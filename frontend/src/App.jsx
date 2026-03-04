@@ -8,6 +8,7 @@ function App() {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
+    console.log("Backend URL:", import.meta.env.VITE_BACKEND_URL);
     fetch(`${backendUrl}/api/health`)
       .then((res) => {
         if (!res.ok) throw new Error("Network response not ok");

@@ -13,4 +13,4 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    CORS_ORIGINS = ["https://ledger-vite.vercel.app/"]
+    CORS_ORIGINS = ["https://ledger-vite.vercel.app"]
