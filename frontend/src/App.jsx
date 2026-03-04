@@ -4,18 +4,16 @@ import "./App.css";
 function App() {
   const [backendStatus, setBackendStatus] = useState("Checking...");
   const [error, setError] = useState(null);
+  
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
-    fetch("/api/health")
+    fetch(`${backendUrl}/api/health`)
       .then((res) => {
-        if (!res.ok) {
-          throw new Error("Network response not ok");
-        }
+        if (!res.ok) throw new Error("Network response not ok");
         return res.json();
       })
-      .then((data) => {
-        setBackendStatus(data.status);
-      })
+      .then((data) => setBackendStatus(data.status))
       .catch((err) => {
         setError(err.message);
         setBackendStatus("Failed");

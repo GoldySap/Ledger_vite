@@ -6,7 +6,6 @@ from config import DevelopmentConfig, ProductionConfig
 def create_app():
     app = Flask(__name__)
 
-    # Decide environment
     env = os.environ.get("FLASK_ENV", "development")
 
     if env == "production":
