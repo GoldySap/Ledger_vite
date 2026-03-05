@@ -1,21 +1,24 @@
 import { useEffect, useState } from "react";
+import { NavTop, NavSide } from './components/Nav/Navs';
 import "./App.css";
+import "./components/Nav/Nav.css";
 
 function App() {
   const [backendStatus, setBackendStatus] = useState("Checking...");
   const [error, setError] = useState(null);
   
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const flaskState = import.meta.env.FLASK_ENV
+  let fetchRoute = (flaskState == "production") ? `${backendUrl}/api/health` : `/api/health`;
 
   useEffect(() => {
-    console.log("Backend URL:", import.meta.env.VITE_BACKEND_URL);
-    fetch(`${backendUrl}/api/health`)
-      .then((res) => {
+    fetch(fetchRoute)
+      .then(res => {
         if (!res.ok) throw new Error("Network response not ok");
         return res.json();
       })
-      .then((data) => setBackendStatus(data.status))
-      .catch((err) => {
+      .then(data => setBackendStatus(data.status))
+      .catch(err => {
         setError(err.message);
         setBackendStatus("Failed");
       });
@@ -23,9 +26,38 @@ function App() {
 
   return (
     <>
-      <h1>Ledger Test</h1>
-      <p>Backend status: {backendStatus}</p>
-      {error && <p style={{ color: "red" }}>Error: {error}</p>}
+      <NavSide>
+        <div className="page-header">
+          <h1>Dashboard</h1>
+          <p>Overview of your finances</p>
+        </div>
+
+        <div className="stats-grid">
+          <div className="stat-card">
+            <p>Total Balance</p>
+            <h2>$24,430</h2>
+          </div>
+
+          <div className="stat-card">
+            <p>Investments</p>
+            <h2>$11,240</h2>
+          </div>
+
+          <div className="stat-card">
+            <p>Monthly Income</p>
+            <h2>$3,200</h2>
+          </div>
+
+          <div className="stat-card">
+            <p>Expenses</p>
+            <h2>$1,540</h2>
+          </div>
+        </div>
+
+        <h1>Ledger Test</h1>
+        <p>Backend status: {backendStatus}</p>
+        {error && <p style={{ color: "red" }}>Error: {error}</p>}
+      </NavSide>
     </>
   );
 }
