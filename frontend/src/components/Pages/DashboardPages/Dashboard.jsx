@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export function Dashboard() {
+export default function Dashboard() {
     const [backendStatus, setBackendStatus] = useState("Checking...");
     const [error, setError] = useState(null);
     
@@ -55,5 +55,3 @@ export function Dashboard() {
         </>
     );
 }
-
-export default Dashboard

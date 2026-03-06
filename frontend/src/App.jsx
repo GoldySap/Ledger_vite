@@ -1,35 +1,51 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Home } from "./components/Pages/Home";
-import { Dashboard } from "./components/Pages/DashboardPages/Dashboard";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Login } from "./components/Auth/Login";
+import { Home } from "./components/Pages/HomePages/Home";
+import { HomeLayout } from "./components/Layout/HomeLayout";
+import Dashboard from "./components/Pages/DashboardPages/Dashboard";
+import { Accounts, Settings, Investments, Transactions, Analytics } from "./components/Pages/DashboardPages/DashboardSubpages";
 import { DashboardLayout } from "./components/Layout/DashboardLayout";
+import { AuthProvider } from "./components/Auth/AuthContext";
+import { ProtectedRoute  } from "./components/Auth/ProtectedRoute";
 import "./components/Nav/Nav.css";
 import "./App.css";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
+     <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* PUBLIC */}
+          <Route path="/" element={<HomeLayout />}>
+            <Route index element={<Home />} />
+            <Route path="features" element={<h1>Features</h1>} />
+            <Route path="pricing" element={<h1>Pricing</h1>} />
+            <Route path="about" element={<h1>About</h1>} />
+            <Route path="login" element={<Login />} />
+          </Route>
+          
 
-        {/* PUBLIC */}
-        <Route path="/" element={<Home />} />
+          {/* AUTH ROUTES */}
+          <Route path="/2fa" element={<h1>Two Factor</h1>} />
 
-        {/* AUTH ROUTES */}
-        <Route path="/login" element={<h1>Login Page</h1>} />
-        <Route path="/2fa" element={<h1>Two Factor</h1>} />
-
-        {/* DASHBOARD */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="accounts" element={<h1>Accounts</h1>} />
-          <Route path="investments" element={<h1>Investments</h1>} />
-          <Route path="transactions" element={<h1>Transactions</h1>} />
-          <Route path="analytics" element={<h1>Analytics</h1>} />
-          <Route path="settings" element={<h1>Settings</h1>} />
-
-        </Route>
-
-      </Routes>
-    </BrowserRouter>
+          {/* DASHBOARD */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+            }>
+            <Route index element={<Navigate to="home" />} />
+            <Route path="home" element={<Dashboard />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="accounts" element={<Accounts />} />
+            <Route path="investments" element={<Investments />} />
+            <Route path="transactions" element={<Transactions />} />
+            <Route path="analytics" element={<Analytics />} />
+          </Route>
+          <Route path="*" element={<h1>404 Not Found</h1>} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

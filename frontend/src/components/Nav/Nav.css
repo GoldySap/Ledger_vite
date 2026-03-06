@@ -48,7 +48,7 @@
   background-color: hsl(from white h s calc(l - 5));
 }
 
-.exits a:hover {
+.nav-section .exits:hover {
   background: #ff2f2f;
   color: white;
 }

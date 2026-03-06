@@ -5,10 +5,11 @@ export function NavTop() {
     <header className="top-nav">
       <NavLink  to="/" className="logo">Ledger</NavLink>
       <nav>
-        <NavLink to="/" className={({ isActive }) => isActive ? "primary" : "" }>Features</NavLink>
-        <NavLink to="/" className={({ isActive }) => isActive ? "primary" : "" }>Pricing</NavLink>
-        <NavLink to="/" className={({ isActive }) => isActive ? "primary" : "" }>About</NavLink>
-        <NavLink to="/dashboard" className={({ isActive }) => isActive ? "primary" : "" }>Login</NavLink>
+        <NavLink to="/" className={({ isActive }) => isActive ? "primary" : "" }>Home</NavLink>
+        <NavLink to="features" className={({ isActive }) => isActive ? "primary" : "" }>Features</NavLink>
+        <NavLink to="pricing" className={({ isActive }) => isActive ? "primary" : "" }>Pricing</NavLink>
+        <NavLink to="about" className={({ isActive }) => isActive ? "primary" : "" }>About</NavLink>
+        <NavLink to="login" className={({ isActive }) => isActive ? "primary" : "" }>Login</NavLink>
       </nav>
     </header>
   );
@@ -18,10 +19,10 @@ export function NavSide({ children }) {
   return (
     <div className="dashboard">
         <nav className="sidebar">
-            <NavLink to="/dashboard" className="logo">Ledger</NavLink>
+            <NavLink to="/dashboard/home" className="logo"><strong>Ledger</strong></NavLink>
 
             <div className="nav-section">
-                <NavLink to="/dashboard" className={({ isActive }) => isActive ? "primary" : "" }>Home</NavLink>
+                <NavLink to="/dashboard/home" className={({ isActive }) => isActive ? "primary" : "" }>Overview</NavLink>
                 <NavLink to="/dashboard/settings" className={({ isActive }) => isActive ? "primary" : "" }>Settings</NavLink>
             </div>
 
@@ -36,9 +37,9 @@ export function NavSide({ children }) {
 
             <div className="spacer"><hr /></div>
 
-            <div className="nav-section exits">
-                <NavLink to="/" className={({ isActive }) => isActive ? "primary" : "" }>Exit</NavLink>
-                <NavLink to="/" className={({ isActive }) => isActive ? "primary" : "" }>Logout</NavLink>
+            <div className="nav-section">
+                <NavLink to="/" className={({ isActive }) => isActive ? "primary" : "" }>Back</NavLink>
+                <NavLink to="/" className={({ isActive }) => isActive ? "exits primary" : "exits" }>Logout</NavLink>
             </div>
         </nav>
 

@@ -1,11 +1,10 @@
 import { NavLink } from "react-router-dom";
-import { NavTop } from "../Nav/Navs";
+import { NavTop } from "../../Nav/Navs";
 
 
 export function Home() {
   return (
     <>
-      <NavTop />
       <main className="home">
         <section className="hero">
           <h1>Manage your finances with clarity</h1>
@@ -13,7 +12,7 @@ export function Home() {
             Ledger helps you track accounts, investments, and transactions
             in one powerful dashboard.
           </p>
-          <NavLink to="/dashboard" className={"primary"}>Open Dashboard</NavLink> 
+          <NavLink to="/dashboard" className="">Open Dashboard</NavLink> 
         </section>
       </main>
     </>
