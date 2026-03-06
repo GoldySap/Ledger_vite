@@ -5,6 +5,11 @@
   width: 100vw;
 }
 
+.logo {
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
 .sidebar {
   background: var(--panel);
   border-right: 1px solid var(--border);
@@ -14,11 +19,9 @@
   gap: 1rem;
 }
 
-.logo {
-  font-weight: 700;
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
-}
+/* .sidebar > * {
+    flex-grow: 1;
+} */
 
 .nav-section {
   display: flex;
@@ -26,7 +29,7 @@
   gap: 0.3rem;
 }
 
-.sidebar button {
+.sidebar a {
   background: transparent;
   border: none;
   text-align: left;
@@ -37,14 +40,106 @@
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
+  transition: all .2s ease;
+  text-decoration: none;
 }
 
-.sidebar button:hover {
-  background: #f1f3f5;
+.sidebar a:hover {
+  background-color: hsl(from white h s calc(l - 5));
 }
 
-.main {
-  padding: 2rem;
-  overflow-y: auto;
-  background: var(--bg);
+.exits a:hover {
+  background: #ff2f2f;
+  color: white;
+}
+
+.sidebar a:active {
+  background-color: hsl(from white h s calc(l - 5));
+  box-shadow: inset rgba(0, 0, 0, 0.4) 0px 0px 10px 1px;
+}
+
+.exits a:active {
+  background-color: hsl(from #ff2f2f h s calc(l - 5));
+  box-shadow: inset rgba(0, 0, 0, 0.4) 0px 0px 10px 1px;
+}
+
+.sidebar .spacer {
+  padding: 10px 0 10px 0;
+}
+
+.sidebar .spacer hr {
+    order: 0;
+    border: none;
+    background-color: var(--muted);
+    height: 2px;
+    border-radius: 6px;
+}
+
+.sidebar a.primary {
+  background: var(--accent);
+  color: white;
+}
+
+.top-nav {
+  padding: 0;
+  margin: 0;
+  height: 4rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  background: white;
+  width: 100vw;
+}
+
+.top-nav nav { 
+  margin: 0 0.5rem 0 0;
+}
+
+.top-nav .logo { 
+  margin: 0 0 0 0.5rem;
+}
+
+.top-nav nav {
+  display: flex;
+  gap: 1rem;
+}
+
+.top-nav a {
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all .2s ease;
+  text-decoration: none;
+}
+
+.top-nav a:hover {
+  background-color: hsl(from white h s calc(l - 10));
+}
+
+.top-nav a:active {
+  box-shadow: inset rgba(0, 0, 0, 0.4) 0px 0px 10px 1px;
+}
+
+.top-nav nav .primary {
+  background: var(--accent);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  text-decoration: none;
+}
+
+.top-nav nav .primary:hover {
+  background-color: hsl(from var(--accent) h s calc(l - 10));
+}
+
+.sidebar a:hover, .exits a:hover, .top-nav a:hover, .top-nav nav a:hover, .top-nav nav .primary:hover {
+  cursor: pointer;
 }

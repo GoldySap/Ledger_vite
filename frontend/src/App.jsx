@@ -1,64 +1,35 @@
-import { useEffect, useState } from "react";
-import { NavTop, NavSide } from './components/Nav/Navs';
-import "./App.css";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Home } from "./components/Pages/Home";
+import { Dashboard } from "./components/Pages/DashboardPages/Dashboard";
+import { DashboardLayout } from "./components/Layout/DashboardLayout";
 import "./components/Nav/Nav.css";
+import "./App.css";
 
 function App() {
-  const [backendStatus, setBackendStatus] = useState("Checking...");
-  const [error, setError] = useState(null);
-  
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
-  const flaskState = import.meta.env.FLASK_ENV
-  let fetchRoute = (flaskState == "production") ? `${backendUrl}/api/health` : `/api/health`;
-
-  useEffect(() => {
-    fetch(fetchRoute)
-      .then(res => {
-        if (!res.ok) throw new Error("Network response not ok");
-        return res.json();
-      })
-      .then(data => setBackendStatus(data.status))
-      .catch(err => {
-        setError(err.message);
-        setBackendStatus("Failed");
-      });
-  }, []);
-
   return (
-    <>
-      <NavSide>
-        <div className="page-header">
-          <h1>Dashboard</h1>
-          <p>Overview of your finances</p>
-        </div>
+    <BrowserRouter>
+      <Routes>
 
-        <div className="stats-grid">
-          <div className="stat-card">
-            <p>Total Balance</p>
-            <h2>$24,430</h2>
-          </div>
+        {/* PUBLIC */}
+        <Route path="/" element={<Home />} />
 
-          <div className="stat-card">
-            <p>Investments</p>
-            <h2>$11,240</h2>
-          </div>
+        {/* AUTH ROUTES */}
+        <Route path="/login" element={<h1>Login Page</h1>} />
+        <Route path="/2fa" element={<h1>Two Factor</h1>} />
 
-          <div className="stat-card">
-            <p>Monthly Income</p>
-            <h2>$3,200</h2>
-          </div>
+        {/* DASHBOARD */}
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="accounts" element={<h1>Accounts</h1>} />
+          <Route path="investments" element={<h1>Investments</h1>} />
+          <Route path="transactions" element={<h1>Transactions</h1>} />
+          <Route path="analytics" element={<h1>Analytics</h1>} />
+          <Route path="settings" element={<h1>Settings</h1>} />
 
-          <div className="stat-card">
-            <p>Expenses</p>
-            <h2>$1,540</h2>
-          </div>
-        </div>
+        </Route>
 
-        <h1>Ledger Test</h1>
-        <p>Backend status: {backendStatus}</p>
-        {error && <p style={{ color: "red" }}>Error: {error}</p>}
-      </NavSide>
-    </>
+      </Routes>
+    </BrowserRouter>
   );
 }
 
