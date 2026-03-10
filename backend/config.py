@@ -2,10 +2,12 @@ import os
 
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "devkey")
-    MARIADB_HOST = os.environ.get("MARIADB_HOST", "localhost")
-    MARIADB_USER = os.environ.get("MARIADB_USER", "root")
-    MARIADB_PASSWORD = os.environ.get("MARIADB_PASSWORD", "")
-    MARIADB_DB = os.environ.get("MARIADB_DB", "ledger")
+    DATABASE_HOST = os.environ.get("DB_HOST", "localhost")
+    DATABASE_USER = os.environ.get("DB_USER", "root")
+    DATABASE_PASSWORD = os.environ.get("DB_PASSWORD", "")
+    DATABASE_NAME = os.environ.get("DB_NAME", "ledger")
+    LOCAL_DB = f"mariadb+pymysql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{DATABASE_NAME}"
+    DATABASE_URL = os.environ.get("SUPABASE_CONNECTION_URL", LOCAL_DB)
 
 class DevelopmentConfig(Config):
     DEBUG = True

@@ -1,29 +1,29 @@
 export function Settings() {
     return (
-        null
+        <h1>Settings</h1>
     );
 }
 
 export function Accounts() {
     return (
-        null
+        <h1>Accounts</h1>
     );
 }
 
 export function Investments() {
     return (
-        null
+        <h1>Investments</h1>
     );
 }
 
 export function Transactions() {
     return (
-        null
+        <h1>Transactions</h1>
     );
 }
 
 export function Analytics() {
     return (
-        null
+        <h1>Analytics</h1>
     );
 }

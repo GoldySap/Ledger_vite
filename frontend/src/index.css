@@ -7,14 +7,14 @@
 
   --border: #e5e7eb;
 
-  --accent: hsl(221 83% 50%);
+  --accent: hsl(120, 14%, 41%);
   
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  /* color-scheme: light dark; */
-  /* color: rgba(255, 255, 255, 0.87); */
+  /* color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87); */
   background-color: var(--bg);
 
   font-synthesis: none;
@@ -40,6 +40,10 @@ main {
 
 main a {
   text-decoration: none;
+  background: var(--accent);
+  color: white;
+  padding: 0.8rem 1.3rem;
+  border-radius: 6px;
 }
 
 h1 {
