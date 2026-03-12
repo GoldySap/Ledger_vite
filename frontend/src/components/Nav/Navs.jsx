@@ -6,10 +6,10 @@ export function NavTop() {
       <NavLink  to="/" className="logo">Ledger</NavLink>
       <nav>
         <NavLink to="/" className={({ isActive }) => isActive ? "primary" : "" }>Home</NavLink>
-        <NavLink to="features" className={({ isActive }) => isActive ? "primary" : "" }>Features</NavLink>
-        <NavLink to="pricing" className={({ isActive }) => isActive ? "primary" : "" }>Pricing</NavLink>
-        <NavLink to="about" className={({ isActive }) => isActive ? "primary" : "" }>About</NavLink>
-        <NavLink to="login" className={({ isActive }) => isActive ? "primary" : "" }>Login</NavLink>
+        <NavLink to="/features" className={({ isActive }) => isActive ? "primary" : "" }>Features</NavLink>
+        <NavLink to="/pricing" className={({ isActive }) => isActive ? "primary" : "" }>Pricing</NavLink>
+        <NavLink to="/about" className={({ isActive }) => isActive ? "primary" : "" }>About</NavLink>
+        <NavLink to="/login" className={({ isActive }) => isActive ? "primary" : "" }>Login</NavLink>
       </nav>
     </header>
   );
@@ -39,7 +39,7 @@ export function NavSide({ children }) {
 
             <div className="nav-section">
                 <NavLink to="/" className={({ isActive }) => isActive ? "primary" : "" }>Back</NavLink>
-                <NavLink to="/" className={({ isActive }) => isActive ? "exits primary" : "exits" }>Logout</NavLink>
+                <NavLink onClick={()=>{logout()}} to="/" className={({ isActive }) => isActive ? "exits primary" : "exits" }>Logout</NavLink>
             </div>
         </nav>
 

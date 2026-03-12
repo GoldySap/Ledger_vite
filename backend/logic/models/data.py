@@ -1,17 +1,5 @@
-from flask_sqlalchemy import SQLAlchemy
+from ..extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
-
-db = SQLAlchemy()
-
-class User(db.Model):
-    __tablename__ = "users"
-
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100))
-    email = db.Column(db.String(200), unique=True)
-    password_hash = db.Column(db.String(255))
-    role = db.Column(db.String(20))
-    subscription_id = db.Column(db.Integer)
 
 class User(db.Model):
     __tablename__ = "users"
@@ -27,3 +15,11 @@ class User(db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+class Transaction(db.Model):
+    __tablename__ = "transactions"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    category = db.Column(db.String(100))
+    created_at = db.Column(db.DateTime, server_default=db.func.now())

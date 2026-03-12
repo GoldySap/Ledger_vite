@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from logic.data.transaction import Transaction
+from ..models.data import Transaction
 
 transaction_bp = Blueprint("transactions", __name__)
 

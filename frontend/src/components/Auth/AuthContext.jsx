@@ -1,22 +1,43 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import { api } from "../API/api";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  function login(jwt) {
-    localStorage.setItem("token", jwt);
-    setToken(jwt);
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    api("/api/auth/me")
+      .then(data => {
+        setUser(data.user);
+      })
+      .catch(() => {
+        localStorage.removeItem("token");
+      })
+      .finally(() => setLoading(false));
+
+  }, []);
+
+  function login(token, user) {
+    localStorage.setItem("token", token);
+    setUser(user);
   }
 
   function logout() {
     localStorage.removeItem("token");
-    setToken(null);
+    setUser(null);
   }
 
   return (
-    <AuthContext.Provider value={{ token, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
@@ -26,17 +47,16 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
-export async function api(url,options={}){
+// export async function api(url,options={}){
 
-  const token = localStorage.getItem("token")
+//   const token = localStorage.getItem("token")
 
-  return fetch(url,{
-    ...options,
-    headers:{
-      "Content-Type":"application/json",
-      Authorization:`Bearer ${token}`,
-      ...options.headers
-    }
-  })
-
-}
+//   return fetch(url,{
+//     ...options,
+//     headers:{
+//       "Content-Type":"application/json",
+//       Authorization:`Bearer ${token}`,
+//       ...options.headers
+//     }
+//   })
+// }

@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
-from logic.data.transaction import Transaction
-from extensions import db
+from ..models.data import Transaction
+from ..extensions import db
 
 finance_bp = Blueprint("finance", __name__)
 
