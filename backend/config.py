@@ -1,7 +1,8 @@
 import os
+from datetime import timedelta
 
 class Config:
-    SECRET_KEY = os.environ.get("SECRET_KEY", "devkey")
+    SECRET_KEY = os.environ.get("SECRET_KEY")
 
     DATABASE_USER = os.environ.get("DB_USER", "root")
     DATABASE_PASSWORD = os.environ.get("DB_PASSWORD", "")
@@ -20,6 +21,16 @@ class Config:
         "pool_size": 5,
         "max_overflow": 10,
     }
+
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
+
+    JWT_TOKEN_LOCATION = ["cookies"]
+    JWT_COOKIE_SECURE = True if os.environ.get("FLASK_ENV") == "production" else True
+    JWT_COOKIE_HTTPONLY = True
+    JWT_COOKIE_SAMESITE = "None"
+    JWT_COOKIE_CSRF_PROTECT = False
+
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
 
 class DevelopmentConfig(Config):
     DEBUG = True

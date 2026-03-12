@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
+import { api } from "../API/api";
 
 export function Login() {
   const [backendStatus, setBackendStatus] = useState("Checking...");
@@ -8,7 +9,7 @@ export function Login() {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const flaskState = import.meta.env.FLASK_ENV
   const flaskUseState = import.meta.env.FLASK_USE
-  let fetchRoute = (flaskState == "production") ? `${backendUrl}/api/health` : (flaskUseState == "external") ? `${backendUrl}/api/health` : `/api/health`;
+  let fetchRoute = (flaskState != "production" && flaskUseState != "external") ? `/api/health` : `${backendUrl}/api/health`;
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -25,15 +26,11 @@ export function Login() {
     try{
       const data = await api("/api/auth/login",{
         method:"POST",
-        body:JSON.stringify({email,password})
+        body: JSON.stringify({email,password})
       });
 
-      if(data.token){
-        login(data.token,data.user);
-        navigate("/dashboard/home");
-      }else{
-        setError(data.error || "Login failed");
-      }
+      login(data.token,data.user);
+      navigate("/dashboard/home");
 
     }catch(err){
       setError(err.message);
@@ -43,16 +40,9 @@ export function Login() {
   }
 
   useEffect(() => {
-      fetch(fetchRoute)
-      .then(res => {
-          if (!res.ok) throw new Error("Network response not ok");
-          return res.json();
-      })
+    api(fetchRoute)
       .then(data => setBackendStatus(data.status))
-      .catch(err => {
-          setError(err.message);
-          setBackendStatus("Failed");
-      });
+      .catch(() => setBackendStatus("Failed"));
   }, []);
 
   return(

@@ -7,11 +7,8 @@ transaction_bp = Blueprint("transactions", __name__)
 @transaction_bp.route("/transactions")
 @jwt_required()
 def get_transactions():
-
     user_id = get_jwt_identity()
-
     transactions = Transaction.query.filter_by(user_id=user_id).all()
-
     result = []
 
     for t in transactions:

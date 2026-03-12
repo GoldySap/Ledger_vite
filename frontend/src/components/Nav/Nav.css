@@ -55,12 +55,10 @@
 
 .sidebar a:active {
   background-color: hsl(from white h s calc(l - 5));
-  box-shadow: inset rgba(0, 0, 0, 0.4) 0px 0px 10px 1px;
 }
 
 .exits a:active {
   background-color: hsl(from #ff2f2f h s calc(l - 5));
-  box-shadow: inset rgba(0, 0, 0, 0.4) 0px 0px 10px 1px;
 }
 
 .sidebar .spacer {
@@ -115,17 +113,12 @@
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  cursor: pointer;
   transition: all .2s ease;
   text-decoration: none;
 }
 
 .top-nav a:hover {
   background-color: hsl(from white h s calc(l - 10));
-}
-
-.top-nav a:active {
-  box-shadow: inset rgba(0, 0, 0, 0.4) 0px 0px 10px 1px;
 }
 
 .top-nav nav .primary {
@@ -142,4 +135,8 @@
 
 .sidebar a:hover, .exits a:hover, .top-nav a:hover, .top-nav nav a:hover, .top-nav nav .primary:hover {
   cursor: pointer;
+}
+
+.sidebar a:active, .exits a:active, .top-nav a:active, main a:active {
+  box-shadow: inset rgba(0, 0, 0, 0.45) 0px 0px 10px 1px;
 }

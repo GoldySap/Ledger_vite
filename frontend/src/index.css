@@ -39,11 +39,16 @@ main {
 }
 
 main a {
-  text-decoration: none;
   background: var(--accent);
   color: white;
   padding: 0.8rem 1.3rem;
   border-radius: 6px;
+  text-decoration: none;
+  transition: all .2s ease;
+}
+
+main a:hover {
+  background-color: hsl(from var(--accent) h s calc(l - 10));
 }
 
 h1 {
@@ -51,10 +56,14 @@ h1 {
   line-height: 1.1;
 }
 
+* {
+  animation: fadeIn 0.4s ease;
+}
+
 @keyframes fadeIn {
   from {
-    opacity: 0;
-    transform: translateY(10px);
+    opacity: 0.7;
+    transform: translateY(3px);
   }
   to {
     opacity: 1;

@@ -4,19 +4,31 @@ export async function api(path, options = {}) {
   const token = localStorage.getItem("token");
 
   const res = await fetch(`${API_URL}${path}`, {
-    ...options,
+    method: options.method || "GET",
     headers: {
       "Content-Type": "application/json",
-      Authorization: token ? `Bearer ${token}` : "",
+      ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers
-    }
+    },
+    body: options.body
   });
 
-  if (res.status === 401) {
-    localStorage.removeItem("token");
-    window.location.href = "/login";
-    return;
+  let data;
+
+  try {
+    data = await res.json();
+  } catch {
+    data = {};
   }
 
-  return res.json();
+  if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+    }
+
+    throw new Error(data.error || `API error: ${res.status}`);
+  }
+
+  return data;
 }

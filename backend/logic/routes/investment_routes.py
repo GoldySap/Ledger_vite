@@ -4,13 +4,13 @@ from ..extensions import db
 
 finance_bp = Blueprint("finance", __name__)
 
-@finance_bp.route("/transactions", methods=["GET"])
-def get_transactions():
-    user_id = request.args.get("user_id")
-    transactions = Transaction.query.filter_by(user_id=user_id).all()
+@finance_bp.route("/investments", methods=["GET"])
+def get_investments():
+    user_id = request.args.get()
+    investments = Transaction.query.filter_by(user_id=user_id).all()
     result = []
 
-    for t in transactions:
+    for t in investments:
         result.append({
             "id": t.id,
             "type": t.type,
