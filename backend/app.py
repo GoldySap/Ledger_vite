@@ -2,9 +2,11 @@ import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 from logic.extensions import db, migrate, jwt
+from backend.logic.routes.debug_routes import debug_bp
 from logic.routes.auth_routes import auth_bp
-from logic.routes.transaction_routes import transaction_bp
 from logic.routes.finance_routes import finance_bp
+from logic.routes.investment_routes import investment_bp
+from logic.routes.transaction_routes import transaction_bp
 from config import DevelopmentConfig, ProductionConfig
 from dotenv import load_dotenv
 
@@ -22,11 +24,13 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
-    CORS(app, origins=app.config["CORS_ORIGINS"])
+    CORS(app, supports_credentials=True, origins=app.config["CORS_ORIGINS"])
 
+    app.register_blueprint(debug_bp)
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
-    app.register_blueprint(transaction_bp, url_prefix="/api")
     app.register_blueprint(finance_bp, url_prefix="/api")
+    app.register_blueprint(investment_bp, url_prefix="/api")
+    app.register_blueprint(transaction_bp, url_prefix="/api")
 
     @app.route("/api/health")
     def health():

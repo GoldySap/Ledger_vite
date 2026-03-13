@@ -29,7 +29,7 @@ export function Login() {
         body: JSON.stringify({email,password})
       });
 
-      login(data.token,data.user);
+      login(data.user);
       navigate("/dashboard/home");
 
     }catch(err){
@@ -82,10 +82,11 @@ export function Logout(){
   const { logout } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(()=>{
+  useEffect(() => {
+    api("/api/auth/logout", { method: "POST" });
     logout();
     navigate("/");
-  },[]);
+  }, []);
 
   return <p>Logging out...</p>;
 }

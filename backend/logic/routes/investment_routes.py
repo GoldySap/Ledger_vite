@@ -2,11 +2,11 @@ from flask import Blueprint, jsonify, request
 from ..models.data import Transaction
 from ..extensions import db
 
-finance_bp = Blueprint("finance", __name__)
+investment_bp = Blueprint("investments", __name__)
 
-@finance_bp.route("/investments", methods=["GET"])
+@investment_bp.route("/transactions", methods=["GET"])
 def get_investments():
-    user_id = request.args.get()
+    user_id = request.args.get("user_id")
     investments = Transaction.query.filter_by(user_id=user_id).all()
     result = []
 
