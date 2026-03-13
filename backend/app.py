@@ -2,7 +2,7 @@ import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 from logic.extensions import db, migrate, jwt
-from backend.logic.routes.debug_routes import debug_bp
+from logic.routes.debug_routes import debug_bp
 from logic.routes.auth_routes import auth_bp
 from logic.routes.finance_routes import finance_bp
 from logic.routes.investment_routes import investment_bp
