@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Login } from "./components/Auth/Login";
+import { AuthPage } from "./components/Auth/Login";
 import { Home } from "./components/Pages/HomePages/Home";
 import { HomeLayout } from "./components/Layout/HomeLayout";
 import Dashboard from "./components/Pages/DashboardPages/Dashboard";
 import { Accounts, Settings, Investments, Transactions, Analytics } from "./components/Pages/DashboardPages/DashboardSubpages";
-import { DashboardLayout } from "./components/Layout/DashboardLayout";
+import { DashboardLayout, AdminDashboardLayout } from "./components/Layout/DashboardLayout";
 import { AuthProvider } from "./components/Auth/AuthContext";
 import { ProtectedRoute  } from "./components/Auth/ProtectedRoute";
 import "./components/Nav/Nav.css";
@@ -21,18 +21,18 @@ function App() {
             <Route path="features" element={<h1>Features</h1>} />
             <Route path="pricing" element={<h1>Pricing</h1>} />
             <Route path="about" element={<h1>About</h1>} />
-            <Route path="login" element={<Login />} />
+            <Route path="login" element={<AuthPage />} />
+            <Route path="*" element={<h1>404 Not Found</h1>} />
           </Route>
           
-
           {/* AUTH ROUTES */}
           <Route path="/2fa" element={<h1>Two Factor</h1>} />
 
-          {/* DASHBOARD */}
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <DashboardLayout />
-            </ProtectedRoute>
+          {/* DASHBOARD USER */}
+          <Route path="/dashboard/user/*" element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
             }>
             <Route index element={<Navigate to="home" />} />
             <Route path="home" element={<Dashboard />} />
@@ -42,7 +42,20 @@ function App() {
             <Route path="transactions" element={<Transactions />} />
             <Route path="analytics" element={<Analytics />} />
           </Route>
-          <Route path="*" element={<h1>404 Not Found</h1>} />
+
+          {/* DASHBOARD ADMIN */}
+          <Route path="/dashboard/admin/*" element={
+              <ProtectedRoute>
+                <AdminDashboardLayout />
+              </ProtectedRoute>
+            }>
+            <Route index element={<Navigate to="home" />} />
+            <Route path="home" element={<Dashboard />} />
+            <Route path="users" element={<Accounts />} />
+            <Route path="subscriptions" element={<Investments />} />
+            <Route path="analytics" element={<Transactions />} />
+            <Route path="auditlogs" element={<Analytics />} />
+          </Route>
         </Routes>
       </BrowserRouter>
     </AuthProvider>

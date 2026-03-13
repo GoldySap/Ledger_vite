@@ -1,137 +1,139 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import { api } from "../API/api";
 
-export function Login() {
-  const [backendStatus, setBackendStatus] = useState("Checking...");
-  
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
-  const flaskState = import.meta.env.FLASK_ENV
-  const flaskUseState = import.meta.env.FLASK_USE
-  let fetchRoute = (flaskState != "production" && flaskUseState != "external") ? `/api/health` : `${backendUrl}/api/health`;
+export function AuthPage() {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const [email,setEmail] = useState("");
-  const [password,setPassword] = useState("");
-  const [loading,setLoading] = useState(false);
-  const [error,setError] = useState("");
-
-  async function handleLogin(e){
+  async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    try{
-      const data = await api("/api/auth/login",{
-        method:"POST",
-        body: JSON.stringify({email,password})
-      });
+    try {
+      let data;
+
+      if (isLogin) {
+        data = await api("/api/auth/login", {
+          method: "POST",
+          body: JSON.stringify({ email, password }),
+        });
+      } else {
+        // Register first
+        data = await api("/api/auth/register", {
+          method: "POST",
+          body: JSON.stringify({
+            email,
+            password,
+            role: "user",
+            subscription_id: 1,
+          }),
+        });
+
+        // Auto-login after registration
+        data = await api("/api/auth/login", {
+          method: "POST",
+          body: JSON.stringify({ email, password }),
+        });
+      }
+
+      if (!data.user) throw new Error("User data missing from backend");
 
       login(data.user);
-      navigate("/dashboard/home");
 
-    }catch(err){
-      setError(err.message);
+      const role = data.user.role || "user";
+      if (role === "admin") {
+        navigate("/dashboard/admin/home");
+      } else {
+        navigate("/dashboard/user/home");
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Something went wrong");
     }
 
     setLoading(false);
   }
 
-  useEffect(() => {
-    api(fetchRoute)
-      .then(data => setBackendStatus(data.status))
-      .catch(() => setBackendStatus("Failed"));
-  }, []);
+  async function handleGoogleLogin() {
+    setLoading(true);
+    setError("");
 
-  return(
-    <>
-      <form onSubmit={handleLogin}>
-        <h2>Login</h2>
-        {error && <p style={{color:"red"}}>{error}</p>}
+    try {
+      const googleEmail = "googleuser@example.com";
+
+      const data = await api("/api/auth/google-login", {
+        method: "POST",
+        body: JSON.stringify({ email: googleEmail }),
+      });
+
+      if (!data.user) throw new Error("Google login failed");
+
+      login(data.user);
+
+      const role = data.user.role || "user";
+      if (role === "admin") {
+        navigate("/dashboard/admin/home");
+      } else {
+        navigate("/dashboard/user/home");
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Google login failed");
+    }
+
+    setLoading(false);
+  }
+
+  return (
+    <div className="auth-page">
+      <h2>{isLogin ? "Login" : "Register"}</h2>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      <form onSubmit={handleSubmit}>
         <input
           type="email"
           placeholder="Email"
           value={email}
-          onChange={e=>setEmail(e.target.value)}
+          onChange={(e) => setEmail(e.target.value)}
           required
         />
-
         <input
           type="password"
           placeholder="Password"
           value={password}
-          onChange={e=>setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
           required
         />
-
         <button disabled={loading}>
-          {loading ? "Logging in..." : "Login"}
+          {loading
+            ? isLogin
+              ? "Logging in..."
+              : "Creating..."
+            : isLogin
+            ? "Login"
+            : "Register"}
         </button>
       </form>
 
-      <h1>Ledger Test</h1>
-      <p>Backend status: {backendStatus}</p>
-      {error && <p style={{ color: "red" }}>Error: {error}</p>}
-    </>
-  );
-}
+      <p>
+        {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+        <button type="button" onClick={() => setIsLogin(!isLogin)}>
+          {isLogin ? "Register" : "Login"}
+        </button>
+      </p>
 
-export function Logout(){
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    api("/api/auth/logout", { method: "POST" });
-    logout();
-    navigate("/");
-  }, []);
-
-  return <p>Logging out...</p>;
-}
-
-export function Register(){
-  const [email,setEmail] = useState("");
-  const [password,setPassword] = useState("");
-  const [loading,setLoading] = useState(false);
-  
-  const navigate = useNavigate();
-
-  async function handleRegister(e){
-    e.preventDefault();
-    setLoading(true);
-
-    const data = await api("/api/auth/register",{method:"POST", body:JSON.stringify({email,password})});
-
-    if(data.message){
-      navigate("/login");
-    }
-
-    setLoading(false);
-  }
-  return(
-    <form onSubmit={handleRegister}>
-
-      <h2>Register</h2>
-
-      <input
-        type="email"
-        value={email}
-        onChange={e=>setEmail(e.target.value)}
-        required
-      />
-
-      <input
-        type="password"
-        value={password}
-        onChange={e=>setPassword(e.target.value)}
-        required
-      />
-
-      <button disabled={loading}>
-        {loading ? "Creating..." : "Create Account"}
-      </button>
-    </form>
+      {/* <p>Or login with:</p>
+      <button onClick={handleGoogleLogin} disabled={loading}>
+        Google
+      </button> */}
+    </div>
   );
 }

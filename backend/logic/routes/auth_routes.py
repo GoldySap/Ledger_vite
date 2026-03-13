@@ -19,13 +19,23 @@ def register():
     data = request.get_json()
     email = data.get("email")
     password = data.get("password")
+    role = data.get("role") or "user"
+    subscription_id = data.get("subscription_id") or 1
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "User exists"}), 400
-    user = User(email=email)
+    user = User(email=email, role=role, subscription_id=subscription_id)
     user.set_password(password)
     db.session.add(user)
     db.session.commit()
-    return jsonify({"msg": "User created"})
+    return jsonify({
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "role": user.role,
+            "subscription_id": user.subscription_id
+        },
+        "msg": "User created"
+    })
 
 @auth_bp.route("/login", methods=["POST"])
 def login():
@@ -38,7 +48,9 @@ def login():
     response = jsonify({
         "user":{
             "id":user.id,
-            "email":user.email
+            "email":user.email,
+            "role": user.role,
+            "subscription_id": user.subscription_id
         }
     })
     set_access_cookies(response, access_token)
@@ -58,5 +70,7 @@ def me():
     user = User.query.get(user_id)
     return jsonify({
         "id": user.id,
-        "email": user.email
+        "email": user.email,
+        "role": user.role,
+        "subscription_id": user.subscription_id
     })

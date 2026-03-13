@@ -12,7 +12,7 @@ export function Home() {
             Ledger helps you track accounts, investments, and transactions
             in one powerful dashboard.
           </p>
-          <NavLink to="/dashboard" className="">Open Dashboard</NavLink> 
+          <NavLink to="/dashboard/user">Open Dashboard</NavLink> 
         </section>
       </main>
     </>
