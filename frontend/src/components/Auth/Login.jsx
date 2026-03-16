@@ -25,8 +25,6 @@ export function AuthPage() {
           method: "POST",
           body: JSON.stringify({ email, password }),
         });
-
-        console.log("LOGIN RESPONSE:", data);
       } else {
         data = await api("/api/auth/register", {
           method: "POST",
@@ -37,15 +35,10 @@ export function AuthPage() {
             subscription_id: 1,
           }),
         });
-
-        console.log("REGISTER RESPONSE:", data);
-
         data = await api("/api/auth/login", {
           method: "POST",
           body: JSON.stringify({ email, password }),
         });
-
-        console.log("LOGIN RESPONSE:", data);
       }
 
       if (!data.user) throw new Error("User data missing from backend");

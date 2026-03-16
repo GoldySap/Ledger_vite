@@ -35,10 +35,17 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = Config.DB_URL if os.environ.get("FLASK_USE") == "external" else Config.LOCAL_DB
-    CORS_ORIGINS = ["http://localhost:5124"]
+    CORS_ORIGINS = [
+        "http://localhost:5124",
+        "http://127.0.0.1:5124",
+        "https://ledger-vite.onrender.com",
+    ]
 
 
 class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = Config.DB_URL
-    CORS_ORIGINS = ["https://ledger-vite.vercel.app"]
+    CORS_ORIGINS = [
+        "https://ledger-vite.vercel.app",
+        "https://ledger-vite.onrender.com"
+    ]
