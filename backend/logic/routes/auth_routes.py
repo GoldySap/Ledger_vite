@@ -14,7 +14,7 @@ def refresh():
     set_access_cookies(response, access_token)
     return response
 
-@auth_bp.route("/register", methods=["POST"])
+@auth_bp.route("/register", methods=["GET", "POST"])
 def register():
     data = request.get_json()
     email = data.get("email")
@@ -36,7 +36,7 @@ def register():
         }
     })
 
-@auth_bp.route("/login", methods=["POST"])
+@auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     data = request.get_json()
     user = User.query.filter_by(email=data["email"]).first()
