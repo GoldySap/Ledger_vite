@@ -25,8 +25,9 @@ export function AuthPage() {
           method: "POST",
           body: JSON.stringify({ email, password }),
         });
+
+        console.log("LOGIN RESPONSE:", data);
       } else {
-        // Register first
         data = await api("/api/auth/register", {
           method: "POST",
           body: JSON.stringify({
@@ -37,11 +38,14 @@ export function AuthPage() {
           }),
         });
 
-        // Auto-login after registration
+        console.log("REGISTER RESPONSE:", data);
+
         data = await api("/api/auth/login", {
           method: "POST",
           body: JSON.stringify({ email, password }),
         });
+
+        console.log("LOGIN RESPONSE:", data);
       }
 
       if (!data.user) throw new Error("User data missing from backend");
@@ -62,35 +66,35 @@ export function AuthPage() {
     setLoading(false);
   }
 
-  async function handleGoogleLogin() {
-    setLoading(true);
-    setError("");
+  // async function handleGoogleLogin() {
+  //   setLoading(true);
+  //   setError("");
 
-    try {
-      const googleEmail = "googleuser@example.com";
+  //   try {
+  //     const googleEmail = "googleuser@example.com";
 
-      const data = await api("/api/auth/google-login", {
-        method: "POST",
-        body: JSON.stringify({ email: googleEmail }),
-      });
+  //     const data = await api("/api/auth/google-login", {
+  //       method: "POST",
+  //       body: JSON.stringify({ email: googleEmail }),
+  //     });
 
-      if (!data.user) throw new Error("Google login failed");
+  //     if (!data.user) throw new Error("Google login failed");
 
-      login(data.user);
+  //     login(data.user);
 
-      const role = data.user.role || "user";
-      if (role === "admin") {
-        navigate("/dashboard/admin/home");
-      } else {
-        navigate("/dashboard/user/home");
-      }
-    } catch (err) {
-      console.error(err);
-      setError(err.message || "Google login failed");
-    }
+  //     const role = data.user.role || "user";
+  //     if (role === "admin") {
+  //       navigate("/dashboard/admin/home");
+  //     } else {
+  //       navigate("/dashboard/user/home");
+  //     }
+  //   } catch (err) {
+  //     console.error(err);
+  //     setError(err.message || "Google login failed");
+  //   }
 
-    setLoading(false);
-  }
+  //   setLoading(false);
+  // }
 
   return (
     <div className="auth-page">
