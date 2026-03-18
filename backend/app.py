@@ -40,6 +40,7 @@ def create_app():
 app = create_app()
 
 with app.app_context():
+    db.drop_all()
     db.create_all()
     if os.environ.get("FLASK_ENV") == "development":
         db.engine.connect()
