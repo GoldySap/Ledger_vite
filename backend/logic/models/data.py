@@ -31,45 +31,23 @@ class User(db.Model):
 class Account(db.Model):
     __tablename__ = "accounts"
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(
-        db.Integer,
-        db.ForeignKey("users.id"),
-        nullable=False
-    )
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     currency = db.Column(db.String(3), default="USD")
-    created_at = db.Column(
-        db.DateTime,
-        server_default=db.func.now()
-    )
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
     user = db.relationship("User", back_populates="accounts")
-    transactions = db.relationship(
-        "Transaction",
-        back_populates="account",
-        cascade="all, delete"
-    )
+    transactions = db.relationship("Transaction", back_populates="account", cascade="all, delete")
 
 class Portfolio(db.Model):
     __tablename__ = "portfolios"
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(
-        db.Integer,
-        db.ForeignKey("users.id"),
-        nullable=False
-    )
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     name = db.Column(db.String(100))
-    created_at = db.Column(
-        db.DateTime,
-        server_default=db.func.now()
-    )
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
 
 class SecuritySettings(db.Model):
     __tablename__ = "security_settings"
-    user_id = db.Column(
-        db.Integer,
-        db.ForeignKey("users.id"),
-        primary_key=True
-    )
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)
     verified = db.Column(db.Boolean, default=False)
     email_2fa_enabled = db.Column(db.Boolean, default=False)
     sms_2fa_enabled = db.Column(db.Boolean, default=False)

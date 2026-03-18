@@ -13,7 +13,7 @@ export async function api(endpoint, options = {}) {
 
   const text = await res.text();
 
-  console.log("RAW RESPONSE:", text); // 👈 ADD THIS
+  console.log("RAW RESPONSE:", text);
 
   if (!text) return {};
 
