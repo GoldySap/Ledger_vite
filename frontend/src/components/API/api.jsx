@@ -12,9 +12,16 @@ export async function api(endpoint, options = {}) {
   });
 
   const text = await res.text();
-  if (!text) return {};
-  const data = JSON.parse(text);
 
-  if (!res.ok) throw new Error(data.error || "Request failed");
-  return data;
+  console.log("RAW RESPONSE:", text); // 👈 ADD THIS
+
+  if (!text) return {};
+
+  try {
+    const data = JSON.parse(text);
+    if (!res.ok) throw new Error(data.error || "Request failed");
+    return data;
+  } catch (err) {
+    throw new Error("Response was not JSON");
+  }
 }

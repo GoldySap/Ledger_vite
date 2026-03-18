@@ -19,6 +19,8 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     subscription = db.relationship("Subscription", backref="users")
+    
+    accounts = db.relationship("Account", back_populates="user")
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -78,6 +80,9 @@ class Transaction(db.Model):
     __tablename__ = "transactions"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, nullable=False)
+    account_id = db.Column(db.Integer, db.ForeignKey("accounts.id"))
     amount = db.Column(db.Float, nullable=False)
     category = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    account = db.relationship("Account", back_populates="transactions")
