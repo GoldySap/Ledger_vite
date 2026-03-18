@@ -2,7 +2,7 @@ import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 from logic.extensions import db, migrate, jwt
-from logic.routes.debug_routes import debug_bp, seed_bp, seed_all_bp
+from logic.routes.debug_routes import debug_bp, seed_bp, seed_all_bp, seed_all
 from logic.routes.auth_routes import auth_bp
 from logic.routes.misc_routes import health
 from logic.routes.finance_routes import finance_bp
@@ -46,6 +46,7 @@ app = create_app()
 with app.app_context():
     db.drop_all()
     db.create_all()
+    seed_all()
     if os.environ.get("FLASK_ENV") == "development":
         db.engine.connect()
 

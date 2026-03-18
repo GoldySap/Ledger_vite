@@ -4,8 +4,13 @@ export default function Dashboard() {
     const [backendStatus, setBackendStatus] = useState("Checking...");
     const [error, setError] = useState(null);
     
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const flaskState = import.meta.env.FLASK_ENV
+    const flaskDBLocal = import.meta.env.FLASK_FLASK_USE
+    let fetchRoute = (flaskState == "production") ? `${backendUrl}/api/health` : (flaskDBLocal == "production") ? `${backendUrl}/api/health` : `/api/health`;
+
     useEffect(() => {
-        api("/api/health")
+        fetch(fetchRoute)
         .then(res => {
             if (!res.ok) throw new Error("Network response not ok");
             return res.json();
