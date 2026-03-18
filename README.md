@@ -5,16 +5,6 @@
 ###  Prosjekttittel
 **Tittel på prosjektet**
 
----
-
-### Deltakere
-- Navn 1 – rolle/ansvar
-- Navn 2 – rolle/ansvar  
-- Navn 3 – rolle/ansvar 
-*(individuelt prosjekt: skriv "Individuelt prosjekt")*
-
----
-
 ### 1. Prosjektidé og problemstilling
 
 #### Beskrivelse
@@ -46,13 +36,13 @@ Systemet skal minst ha følgende funksjoner:
 ### 3. Teknologivalg
 
 #### Programmeringsspråk
-- Eksempel: Python / JavaScript / C#
+- Eksempel: Python / JavaScript
 
 #### Rammeverk / Plattform / Spillmotor
-- Eksempel: Flask / Unity / Godot / .NET
+- Eksempel: Flask / Vite React / Node
 
 #### Database
-- MariaDB
+- Postgres (Render/Supabase)
 
 #### Verktøy
 - GitHub
@@ -60,30 +50,6 @@ Systemet skal minst ha følgende funksjoner:
 - Eventuelle andre verktøy
 
 ---
-
-### 4. Datamodell
-
-#### Oversikt over tabeller
-
-**Tabell 1:**
-- Navn:
-- Beskrivelse:
-
-**Tabell 2:**
-- Navn:
-- Beskrivelse:
-
-*(Minst 2–4 tabeller)*
-
-#### Eksempel på tabellstruktur
-```sql
-User(
-  id INT PRIMARY KEY,
-  username VARCHAR(50),
-  email VARCHAR(100),
-  password VARCHAR(255)
-)
-```
 
 ## Prosjekt Dokumentasjon
 
