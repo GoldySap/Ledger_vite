@@ -2,7 +2,7 @@ import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 from logic.extensions import db, migrate, jwt
-from logic.routes.debug_routes import debug_bp, seed_all_bp
+from logic.routes.debug_routes import debug_bp, seed_bp, seed_all_bp
 from logic.routes.auth_routes import auth_bp
 from logic.routes.misc_routes import health
 from logic.routes.finance_routes import finance_bp
@@ -27,7 +27,8 @@ def create_app():
     jwt.init_app(app)
     CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}},)
 
-    # app.register_blueprint(debug_bp)
+    app.register_blueprint(debug_bp)
+    app.register_blueprint(seed_bp)
     app.register_blueprint(seed_all_bp)
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(finance_bp, url_prefix="/api")
