@@ -10,8 +10,10 @@ class Config:
     DATABASE_NAME = os.environ.get("DB_NAME", "ledger")
     LOCAL_DB = f"mysql+pymysql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{DATABASE_NAME}"
 
+    SUBABASE_DB_URL = os.environ.get("SUBABASE_DB_URL", "")
     EXTERNAL_DB_URL = os.environ.get("RENDER_DB_URL_EXTERNAL", "")
     INTERNAL_DB_URL = os.environ.get("RENDER_DB_URL_INTERNAL", "")
+    SUBA_URL = f"postgresql+psycopg2://{SUBABASE_DB_URL}?sslmode=require"
     DB_URL = f"postgresql+psycopg2://{INTERNAL_DB_URL}?sslmode=require" if os.environ.get("FLASK_ENV") == "production" else f"postgresql+psycopg2://{EXTERNAL_DB_URL}?sslmode=require"
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
