@@ -24,7 +24,7 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
-    CORS(app, supports_credentials=True, origins=app.config["CORS_ORIGINS"])
+    CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}},)
 
     app.register_blueprint(debug_bp)
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
