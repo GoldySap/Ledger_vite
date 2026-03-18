@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 from logic.extensions import db, migrate, jwt
 from logic.routes.debug_routes import debug_bp, seed_all_bp
@@ -33,6 +33,10 @@ def create_app():
     app.register_blueprint(finance_bp, url_prefix="/api")
     app.register_blueprint(investment_bp, url_prefix="/api")
     app.register_blueprint(transaction_bp, url_prefix="/api")
+
+    @app.route("/api/health")
+    def health():
+        return jsonify({"status": "ok"})
 
     return app
 

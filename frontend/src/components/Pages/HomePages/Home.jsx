@@ -8,7 +8,8 @@ export function Home() {
   
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const flaskState = import.meta.env.FLASK_ENV
-  let fetchRoute = (flaskState == "production") ? `${backendUrl}/api/health` : `/api/health`;
+  const flaskDBLocal = import.meta.env.FLASK_FLASK_USE
+  let fetchRoute = (flaskState == "production") ? `${backendUrl}/api/health` : (flaskDBLocal == "external") ? `${backendUrl}/api/health` : `/api/health`;
 
   useEffect(() => {
       fetch(fetchRoute)
