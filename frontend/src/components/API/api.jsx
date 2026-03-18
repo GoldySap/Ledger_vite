@@ -3,6 +3,7 @@ export async function api(endpoint, options = {}) {
   const url = `${backendUrl}${endpoint.startsWith("/") ? endpoint : "/" + endpoint}`;
   
   const res = await fetch(url, {
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     ...options,
   });

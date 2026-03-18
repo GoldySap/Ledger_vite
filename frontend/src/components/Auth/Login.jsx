@@ -122,7 +122,7 @@ export function AuthPage() {
 
       <p>
         {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-        <button type="button" onClick={() => setIsLogin(!isLogin)}>
+        <button type="button" onClick={() => setIsLogin(!isLogin)} disabled={loading}>
           {isLogin ? "Register" : "Login"}
         </button>
       </p>
