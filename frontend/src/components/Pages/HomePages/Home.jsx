@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { NavTop } from "../../Nav/Navs";
+import { useEffect, useState } from "react";
 
 
 export function Home() {
