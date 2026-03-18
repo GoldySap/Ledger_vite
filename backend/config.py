@@ -46,6 +46,7 @@ class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = Config.DB_URL
     CORS_ORIGINS = [
+        "http://localhost:5124",
         "https://ledger-vite.vercel.app",
         "https://ledger-vite.onrender.com"
     ]
