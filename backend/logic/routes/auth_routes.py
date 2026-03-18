@@ -14,9 +14,11 @@ def refresh():
     set_access_cookies(response, access_token)
     return response
 
-@auth_bp.route("/register", methods=["GET", "POST"])
+@auth_bp.route("/register", methods=["POST"])
 def register():
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data"}), 400
     email = data.get("email")
     password = data.get("password")
     role = data.get("role") or "user"
@@ -36,9 +38,11 @@ def register():
         }
     })
 
-@auth_bp.route("/login", methods=["GET", "POST"])
+@auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data"}), 400
     user = User.query.filter_by(email=data["email"]).first()
     if not user or not user.check_password(data["password"]):
         return jsonify({"error":"Invalid credentials"}), 401
