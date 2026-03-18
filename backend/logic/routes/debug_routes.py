@@ -64,7 +64,7 @@ def seed_all():
     pro_sub = Subscription.query.filter_by(label="Pro").first()
 
     ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL")
-    ADMIN_PASSWORD = os.environ.get("ADMIN_EMAIL")
+    ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
     admin = User.query.filter_by(email=ADMIN_EMAIL).first()
     if not admin:
         admin = User(
