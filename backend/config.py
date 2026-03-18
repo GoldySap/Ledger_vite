@@ -38,7 +38,7 @@ class DevelopmentConfig(Config):
     CORS_ORIGINS = [
         "http://localhost:5124",
         "http://127.0.0.1:5124",
-        "https://ledger-vite.onrender.com",
+        os.environ.get("VITE_BACKEND_URL")
     ]
 
 
@@ -48,5 +48,5 @@ class ProductionConfig(Config):
     CORS_ORIGINS = [
         "http://localhost:5124",
         "https://ledger-vite.vercel.app",
-        "https://ledger-vite.onrender.com"
+        os.environ.get("VITE_BACKEND_URL")
     ]

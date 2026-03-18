@@ -14,7 +14,7 @@ class User(db.Model):
     email = db.Column(db.String(200), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), default="user")
-    subscription_id = db.Column(db.Integer, db.ForeignKey("Subscription.id"), nullable=True)
+    subscription_id = db.Column(db.Integer, db.ForeignKey("subscription.id"), nullable=True)
     active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
