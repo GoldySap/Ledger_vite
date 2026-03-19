@@ -2,26 +2,43 @@ export async function api(endpoint, options = {}) {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const url = `${backendUrl}${endpoint.startsWith("/") ? endpoint : "/" + endpoint}`;
 
-  const res = await fetch(url, {
-    credentials: "include",
-    headers: {
-      ...(options.body && { "Content-Type": "application/json" }),
-      ...options.headers,
-    },
-    ...options,
-  });
+  async function request() {
+    return fetch(url, {
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      ...options,
+    });
+  }
+
+  let res = await request();
+
+  if (res.status === 401 || res.status === 422) {
+    const refreshRes = await fetch(`${backendUrl}/api/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (refreshRes.ok) {
+      res = await request();
+    } else {
+      throw new Error("Session expired");
+    }
+  }
 
   const text = await res.text();
-
-  console.log("RAW RESPONSE:", text);
-
   if (!text) return {};
 
   try {
     const data = JSON.parse(text);
     if (!res.ok) throw new Error(data.error || "Request failed");
     return data;
-  } catch (err) {
-    throw new Error("Response was not JSON");
+  } catch {
+    console.error("RAW RESPONSE:", text);
+    if (!text) {
+        throw new Error("Response was not JSON");
+    } else {
+        const data = JSON.parse(text);
+        throw new Error(data.error);
+    }
   }
 }

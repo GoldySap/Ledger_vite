@@ -46,8 +46,8 @@ def login():
     user = User.query.filter_by(email=data["email"]).first()
     if not user or not user.check_password(data["password"]):
         return jsonify({"error":"Invalid credentials"}), 401
-    access_token = create_access_token(identity=user.id)
-    refresh_token = create_refresh_token(identity=user.id)
+    access_token = create_access_token(identity=str(user.id))
+    refresh_token = create_refresh_token(identity=str(user.id))
     response = jsonify({
         "user": {
             "id": user.id,
@@ -70,7 +70,7 @@ def logout():
 @jwt_required()
 def me():
     user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = User.query.get(int(user_id))
     return jsonify({
         "id": user.id,
         "email": user.email,
