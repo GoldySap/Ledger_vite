@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { useApi } from "../API/useApi";
-const { call } = useApi();
+import { api } from "../API/api";
 
 const AuthContext = createContext();
 
@@ -20,7 +19,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     async function fetchUser() {
       try {
-        const res = await call("/api/auth/me");
+        const res = await api("/api/auth/me");
         setUser(res);
       } catch {
         setUser(null);

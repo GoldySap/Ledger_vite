@@ -1,4 +1,4 @@
-import { useAuth } from "../components/AuthContext";
+import { useAuth } from "../Auth/AuthContext";
 import { api } from "./api";
 
 export function useApi() {
