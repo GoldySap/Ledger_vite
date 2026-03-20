@@ -5,9 +5,9 @@ export default function Dashboard() {
     const [error, setError] = useState(null);
     
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
-    const flaskState = import.meta.env.VITE_FLASK_ENV
-    const flaskDBLocal = import.meta.env.VITE_FLASK_FLASK_USE
-    let fetchRoute = (flaskState == "production") ? `${backendUrl}/api/health` : (flaskDBLocal == "production") ? `${backendUrl}/api/health` : `/api/health`;
+    const flaskState = import.meta.env.VITE_FLASK_ENV;
+    const flaskDBLocal = import.meta.env.VITE_FLASK_USE;
+    let fetchRoute = (flaskState == "production") ? `${backendUrl}/api/health` : (flaskDBLocal == "external") ? `${backendUrl}/api/health` : `/api/health`;
 
     useEffect(() => {
         fetch(fetchRoute)

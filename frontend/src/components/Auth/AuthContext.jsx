@@ -4,39 +4,44 @@ import { api } from "../API/api";
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-  function login(userData) {
-    setUser(userData);
-  }
-
-  function logout() {
-    setUser(null);
-    call("/api/auth/logout", { method: "POST" });
-  }
-
-  useEffect(() => {
-    async function fetchUser() {
-      try {
-        const res = await api("/api/auth/me");
-        setUser(res);
-      } catch {
-        setUser(null);
-      }
-      setLoading(false);
+    function login(userData) {
+        setUser(userData);
     }
 
-    fetchUser();
-  }, []);
+    async function logout() {
+        try {
+            await api("/api/auth/logout", { method: "POST" });
+        } catch (err) {
+            console.error("Logout failed:", err);
+        }
 
-  return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
+        setUser(null);
+    }
+
+    useEffect(() => {
+        async function fetchUser() {
+        try {
+            const res = await api("/api/auth/me");
+            setUser(res);
+        } catch {
+            setUser(null);
+        }
+        setLoading(false);
+        }
+
+        fetchUser();
+    }, []);
+
+    return (
+        <AuthContext.Provider value={{ user, login, logout, loading }}>
+        {children}
+        </AuthContext.Provider>
+    );
 }
 
 export function useAuth() {
-  return useContext(AuthContext);
+    return useContext(AuthContext);
 }

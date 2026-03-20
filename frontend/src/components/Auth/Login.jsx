@@ -72,6 +72,7 @@ export function AuthPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          oninput="this.value = this.value.toLowerCase();"
         />
         <input
           type="password"
