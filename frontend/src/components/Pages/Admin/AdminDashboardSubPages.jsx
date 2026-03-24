@@ -21,23 +21,29 @@ export function Management() {
 }
 
 function AdminTable({ endpoint }) {
-  const { call } = useApi();
-  const [columns, setColumns] = useState([]);
-  const [data, setData] = useState([]);
+    const { call } = useApi();
+    const [columns, setColumns] = useState([]);
+    const [data, setData] = useState([]);
 
-  useEffect(() => {
-    call(endpoint).then(res => {
-      setColumns(res.columns);
-      setData(res.data);
-    });
-  }, [endpoint]);
+    useEffect(() => {
+        call(endpoint)
+            .then(res => {
+            console.log("API RESPONSE:", res);
+            setColumns(res?.columns || []);
+            setData(res?.data || []);
+            })
+            .catch(err => {
+            console.error("TABLE ERROR:", err);
+            setColumns([]);
+            setData([]);
+            });
+    }, [endpoint]);
 
   async function updateRow(id, updates) {
     await call(`${endpoint}/${id}`, {
       method: "PUT",
       body: JSON.stringify(updates),
     });
-
     setData(prev =>
       prev.map(row => row.id === id ? { ...row, ...updates } : row)
     );
@@ -134,7 +140,7 @@ function CreateSubscription({ refresh }) {
   const [form, setForm] = useState({ label: "", price: "" });
 
   async function submit() {
-    await call("/api/admin/users", {
+    await call("/api/admin/subscriptions", {
       method: "POST",
       body: JSON.stringify(form),
     });
