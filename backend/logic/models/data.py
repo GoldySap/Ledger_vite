@@ -1,6 +1,19 @@
 from ..extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
 
+class SubscriptionAccess(db.Model):
+    __tablename__ = "subscription_access"
+    id = db.Column(db.Integer, primary_key=True)
+    subscription_id = db.Column(db.Integer, db.ForeignKey("subscriptions.id"), unique=True)
+    can_export_data = db.Column(db.Boolean, default=False)
+    has_finance_access = db.Column(db.Boolean, default=False)
+    has_investment_access = db.Column(db.Boolean, default=False)
+    has_analytics_access = db.Column(db.Boolean, default=False)
+    max_accounts = db.Column(db.Integer, default=1)
+    max_portfolio_transfer_rate = db.Column(db.Integer, default=1000)
+    
+    subscription = db.relationship("Subscription", backref=db.backref("access", uselist=False))
+
 class Subscription(db.Model):
     __tablename__ = "subscriptions"
     id = db.Column(db.Integer, primary_key=True)
@@ -35,6 +48,7 @@ class Account(db.Model):
     name = db.Column(db.String(100), nullable=False)
     currency = db.Column(db.String(3), default="USD")
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+    
     user = db.relationship("User", back_populates="accounts")
     transactions = db.relationship("Transaction", back_populates="account", cascade="all, delete")
 

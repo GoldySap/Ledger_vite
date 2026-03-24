@@ -3,8 +3,8 @@ import { AuthPage } from "./components/Auth/Login";
 import { Home } from "./components/Pages/HomePages/Home";
 import { HomeLayout } from "./components/Layout/HomeLayout";
 import Dashboard from "./components/Pages/DashboardPages/Dashboard";
-import { Accounts, Settings, Investments, Transactions, Analytics } from "./components/Pages/DashboardPages/DashboardSubpages";
-import { Management } from "./components/Pages/Admin/AdminDashboardSubPages";
+import { Settings, Finances, Investments, Analytics } from "./components/Pages/DashboardPages/DashboardSubpages";
+import { Management, AdminAnalytics, Logs } from "./components/Pages/Admin/AdminDashboardSubPages";
 import { DashboardLayout, AdminDashboardLayout } from "./components/Layout/DashboardLayout";
 import { AuthProvider } from "./components/Auth/AuthContext";
 import { ProtectedRoute  } from "./components/Auth/ProtectedRoute";
@@ -38,9 +38,8 @@ function App() {
             <Route index element={<Navigate to="home" />} />
             <Route path="home" element={<Dashboard />} />
             <Route path="settings" element={<Settings />} />
-            <Route path="accounts" element={<Accounts />} />
+            <Route path="finances" element={<Finances />} />
             <Route path="investments" element={<Investments />} />
-            <Route path="transactions" element={<Transactions />} />
             <Route path="analytics" element={<Analytics />} />
           </Route>
 
@@ -53,8 +52,8 @@ function App() {
             <Route index element={<Navigate to="home" />} />
             <Route path="home" element={<Dashboard />} />
             <Route path="management" element={<Management />} />
-            <Route path="analytics" element={<Transactions />} />
-            <Route path="auditlogs" element={<Analytics />} />
+            <Route path="analytics" element={<AdminAnalytics />} />
+            <Route path="auditlogs" element={<Logs />} />
           </Route>
         </Routes>
       </BrowserRouter>

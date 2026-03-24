@@ -43,9 +43,8 @@ export function NavSide({ children }) {
                 <div className="spacer"><hr /></div>
 
                 <div className="nav-section">
-                    <NavLink to="/dashboard/user/accounts" className={({ isActive }) => isActive ? "primary" : "" }>Accounts</NavLink>
+                    <NavLink to="/dashboard/user/finances" className={({ isActive }) => isActive ? "primary" : "" }>Finances</NavLink>
                     <NavLink to="/dashboard/user/investments" className={({ isActive }) => isActive ? "primary" : "" }>Investments</NavLink>
-                    <NavLink to="/dashboard/user/transactions" className={({ isActive }) => isActive ? "primary" : "" }>Transactions</NavLink>
                     <NavLink to="/dashboard/user/analytics" className={({ isActive }) => isActive ? "primary" : "" }>Analytics</NavLink>
                 </div>
 

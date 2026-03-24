@@ -1,0 +1,15 @@
+/* .user {
+    display: flex;
+    flex-direction: row;
+} */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th, .table td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.6rem;
+  text-align: left;
+}
