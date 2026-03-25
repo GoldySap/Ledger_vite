@@ -44,6 +44,22 @@ def update_user(user_id):
     db.session.commit()
     return jsonify({"msg": "User updated"})
 
+@admin_bp.route("/users/bulk", methods=["PUT"])
+@jwt_required()
+@admin_required
+def bulk_update_users():
+    updates = request.get_json()
+    for user_id, changes in updates.items():
+        user = User.query.get(user_id)
+        if not user:
+            continue
+        for key, value in changes.items():
+            if hasattr(user, key):
+                setattr(user, key, value)
+    db.session.commit()
+
+    return jsonify({"msg": "Bulk updated"})
+
 @admin_bp.route("/users", methods=["POST"])
 @jwt_required()
 @admin_required
@@ -91,6 +107,22 @@ def update_subscription(sub_id):
     db.session.commit()
 
     return jsonify({"msg": "Updated"})
+
+@admin_bp.route("/subscriptions/bulk", methods=["PUT"])
+@jwt_required()
+@admin_required
+def bulk_update_subscriptions():
+    updates = request.get_json()
+    for subscriptions_id, changes in updates.items():
+        subscription = User.query.get(subscriptions_id)
+        if not subscription:
+            continue
+        for key, value in changes.items():
+            if hasattr(subscription, key):
+                setattr(subscription, key, value)
+    db.session.commit()
+    
+    return jsonify({"msg": "Bulk updated"})
 
 @admin_bp.route("/subscriptions", methods=["POST"])
 @jwt_required()

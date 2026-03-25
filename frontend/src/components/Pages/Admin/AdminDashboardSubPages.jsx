@@ -24,6 +24,7 @@ function AdminTable({ endpoint }) {
     const { call } = useApi();
     const [columns, setColumns] = useState([]);
     const [data, setData] = useState([]);
+    const [edited, setEdited] = useState({}); 
 
     useEffect(() => {
         call(endpoint)
@@ -39,15 +40,18 @@ function AdminTable({ endpoint }) {
             });
     }, [endpoint]);
 
-  async function updateRow(id, updates) {
-    await call(`${endpoint}/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(updates),
-    });
-    setData(prev =>
-      prev.map(row => row.id === id ? { ...row, ...updates } : row)
-    );
-  }
+    async function updateRow(id, updates) {
+        await call(`${endpoint}/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(updates),
+        });
+        setData(prev => prev.map(row => row.id === id ? { ...row, ...updates } : row));
+    }
+
+    function updateLocal(id, field, value) {
+        setData(prev => prev.map(row => row.id === id ? { ...row, [field]: value } : row));
+        setEdited(prev => ({...prev, [id]: {...prev[id], [field]: value}}));
+    }
 
   return (
     <table>
@@ -59,7 +63,12 @@ function AdminTable({ endpoint }) {
 
       <tbody>
         {data.map(row => (
-          <tr key={row.id}>
+          <tr 
+            key={row.id}
+            style={{
+                background: edited[row.id] ? "#fff3cd" : "transparent"
+            }}
+          >
             {columns.map(col => (
               <td key={col}>
                 {typeof row[col] === "boolean" ? (
@@ -67,21 +76,22 @@ function AdminTable({ endpoint }) {
                     type="checkbox"
                     checked={row[col]}
                     onChange={e =>
-                      updateRow(row.id, { [col]: e.target.checked })
+                      updateLocal(row.id, col, { [col]: e.target.checked })
                     }
                   />
                 ) : typeof row[col] === "number" ? (
                   <input
                     value={row[col]}
+                    
                     onChange={e =>
-                      updateRow(row.id, { [col]: Number(e.target.value) })
+                      updateLocal(row.id, col, { [col]: Number(e.target.value) })
                     }
                   />
                 ) : (
                   <input
                     value={row[col] || ""}
                     onChange={e =>
-                      updateRow(row.id, { [col]: e.target.value })
+                      updateLocal(row.id, col, { [col]: e.target.value })
                     }
                   />
                 )}
@@ -95,13 +105,33 @@ function AdminTable({ endpoint }) {
 }
 
 function UsersTab() {
-  return (
-    <div>
-      <h2>Users</h2>
-      <CreateUser />
-      <AdminTable endpoint="/api/admin/users" />
-    </div>
-  );
+    async function saveChanges() {
+        const code = prompt("Enter admin verification code");
+        await call(`${endpoint}/bulk`, {
+            method: "PUT",
+            body: JSON.stringify({ updates: edited, code }),
+        });
+    }
+
+    // async function saveChanges() {
+    //     const updates = Object.entries(edited);
+    //     for (const [id, changes] of updates) {
+    //         await call(`${endpoint}/${id}`, {
+    //         method: "PUT",
+    //         body: JSON.stringify(changes),
+    //         });
+    //     }
+    //     setEdited({});
+    // }
+
+    return (
+        <div>
+            <h2>Users</h2>
+            <CreateUser />
+            <button onClick={saveChanges()} disabled={!Object.keys(edited).length}>Save Changes</button>
+            <AdminTable endpoint="/api/admin/users" />
+        </div>
+    );
 }
 
 function CreateUser({ refresh }) {
@@ -126,13 +156,33 @@ function CreateUser({ refresh }) {
 }
 
 function SubscriptionsTab() {
-  return (
-    <div>
-      <h2>Subscriptions</h2>
-      <CreateSubscription />
-      <AdminTable endpoint="/api/admin/subscriptions" />
-    </div>
-  );
+    async function saveChanges() {
+        const code = prompt("Enter admin verification code");
+        await call(`${endpoint}/bulk`, {
+            method: "PUT",
+            body: JSON.stringify({ updates: edited, code }),
+        });
+    }
+
+    // async function saveChanges() {
+    //     const updates = Object.entries(edited);
+    //     for (const [id, changes] of updates) {
+    //         await call(`${endpoint}/${id}`, {
+    //         method: "PUT",
+    //         body: JSON.stringify(changes),
+    //         });
+    //     }
+    //     setEdited({});
+    // }
+
+    return (
+        <div>
+            <h2>Subscriptions</h2>
+            <CreateSubscription />
+            <button onClick={saveChanges} disabled={!Object.keys(edited).length}>Save Changes</button>
+            <AdminTable endpoint="/api/admin/subscriptions" />
+        </div>
+    );
 }
 
 function CreateSubscription({ refresh }) {

@@ -8,7 +8,7 @@
   border-collapse: collapse;
 }
 
-.table th, .table td {
+.table thead tr th, .table tbody tr td {
   border-bottom: 1px solid var(--border);
   padding: 0.6rem;
   text-align: left;

@@ -24,10 +24,12 @@ export function AuthProvider({ children }) {
     useEffect(() => {
         async function fetchUser() {
             try {
-                const res = await api("/api/auth/me");
-                setUser(res);
-            } catch {
+                const user = await api("/api/auth/me");
+                setUser(user);
+            } catch (err) {
+                console.warn("No Valid User, logged out");
                 setUser(null);
+                // window.location.href = "/login";
             }
             setLoading(false);
         }
