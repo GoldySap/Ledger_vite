@@ -12,25 +12,25 @@ export async function api(endpoint, options = {}) {
 
   let res = await request();
 
-  if (res.status === 401 || res.status === 422) {
-    const refreshRes = await fetch(`${backendUrl}/api/auth/refresh`, {
-      method: "POST",
-      credentials: "include",
-    });
+  if (res.status === 401) {
+      const refresh = await fetch("/api/auth/refresh", {
+        method: "POST",
+        credentials: "include",
+      });
 
-    if (refreshRes.ok) {
-      res = await request();
-    } else {
-      throw new Error("Session expired");
+      if (refresh.ok) {
+        return call(url, options);
+      } else {
+        throw new Error("Session expired");
+      }
     }
-  }
 
   const text = await res.text();
   if (!text) return {};
 
   try {
     const data = JSON.parse(text);
-    if (!res.ok) throw new Error(data.error || "Request failed");
+    if (!res.ok) throw new Error(data.msg || data.error || "Request failed");
     return data;
   } catch {
     console.error("RAW RESPONSE:", text);

@@ -19,10 +19,18 @@ def model_to_dict(obj, exclude=None):
 @admin_required
 def get_users():
     users = User.query.all()
+    columns = [
+        c.name for c in User.__table__.columns
+        if c.name not in ["password_hash"]
+    ]
+    data = []
+    for u in users:
+        row = {col: getattr(u, col) for col in columns}
+        data.append(row)
 
     return jsonify({
-        "columns": ["id", "email", "role", "active", "subscription_id"],
-        "data": [model_to_dict(u, exclude=["password_hash"]) for u in users]
+        "columns": columns,
+        "data": data
     })
 
 @admin_bp.route("/users/<int:user_id>", methods=["PUT"])
@@ -56,16 +64,15 @@ def create_user():
 @admin_required
 def get_subscriptions():
     subs = Subscription.query.all()
-    result = []
+    columns = [c.name for c in Subscription.__table__.columns]
+    data = []
     for s in subs:
-        data = model_to_dict(s)
-        if s.access:
-            data.update(model_to_dict(s.access, exclude=["id", "subscription_id"]))
-        result.append(data)
+        row = {col: getattr(s, col) for col in columns}
+        data.append(row)
 
     return jsonify({
-        "columns": list(result[0].keys()) if result else [],
-        "data": result
+        "columns": columns,
+        "data": data
     })
 
 @admin_bp.route("/subscriptions/<int:sub_id>", methods=["PUT"])
@@ -104,3 +111,16 @@ def create_subscription():
     db.session.commit()
 
     return jsonify({"msg": "Created"})
+
+@admin_bp.route("/subscription-access", methods=["GET"])
+@jwt_required()
+@admin_required
+def get_subscription_access():
+    access = SubscriptionAccess.query.all()
+    columns = [c.name for c in SubscriptionAccess.__table__.columns]
+    data = [{col: getattr(a, col) for col in columns} for a in access]
+
+    return jsonify({
+        "columns": columns,
+        "data": data
+    })
