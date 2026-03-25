@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useApi } from "../../API/useApi";
-import "./auth.css";
+import "./admin.css";
 
 export function Management() {
   const [tab, setTab] = useState("users");

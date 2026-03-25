@@ -23,15 +23,14 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         async function fetchUser() {
-        try {
-            const res = await api("/api/auth/me");
-            setUser(res);
-        } catch {
-            setUser(null);
+            try {
+                const res = await api("/api/auth/me");
+                setUser(res);
+            } catch {
+                setUser(null);
+            }
+            setLoading(false);
         }
-        setLoading(false);
-        }
-
         fetchUser();
     }, []);
 
