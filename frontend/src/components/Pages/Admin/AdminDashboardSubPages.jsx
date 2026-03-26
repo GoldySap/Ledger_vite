@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useApi } from "../../API/useApi";
 import "./admin.css";
 
@@ -22,9 +22,9 @@ export function Management() {
 
 function AdminTable({ endpoint }) {
     const { call } = useApi();
+    const rowRefs = useRef({});
     const [columns, setColumns] = useState([]);
     const [data, setData] = useState([]);
-    const [edited, setEdited] = useState({}); 
 
     useEffect(() => {
         call(endpoint)
@@ -40,96 +40,84 @@ function AdminTable({ endpoint }) {
             });
     }, [endpoint]);
 
-    async function updateRow(id, updates) {
-        await call(`${endpoint}/${id}`, {
-        method: "PUT",
-        body: JSON.stringify(updates),
-        });
-        setData(prev => prev.map(row => row.id === id ? { ...row, ...updates } : row));
-    }
-
-    function updateLocal(id, field, value) {
-        setData(prev => prev.map(row => row.id === id ? { ...row, [field]: value } : row));
-        setEdited(prev => ({...prev, [id]: {...prev[id], [field]: value}}));
-    }
-
-  return (
-    <table>
-      <thead>
-        <tr>
-          {columns.map(col => <th key={col}>{col}</th>)}
-        </tr>
-      </thead>
-
-      <tbody>
-        {data.map(row => (
-          <tr 
-            key={row.id}
-            style={{
-                background: edited[row.id] ? "#fff3cd" : "transparent"
-            }}
-          >
-            {columns.map(col => (
-              <td key={col}>
-                {typeof row[col] === "boolean" ? (
-                  <input
-                    type="checkbox"
-                    checked={row[col]}
-                    onChange={e =>
-                      updateLocal(row.id, col, { [col]: e.target.checked })
-                    }
-                  />
-                ) : typeof row[col] === "number" ? (
-                  <input
-                    value={row[col]}
-                    
-                    onChange={e =>
-                      updateLocal(row.id, col, { [col]: Number(e.target.value) })
-                    }
-                  />
-                ) : (
-                  <input
-                    value={row[col] || ""}
-                    onChange={e =>
-                      updateLocal(row.id, col, { [col]: e.target.value })
-                    }
-                  />
-                )}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-function UsersTab() {
     async function saveChanges() {
         const code = prompt("Enter admin verification code");
         await call(`${endpoint}/bulk`, {
             method: "PUT",
-            body: JSON.stringify({ updates: edited, code }),
+            body: JSON.stringify({ updates: rowRefs.current, code }),
         });
+        rowRefs.current = {};
     }
 
     // async function saveChanges() {
-    //     const updates = Object.entries(edited);
+    //     const updates = Object.entries(rowRefs.current);
     //     for (const [id, changes] of updates) {
     //         await call(`${endpoint}/${id}`, {
     //         method: "PUT",
     //         body: JSON.stringify(changes),
     //         });
     //     }
-    //     setEdited({});
     // }
 
+  return (
+    <>
+        <button onClick={saveChanges} disabled={!Object.keys(rowRefs.current).length}>Save Changes</button>
+        <table>
+            <thead>
+                <tr>
+                {columns.map(col => <th key={col}>{col}</th>)}
+                </tr>
+            </thead>
+
+            <tbody>
+                {data.map(row => (
+                <tr 
+                    key={row.id}
+                    style={{background: rowRefs.current[row.id] ? "#fff3cd" : "transparent"}}
+                >
+                    {columns.map(col => (
+                    <td key={col}>
+                        {typeof row[col] === "boolean" ? (
+                        <input
+                            type="checkbox"
+                            defaultChecked={row[col]}
+                            ref={el => {if (!rowRefs.current[row.id]) rowRefs.current[row.id] = {};}}
+                            onChange={e => {rowRefs.current[row.id][col] = e.target.checked;}}
+                        />
+                        ) : // typeof row[col] === "number" ? (
+                        // <input
+                        //     defaultValue={row[col]}
+                        //     ref={el => (rowRefs.current[row.id] = rowRefs.current[row.id] || {})}
+                        //     onChange={e => {rowRefs.current[row.id][col] = Number(e.target.value);}}
+                        // />
+                        (<input
+                            defaultValue={row[col] ?? ""}
+                            ref={el => {if (!rowRefs.current[row.id]) rowRefs.current[row.id] = {};}}
+                            onChange={e => {rowRefs.current[row.id][col] = typeof row[col] === "number" ? Number(e.target.value) : e.target.value;}}
+                        />
+                        // ) : (
+                        // <input
+                        //     defaultValue={row[col] || ""}
+                        //     ref={el => (rowRefs.current[row.id] = rowRefs.current[row.id] || {})}
+                        //     onChange={e => {rowRefs.current[row.id][col] = e.target.value;}}
+                        // />
+                        )}
+                    </td>
+                    ))}
+                </tr>
+                ))}
+            </tbody>
+        </table>
+    </>
+  );
+}
+
+function UsersTab() {
     return (
         <div>
             <h2>Users</h2>
             <CreateUser />
-            <button onClick={saveChanges()} disabled={!Object.keys(edited).length}>Save Changes</button>
-            <AdminTable endpoint="/api/admin/users" />
+            <AdminTable endpoint={"/api/admin/users"}/>
         </div>
     );
 }
@@ -156,31 +144,11 @@ function CreateUser({ refresh }) {
 }
 
 function SubscriptionsTab() {
-    async function saveChanges() {
-        const code = prompt("Enter admin verification code");
-        await call(`${endpoint}/bulk`, {
-            method: "PUT",
-            body: JSON.stringify({ updates: edited, code }),
-        });
-    }
-
-    // async function saveChanges() {
-    //     const updates = Object.entries(edited);
-    //     for (const [id, changes] of updates) {
-    //         await call(`${endpoint}/${id}`, {
-    //         method: "PUT",
-    //         body: JSON.stringify(changes),
-    //         });
-    //     }
-    //     setEdited({});
-    // }
-
     return (
         <div>
             <h2>Subscriptions</h2>
             <CreateSubscription />
-            <button onClick={saveChanges} disabled={!Object.keys(edited).length}>Save Changes</button>
-            <AdminTable endpoint="/api/admin/subscriptions" />
+            <AdminTable endpoint={"/api/admin/subscriptions"}/>
         </div>
     );
 }

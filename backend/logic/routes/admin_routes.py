@@ -48,14 +48,24 @@ def update_user(user_id):
 @jwt_required()
 @admin_required
 def bulk_update_users():
-    updates = request.get_json()
+    data = request.get_json()
+
+    updates = data.get("updates", {})
+    code = data.get("code")
+
+    # (optional) verify code later
+    # if code != "your-secret":
+    #     return jsonify({"error": "Invalid code"}), 403
+
     for user_id, changes in updates.items():
-        user = User.query.get(user_id)
+        user = User.query.get(int(user_id))
         if not user:
             continue
+
         for key, value in changes.items():
             if hasattr(user, key):
                 setattr(user, key, value)
+
     db.session.commit()
 
     return jsonify({"msg": "Bulk updated"})
@@ -114,7 +124,7 @@ def update_subscription(sub_id):
 def bulk_update_subscriptions():
     updates = request.get_json()
     for subscriptions_id, changes in updates.items():
-        subscription = User.query.get(subscriptions_id)
+        subscription = Subscription.query.get(subscriptions_id)
         if not subscription:
             continue
         for key, value in changes.items():
