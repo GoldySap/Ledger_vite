@@ -25,6 +25,7 @@ function AdminTable({ endpoint }) {
     const rowRefs = useRef({});
     const [columns, setColumns] = useState([]);
     const [data, setData] = useState([]);
+    const [editable, setEditable] = useState({});
 
     useEffect(() => {
         call(endpoint)
@@ -32,21 +33,34 @@ function AdminTable({ endpoint }) {
             console.log("API RESPONSE:", res);
             setColumns(res?.columns || []);
             setData(res?.data || []);
+            setEditable(res?.data || [])
             })
             .catch(err => {
             console.error("TABLE ERROR:", err);
             setColumns([]);
             setData([]);
+            setEditable([]);
             });
     }, [endpoint]);
 
     async function saveChanges() {
-        const code = prompt("Enter admin verification code");
         await call(`${endpoint}/bulk`, {
             method: "PUT",
             body: JSON.stringify({ updates: rowRefs.current, code }),
         });
         rowRefs.current = {};
+        window.location.reload()
+    }
+
+    async function verifyAndSave() {
+        const code = prompt("Enter admin code");
+
+        await call("/api/admin/verify", {
+            method: "POST",
+            body: JSON.stringify({ code }),
+        });
+
+        await saveChanges();
     }
 
     // async function saveChanges() {
@@ -61,7 +75,7 @@ function AdminTable({ endpoint }) {
 
   return (
     <>
-        <button onClick={saveChanges} disabled={!Object.keys(rowRefs.current).length}>Save Changes</button>
+        <button onClick={verifyAndSave} disabled={!Object.keys(rowRefs.current).length}>Save Changes</button>
         <table>
             <thead>
                 <tr>
@@ -77,7 +91,9 @@ function AdminTable({ endpoint }) {
                 >
                     {columns.map(col => (
                     <td key={col}>
-                        {typeof row[col] === "boolean" ? (
+                        {editable[col] === false ? (
+                            <span>{row[col]}</span>
+                        ) : typeof row[col] === "boolean" ? (
                         <input
                             type="checkbox"
                             defaultChecked={row[col]}

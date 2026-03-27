@@ -24,6 +24,7 @@ function WalletTab() {
     return (
         <>
             <h1>Wallet</h1>
+            {/* From Uiverse.io by byllzz */}
             <div className="app-container">
                 <div className="wallet">
                     <div className="wallet-back"></div>
@@ -92,8 +93,8 @@ function WalletTab() {
                             <path
                             d="M 8 22 C 8 16, 12 16, 15 16 C 23 16, 27 29, 40 29 L 240 29 C 253 29, 257 16, 265 16 C 268 16, 272 16, 272 22 L 272 120 C 272 150, 255 152, 240 152 L 40 152 C 25 152, 8 152, 8 120 Z"
                             stroke="#3d5635"
-                            stroke-width="1.5"
-                            stroke-dasharray="6 4"
+                            strokeWidth="1.5"
+                            strokeDasharray="6 4"
                             ></path>
                         </svg>
                         <div className="pocket-content">
@@ -109,9 +110,9 @@ function WalletTab() {
                                     height="20"
                                     viewBox="0 0 24 24"
                                     fill="none"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
                                 >
                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                     <circle cx="12" cy="12" r="3"></circle>
@@ -124,9 +125,9 @@ function WalletTab() {
                                     height="20"
                                     viewBox="0 0 24 24"
                                     fill="none"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
                                 >
                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                     <circle cx="12" cy="12" r="3"></circle>

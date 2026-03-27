@@ -1,8 +1,8 @@
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, set_access_cookies
 from flask import Blueprint, request, jsonify
 from ..extensions import db
 from ..models.data import User, Subscription, SubscriptionAccess
-from ..routes.helpers import admin_required
+from ..routes.helpers import admin_required, verified_required
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -30,11 +30,20 @@ def get_users():
 
     return jsonify({
         "columns": columns,
-        "data": data
+        "data": data,
+        "editable": {
+            "id": False,
+            "email": False,
+            "role": False,
+            "subscription_id": True,
+            "active": True,
+            "created_at": False
+        }
     })
 
 @admin_bp.route("/users/<int:user_id>", methods=["PUT"])
 @jwt_required()
+@verified_required
 @admin_required
 def update_user(user_id):
     data = request.get_json()
@@ -46,6 +55,7 @@ def update_user(user_id):
 
 @admin_bp.route("/users/bulk", methods=["PUT"])
 @jwt_required()
+@verified_required
 @admin_required
 def bulk_update_users():
     data = request.get_json()
@@ -72,6 +82,7 @@ def bulk_update_users():
 
 @admin_bp.route("/users", methods=["POST"])
 @jwt_required()
+@verified_required
 @admin_required
 def create_user():
     data = request.get_json()
@@ -103,6 +114,7 @@ def get_subscriptions():
 
 @admin_bp.route("/subscriptions/<int:sub_id>", methods=["PUT"])
 @jwt_required()
+@verified_required
 @admin_required
 def update_subscription(sub_id):
     data = request.get_json()
@@ -120,6 +132,7 @@ def update_subscription(sub_id):
 
 @admin_bp.route("/subscriptions/bulk", methods=["PUT"])
 @jwt_required()
+@verified_required
 @admin_required
 def bulk_update_subscriptions():
     updates = request.get_json()
@@ -136,6 +149,7 @@ def bulk_update_subscriptions():
 
 @admin_bp.route("/subscriptions", methods=["POST"])
 @jwt_required()
+@verified_required
 @admin_required
 def create_subscription():
     data = request.get_json()
@@ -166,3 +180,22 @@ def get_subscription_access():
         "columns": columns,
         "data": data
     })
+
+@admin_bp.route("/verify", methods=["POST"])
+@jwt_required()
+@admin_required
+def verify_admin():
+    data = request.get_json()
+    code = data.get("code")
+
+    if code != "1234":
+        return jsonify({"error": "Invalid code"}), 403
+    
+    access_token = create_access_token(
+        identity=get_jwt_identity(),
+        additional_claims={"verified": True}
+    )
+
+    response = jsonify({"verified": True})
+    set_access_cookies(response, access_token)
+    return response
