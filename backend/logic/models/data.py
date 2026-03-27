@@ -1,6 +1,5 @@
 from ..extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
 
 class SubscriptionAccess(db.Model):
     __tablename__ = "subscription_access"
@@ -87,9 +86,14 @@ class Investment(db.Model):
     symbol = db.Column(db.String(10), unique=True, nullable=False)
     name = db.Column(db.String(255), nullable=False)
     asset_type = db.Column(db.String(50), default="stock")
+    sector = db.Column(db.String(100))
+    industry = db.Column(db.String(100))
+    description = db.Column(db.Text)
+    logo_url = db.Column(db.String(500))
     current_price = db.Column(db.Float, nullable=False, default=0)
-    last_updated = db.Column(db.DateTime, default=datetime.utcnow)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    price_change_percent = db.Column(db.Float, default=0)
+    last_updated = db.Column(db.DateTime, default=db.func.now())
+    created_at = db.Column(db.DateTime, default=db.func.now())
     
     holdings = db.relationship("Holding", back_populates="investment", cascade="all, delete")
     prices = db.relationship("PriceHistory", back_populates="investment", cascade="all, delete")
@@ -102,8 +106,8 @@ class Holding(db.Model):
     investment_id = db.Column(db.Integer, db.ForeignKey("investments.id"), nullable=False)
     quantity = db.Column(db.Float, nullable=False)
     avg_buy_price = db.Column(db.Float, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=db.func.now())
+    updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
     
     user = db.relationship("User", backref="holdings")
     investment = db.relationship("Investment", back_populates="holdings")
@@ -114,11 +118,11 @@ class InvestmentTransaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     holding_id = db.Column(db.Integer, db.ForeignKey("holdings.id"), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    transaction_type = db.Column(db.String(10), nullable=False)  # "buy" or "sell"
+    transaction_type = db.Column(db.String(10), nullable=False)
     quantity = db.Column(db.Float, nullable=False)
     price_per_share = db.Column(db.Float, nullable=False)
     total_value = db.Column(db.Float, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=db.func.now())
     
     holding = db.relationship("Holding", back_populates="transactions")
     user = db.relationship("User", backref="investment_transactions")
@@ -128,16 +132,18 @@ class PriceHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     investment_id = db.Column(db.Integer, db.ForeignKey("investments.id"), nullable=False)
     price = db.Column(db.Float, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    timestamp = db.Column(db.DateTime, default=db.func.now(), index=True)
     
     investment = db.relationship("Investment", back_populates="prices")
+    
+    __table_args__ = (db.Index('ix_investment_timestamp', 'investment_id', 'timestamp'),)
 
 class Watchlist(db.Model):
     __tablename__ = "watchlist"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     investment_id = db.Column(db.Integer, db.ForeignKey("investments.id"), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=db.func.now())
     
     user = db.relationship("User", backref="watchlist")
     investment = db.relationship("Investment", back_populates="watchlist_items")
@@ -150,7 +156,7 @@ class PriceAlert(db.Model):
     alert_type = db.Column(db.String(10), nullable=False)
     target_price = db.Column(db.Float, nullable=False)
     is_triggered = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=db.func.now())
     
     user = db.relationship("User", backref="price_alerts")
     investment = db.relationship("Investment")

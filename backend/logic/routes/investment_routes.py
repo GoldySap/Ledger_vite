@@ -4,13 +4,12 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from . import investment_bp
 from ..extensions import db
 from ..models.data import (Transaction, Investment, Holding, InvestmentTransaction, PriceHistory, Watchlist, PriceAlert)
-from datetime import datetime, timedelta
 
 FINNHUB_API_KEY = os.environ.get("FINNHUB_API_KEY")
 
 investment_bp = Blueprint("investments", __name__)
 
-@investment_bp.route("/transactions", methods=["GET"])
+@investment_bp.route("/oldinvestments", methods=["GET"])
 def get_investments():
     user_id = request.args.get("user_id")
     investments = Transaction.query.filter_by(user_id=user_id).all()
@@ -134,6 +133,7 @@ def buy_investment():
             avg_buy_price=price_per_share,
         )
         db.session.add(holding)
+        db.session.flush()
     transaction = InvestmentTransaction(
         holding_id=holding.id,
         user_id=user_id,

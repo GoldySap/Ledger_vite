@@ -13,7 +13,7 @@ export function NavTop() {
             <NavLink to="/about">About</NavLink>
             {!loading && (
             user ? (
-                <NavLink to="/dashboard/user/home">Dashboard</NavLink>
+                <NavLink to={!user ? "/dashboard/user" : "/dashboard/" + user.role}>Dashboard</NavLink>
             ) : (
                 <NavLink to="/login">Login</NavLink>
             )

@@ -1,8 +1,10 @@
 import { NavLink } from "react-router-dom";
 import { useEffect, useState } from "react";
-
+import { useAuth } from "../../Auth/AuthContext";
 
 export function Home() {
+  const { user } = useAuth();
+
   const [backendStatus, setBackendStatus] = useState("Checking...");
   const [error, setError] = useState(null);
   
@@ -32,7 +34,7 @@ export function Home() {
             Ledger helps you track accounts, investments, and transactions
             in one powerful dashboard.
           </p>
-          <NavLink to="/dashboard/user">Open Dashboard</NavLink> 
+          <NavLink to={!user ? "/dashboard/user" : "/dashboard/" + user.role}>Open Dashboard</NavLink> 
         </section>
         <h1>Ledger Test</h1>
             <p>Backend status: {backendStatus}</p>

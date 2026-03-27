@@ -49,7 +49,6 @@ function AdminTable({ endpoint }) {
             body: JSON.stringify({ updates: rowRefs.current, code }),
         });
         rowRefs.current = {};
-        window.location.reload()
     }
 
     async function verifyAndSave() {

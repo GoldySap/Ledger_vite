@@ -29,7 +29,6 @@ export function AuthProvider({ children }) {
             } catch (err) {
                 console.warn("No Valid User, logged out");
                 setUser(null);
-                // window.location.href = "/login";
             }
             setLoading(false);
         }

@@ -147,10 +147,191 @@ function BlankTab() {
     );
 }
 
+import { useState, useEffect } from "react";
+import { useApi } from "../../API/useApi";
+import "./investments.css";
+
 export function Investments() {
-    return (
-        <h1>Investments</h1>
-    );
+  const [activeTab, setActiveTab] = useState("portfolio");
+
+  return (
+    <div className="investments-container">
+      <h1>Investments</h1>
+
+      <div className="tab-nav">
+        <button onClick={() => setActiveTab("portfolio")}>Portfolio</button>
+        <button onClick={() => setActiveTab("market")}>Market</button>
+        <button onClick={() => setActiveTab("watchlist")}>Watchlist</button>
+      </div>
+
+      {activeTab === "portfolio" && <PortfolioTab />}
+      {activeTab === "market" && <MarketTab />}
+      {activeTab === "watchlist" && <WatchlistTab />}
+    </div>
+  );
+}
+
+function PortfolioTab() {
+  const { call } = useApi();
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    call("/api/portfolio")
+      .then(setData)
+      .catch(console.error);
+  }, []);
+
+  if (!data) return <p>Loading...</p>;
+
+  return (
+    <div>
+      <h2>Your Portfolio</h2>
+
+      <div className="portfolio-summary">
+        <p>Total Value: ${data.total_value}</p>
+        <p>Total Gain/Loss: ${data.total_gain_loss}</p>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Symbol</th>
+            <th>Qty</th>
+            <th>Buy Price</th>
+            <th>Current</th>
+            <th>Value</th>
+            <th>Gain %</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {data.holdings.map(h => (
+            <tr key={h.id}>
+              <td>{h.symbol}</td>
+              <td>{h.quantity}</td>
+              <td>{h.avg_buy_price}</td>
+              <td>{h.current_price}</td>
+              <td>{h.current_value}</td>
+              <td style={{ color: h.gain_loss_pct >= 0 ? "lime" : "red" }}>
+                {h.gain_loss_pct}%
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function MarketTab() {
+  const { call } = useApi();
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+
+  async function search() {
+    if (!query) return;
+
+    const res = await call(`/api/investments/search?q=${query}`);
+    setResults(res.results);
+  }
+
+  async function buy(investment_id) {
+    const quantity = Number(prompt("Quantity to buy:"));
+    if (!quantity) return;
+
+    await call("/api/holdings/buy", {
+      method: "POST",
+      body: JSON.stringify({ investment_id, quantity }),
+    });
+
+    alert("Bought!");
+  }
+
+  return (
+    <div>
+      <h2>Market</h2>
+
+      <input
+        placeholder="Search stocks..."
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+      />
+      <button onClick={search}>Search</button>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Symbol</th>
+            <th>Name</th>
+            <th>Price</th>
+            <th></th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {results.map(r => (
+            <tr key={r.id}>
+              <td>{r.symbol}</td>
+              <td>{r.name}</td>
+              <td>${r.current_price}</td>
+              <td>
+                <button onClick={() => buy(r.id)}>Buy</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function WatchlistTab() {
+  const { call } = useApi();
+  const [items, setItems] = useState([]);
+
+  async function load() {
+    const res = await call("/api/watchlist");
+    setItems(res.watchlist);
+  }
+
+  async function remove(id) {
+    await call(`/api/watchlist/${id}`, { method: "DELETE" });
+    load();
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  return (
+    <div>
+      <h2>Watchlist</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Symbol</th>
+            <th>Name</th>
+            <th>Price</th>
+            <th></th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {items.map(i => (
+            <tr key={i.id}>
+              <td>{i.symbol}</td>
+              <td>{i.name}</td>
+              <td>${i.current_price}</td>
+              <td>
+                <button onClick={() => remove(i.id)}>Remove</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 export function Analytics() {
