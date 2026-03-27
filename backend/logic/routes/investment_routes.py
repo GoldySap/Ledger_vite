@@ -1,10 +1,8 @@
-import os
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..extensions import db
 from ..models.data import (Transaction, Investment, Holding, InvestmentTransaction, PriceHistory, Watchlist, PriceAlert)
-
-FINNHUB_API_KEY = os.environ.get("FINNHUB_API_KEY")
+from ..services.finnhub import get_quote
 
 investment_bp = Blueprint("investments", __name__)
 
@@ -47,24 +45,25 @@ def get_portfolio():
 @investment_bp.route("/investments", methods=["GET"])
 @jwt_required()
 def get_investments():
-    page = request.args.get("page", 1, type=int)
-    per_page = request.args.get("per_page", 20, type=int)
-    investments = Investment.query.paginate(page=page, per_page=per_page)
-    data = [{
-        "id": inv.id,
-        "symbol": inv.symbol,
-        "name": inv.name,
-        "asset_type": inv.asset_type,
-        "current_price": inv.current_price,
-        "last_updated": inv.last_updated.isoformat(),
-    } for inv in investments.items]
-    
-    return jsonify({
-        "investments": data,
-        "total": investments.total,
-        "pages": investments.pages,
-        "current_page": page,
-    })
+    investments = Investment.query.all()
+
+    data = []
+    for inv in investments:
+        quote = get_quote(inv.symbol)
+        inv.current_price = quote["price"]
+        inv.price_change_percent = quote["change_percent"]
+
+        data.append({
+            "id": inv.id,
+            "symbol": inv.symbol,
+            "name": inv.name,
+            "current_price": inv.current_price,
+            "change": inv.price_change_percent
+        })
+
+    db.session.commit()
+
+    return jsonify({"investments": data})
 
 @investment_bp.route("/investments/search", methods=["GET"])
 @jwt_required()

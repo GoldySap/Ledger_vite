@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useApi } from "../../API/useApi";
 import "./wallet.css";
+import "./investments.css";
 
 export function Finances() {
   const [tab, setTab] = useState("wallet");
@@ -147,28 +148,24 @@ function BlankTab() {
     );
 }
 
-import { useState, useEffect } from "react";
-import { useApi } from "../../API/useApi";
-import "./investments.css";
-
 export function Investments() {
-  const [activeTab, setActiveTab] = useState("portfolio");
+    const [activeTab, setActiveTab] = useState("portfolio");
 
-  return (
-    <div className="investments-container">
-      <h1>Investments</h1>
+    return (
+        <div className="investments-container">
+            <h1>Investments</h1>
 
-      <div className="tab-nav">
-        <button onClick={() => setActiveTab("portfolio")}>Portfolio</button>
-        <button onClick={() => setActiveTab("market")}>Market</button>
-        <button onClick={() => setActiveTab("watchlist")}>Watchlist</button>
-      </div>
+            <div className="tab-nav">
+                <button onClick={() => setActiveTab("portfolio")}>Portfolio</button>
+                <button onClick={() => setActiveTab("market")}>Market</button>
+                <button onClick={() => setActiveTab("watchlist")}>Watchlist</button>
+            </div>
 
-      {activeTab === "portfolio" && <PortfolioTab />}
-      {activeTab === "market" && <MarketTab />}
-      {activeTab === "watchlist" && <WatchlistTab />}
-    </div>
-  );
+            {activeTab === "portfolio" && <PortfolioTab />}
+            {activeTab === "market" && <MarketTab />}
+            {activeTab === "watchlist" && <WatchlistTab />}
+        </div>
+    );
 }
 
 function PortfolioTab() {
@@ -176,7 +173,7 @@ function PortfolioTab() {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    call("/api/portfolio")
+    call("/api/investment/portfolio")
       .then(setData)
       .catch(console.error);
   }, []);
@@ -239,13 +236,23 @@ function MarketTab() {
     const quantity = Number(prompt("Quantity to buy:"));
     if (!quantity) return;
 
-    await call("/api/holdings/buy", {
+    await call("/api/investment/holdings/buy", {
       method: "POST",
       body: JSON.stringify({ investment_id, quantity }),
     });
 
     alert("Bought!");
   }
+
+  useEffect(() => {
+    fetchInvestments();
+
+    const interval = setInterval(() => {
+        fetchInvestments();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div>
@@ -285,17 +292,80 @@ function MarketTab() {
   );
 }
 
+function TradeModal({ stock, onClose, refresh }) {
+    const { call } = useApi();
+    const [quantity, setQuantity] = useState(1);
+    const [loading, setLoading] = useState(false);
+
+    async function handleBuy() {
+        setLoading(true);
+        await call("/api/investments/holdings/buy", {
+            method: "POST",
+            body: JSON.stringify({
+                investment_id: stock.id,
+                quantity
+            })
+        });
+        setLoading(false);
+        refresh();
+        onClose();
+    }
+
+    async function handleSell() {
+        setLoading(true);
+        await call(`/api/investments/holdings/${stock.holding_id}/sell`, {
+            method: "POST",
+            body: JSON.stringify({ quantity })
+        });
+        setLoading(false);
+        refresh();
+        onClose();
+    }
+
+    const total = (quantity * stock.current_price).toFixed(2);
+
+    return (
+        <div className="modal-backdrop">
+            <div className="modal">
+                <h2>{stock.name} ({stock.symbol})</h2>
+                <p>Price: ${stock.current_price}</p>
+
+                <input
+                    type="number"
+                    value={quantity}
+                    min={1}
+                    onChange={e => setQuantity(Number(e.target.value))}
+                />
+
+                <p>Total: ${total}</p>
+
+                <div className="actions">
+                    <button onClick={handleBuy} disabled={loading}>
+                        Buy
+                    </button>
+
+                    <button onClick={handleSell} disabled={loading}>
+                        Sell
+                    </button>
+
+                    <button onClick={onClose}>Cancel</button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function WatchlistTab() {
   const { call } = useApi();
   const [items, setItems] = useState([]);
 
   async function load() {
-    const res = await call("/api/watchlist");
+    const res = await call("/api/investment/watchlist");
     setItems(res.watchlist);
   }
 
   async function remove(id) {
-    await call(`/api/watchlist/${id}`, { method: "DELETE" });
+    await call(`/api/investment/watchlist/${id}`, { method: "DELETE" });
     load();
   }
 

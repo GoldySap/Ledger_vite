@@ -31,7 +31,7 @@ def create_app():
     app.register_blueprint(admin_bp, url_prefix="/api/admin")
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(finance_bp, url_prefix="/api")
-    app.register_blueprint(investment_bp, url_prefix="/api")
+    app.register_blueprint(investment_bp, url_prefix="/api/investment")
     app.register_blueprint(transaction_bp, url_prefix="/api")
 
     @app.route("/api/health")
