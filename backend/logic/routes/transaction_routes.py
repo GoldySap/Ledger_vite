@@ -10,7 +10,6 @@ def get_transactions():
     user_id = get_jwt_identity()
     transactions = Transaction.query.filter_by(user_id=user_id).all()
     result = []
-
     for t in transactions:
         result.append({
             "id": t.id,

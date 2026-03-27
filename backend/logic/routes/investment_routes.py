@@ -8,22 +8,6 @@ FINNHUB_API_KEY = os.environ.get("FINNHUB_API_KEY")
 
 investment_bp = Blueprint("investments", __name__)
 
-@investment_bp.route("/oldinvestments", methods=["GET"])
-def get_investments():
-    user_id = request.args.get("user_id")
-    investments = Transaction.query.filter_by(user_id=user_id).all()
-    result = []
-
-    for t in investments:
-        result.append({
-            "id": t.id,
-            "type": t.type,
-            "category": t.category,
-            "amount": t.amount
-        })
-
-    return jsonify(result)
-
 @investment_bp.route("/portfolio", methods=["GET"])
 @jwt_required()
 def get_portfolio():

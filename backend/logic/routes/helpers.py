@@ -8,14 +8,13 @@ def admin_required(fn):
     def wrapper(*args, **kwargs):
         user_id = get_jwt_identity()
         user = User.query.get(user_id)
-
         if not user or user.role != "admin":
             return jsonify({"error": "Admin access required"}), 403
-
         return fn(*args, **kwargs)
     return wrapper
 
 def verified_required(fn):
+    @wraps(fn)
     def wrapper(*args, **kwargs):
         claims = get_jwt()
         if not claims.get("verified"):
@@ -28,6 +27,7 @@ def has_access(user, feature):
 
 def subscription_access_required(feature):
     def decorator(fn):
+        @wraps(fn)
         def wrapper(*args, **kwargs):
             user_id = get_jwt_identity()
             user = User.query.get(int(user_id))
