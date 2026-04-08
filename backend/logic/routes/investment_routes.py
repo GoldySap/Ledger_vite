@@ -2,7 +2,8 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..extensions import db
 from ..models.data import (Transaction, Investment, Holding, InvestmentTransaction, PriceHistory, Watchlist, PriceAlert)
-from ..services.finnhub import get_quote
+from ..services.finnhub import get_quote, FINNHUB_API_KEY
+import requests
 
 investment_bp = Blueprint("investments", __name__)
 
@@ -209,3 +210,17 @@ def remove_from_watchlist(watchlist_id):
     watchlist_item = Watchlist.query.filter_by(id=watchlist_id, user_id=user_id).first()
     if not watchlist_item:
         return jsonify({"error": "Not found"}), 404
+
+@investment_bp.route("/market/live", methods=["GET"])
+def live_market():
+    symbols = ["AAPL", "TSLA", "MSFT"]
+    result = []
+    for symbol in symbols:
+        r = requests.get(
+            f"https://finnhub.io/api/v1/quote?symbol={symbol}&token={FINNHUB_API_KEY}"
+        ).json()
+        result.append({
+            "symbol": symbol,
+            "price": r["c"]
+        })
+    return jsonify(result)
