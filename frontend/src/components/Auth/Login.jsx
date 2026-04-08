@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import { useApi } from "../API/useApi";
@@ -12,7 +12,6 @@ export function AuthPage() {
   const [error, setError] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [captchaToken, setCaptchaToken] = useState("");
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -81,7 +80,6 @@ export function AuthPage() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <Turnstile onVerify={(token) => setCaptchaToken(token)} />
         <button disabled={loading}>
           {loading ? isLogin ? "Logging in..." : "Creating..." : isLogin ? "Login" : "Register"}
         </button>
@@ -94,22 +92,5 @@ export function AuthPage() {
         </button>
       </p>
     </div>
-  );
-}
-
-export function Turnstile({ onVerify }) {
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
-
-  return (
-    <div
-      className="cf-turnstile"
-      data-sitekey="YOUR_SITE_KEY"
-      data-callback={onVerify}
-    ></div>
   );
 }

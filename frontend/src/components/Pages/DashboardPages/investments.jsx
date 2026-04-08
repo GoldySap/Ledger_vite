@@ -88,6 +88,11 @@ function MarketTab() {
   const [results, setResults] = useState([]);
   const [selectedStock, setSelectedStock] = useState(null);
 
+  async function fetchDefault() {
+    const res = await call("/api/investments");
+    setResults(res.investments);
+  }
+
   async function search() {
     if (!query) return;
     const res = await call(`/api/investments/search?q=${query}`);
@@ -95,12 +100,14 @@ function MarketTab() {
   }
 
   useEffect(() => {
+    fetchDefault();
+
     const interval = setInterval(() => {
-      if (query) search();
+      fetchDefault();
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [query]);
+  }, []);
 
   return (
     <div>

@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify
 from sqlalchemy import text
 from ..extensions import db
 from ..models.data import User, Subscription
+from ..routes.investment_routes import Investment
 import os
 
 debug_bp = Blueprint("debug", __name__)
@@ -41,6 +42,23 @@ def seed_all():
         admin = User(email=ADMIN_EMAIL, role="admin", subscription_id=pro_sub.id)
         admin.set_password(ADMIN_PASSWORD)
         db.session.add(admin)
+    db.session.commit()
+
+    stocks = [
+        {"symbol": "AAPL", "name": "Apple Inc.", "price": 175},
+        {"symbol": "TSLA", "name": "Tesla Inc.", "price": 250},
+        {"symbol": "MSFT", "name": "Microsoft Corp.", "price": 320},
+        {"symbol": "GOOGL", "name": "Alphabet Inc.", "price": 2800},
+        {"symbol": "AMZN", "name": "Amazon.com Inc.", "price": 140},
+    ]
+
+    for s in stocks:
+        inv = Investment(
+            symbol=s["symbol"],
+            name=s["name"],
+            current_price=s["price"]
+        )
+        db.session.add(inv)
     db.session.commit()
 
     return jsonify({

@@ -39,16 +39,6 @@ def subscription_access_required(feature):
         return wrapper
     return decorator
 
-def verify_captcha(token):
-    r = requests.post(
-        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-        data={
-            "secret": os.getenv("CF_TURNSTILE_SECRET"),
-            "response": token
-        }
-    )
-    return r.json().get("success", False)
-
 def codeGenerator(type):
     if type == "OTP":
         return str(random.randint(100000, 999999))

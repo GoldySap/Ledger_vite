@@ -199,3 +199,4 @@ def verify_admin():
     response = jsonify({"verified": True})
     set_access_cookies(response, access_token)
     return response
+    

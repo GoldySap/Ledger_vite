@@ -209,4 +209,3 @@ def remove_from_watchlist(watchlist_id):
     watchlist_item = Watchlist.query.filter_by(id=watchlist_id, user_id=user_id).first()
     if not watchlist_item:
         return jsonify({"error": "Not found"}), 404
-    

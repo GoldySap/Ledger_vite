@@ -222,37 +222,24 @@ function PortfolioTab() {
 
 function MarketTab() {
   const { call } = useApi();
+
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
+  const [selectedStock, setSelectedStock] = useState(null);
 
   async function search() {
     if (!query) return;
-
     const res = await call(`/api/investments/search?q=${query}`);
     setResults(res.results);
   }
 
-  async function buy(investment_id) {
-    const quantity = Number(prompt("Quantity to buy:"));
-    if (!quantity) return;
-
-    await call("/api/investment/holdings/buy", {
-      method: "POST",
-      body: JSON.stringify({ investment_id, quantity }),
-    });
-
-    alert("Bought!");
-  }
-
   useEffect(() => {
-    fetchInvestments();
-
     const interval = setInterval(() => {
-        fetchInvestments();
+      if (query) search();
     }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [query]);
 
   return (
     <div>
@@ -282,12 +269,22 @@ function MarketTab() {
               <td>{r.name}</td>
               <td>${r.current_price}</td>
               <td>
-                <button onClick={() => buy(r.id)}>Buy</button>
+                <button onClick={() => setSelectedStock(r)}>
+                  Trade
+                </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {selectedStock && (
+        <TradeModal
+          stock={selectedStock}
+          onClose={() => setSelectedStock(null)}
+          refresh={search}
+        />
+      )}
     </div>
   );
 }
@@ -356,52 +353,52 @@ function TradeModal({ stock, onClose, refresh }) {
 }
 
 function WatchlistTab() {
-  const { call } = useApi();
-  const [items, setItems] = useState([]);
+    const { call } = useApi();
+    const [items, setItems] = useState([]);
 
-  async function load() {
-    const res = await call("/api/investment/watchlist");
-    setItems(res.watchlist);
-  }
+    async function load() {
+        const res = await call("/api/investment/watchlist");
+        setItems(res.watchlist);
+    }
 
-  async function remove(id) {
-    await call(`/api/investment/watchlist/${id}`, { method: "DELETE" });
-    load();
-  }
+    async function remove(id) {
+        await call(`/api/investment/watchlist/${id}`, { method: "DELETE" });
+        load();
+    }
 
-  useEffect(() => {
-    load();
-  }, []);
+    useEffect(() => {
+        load();
+    }, []);
 
-  return (
-    <div>
-      <h2>Watchlist</h2>
+    return (
+        <div>
+        <h2>Watchlist</h2>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Symbol</th>
-            <th>Name</th>
-            <th>Price</th>
-            <th></th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {items.map(i => (
-            <tr key={i.id}>
-              <td>{i.symbol}</td>
-              <td>{i.name}</td>
-              <td>${i.current_price}</td>
-              <td>
-                <button onClick={() => remove(i.id)}>Remove</button>
-              </td>
+        <table>
+            <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Name</th>
+                <th>Price</th>
+                <th></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+            </thead>
+
+            <tbody>
+            {items.map(i => (
+                <tr key={i.id}>
+                <td>{i.symbol}</td>
+                <td>{i.name}</td>
+                <td>${i.current_price}</td>
+                <td>
+                    <button onClick={() => remove(i.id)}>Remove</button>
+                </td>
+                </tr>
+            ))}
+            </tbody>
+        </table>
+        </div>
+    );
 }
 
 export function Analytics() {
