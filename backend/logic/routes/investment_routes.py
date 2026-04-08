@@ -215,12 +215,14 @@ def remove_from_watchlist(watchlist_id):
 def live_market():
     symbols = ["AAPL", "TSLA", "MSFT"]
     result = []
-    for symbol in symbols:
+    for i, symbol in enumerate(symbols):
         r = requests.get(
             f"https://finnhub.io/api/v1/quote?symbol={symbol}&token={FINNHUB_API_KEY}"
         ).json()
         result.append({
+            "id": i,
             "symbol": symbol,
-            "price": r["c"]
+            "name": symbol,
+            "current_price": r.get("c", 0)
         })
     return jsonify(result)

@@ -89,8 +89,8 @@ function MarketTab() {
   const [selectedStock, setSelectedStock] = useState(null);
 
   async function fetchDefault() {
-    const res = await call("/api/investments");
-    setResults(res.investments);
+    const res = await call("/api/investments/market/live");
+    setResults(res);
   }
 
   async function search() {
@@ -132,7 +132,7 @@ function MarketTab() {
 
         <tbody>
           {results.map(r => (
-            <tr key={r.id}>
+            <tr key={r.id || r.symbol}>
               <td>{r.symbol}</td>
               <td>{r.name}</td>
               <td>${r.current_price}</td>
