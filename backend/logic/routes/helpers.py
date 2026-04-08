@@ -2,6 +2,8 @@ from flask_jwt_extended import get_jwt_identity, get_jwt
 from functools import wraps
 from flask import jsonify
 from ..models.data import User
+import os, requests, random, time
+from werkzeug.security import generate_password_hash, check_password_hash
 
 def admin_required(fn):
     @wraps(fn)
@@ -37,9 +39,19 @@ def subscription_access_required(feature):
         return wrapper
     return decorator
 
+def verify_captcha(token):
+    r = requests.post(
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        data={
+            "secret": os.getenv("CF_TURNSTILE_SECRET"),
+            "response": token
+        }
+    )
+    return r.json().get("success", False)
+
 def codeGenerator(type):
     if type == "OTP":
-        return
+        return str(random.randint(100000, 999999))
     if type == "TFA":
         return
     if type == "ADMIN":
