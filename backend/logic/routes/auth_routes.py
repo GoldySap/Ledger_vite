@@ -1,8 +1,8 @@
 from flask_jwt_extended import create_access_token, create_refresh_token, set_access_cookies, set_refresh_cookies, unset_jwt_cookies, jwt_required, get_jwt_identity
 from flask import Blueprint, request, jsonify
 from ..extensions import db
-from ..models.data import User
-from ..routes.helpers import admin_required
+from ..models.data import User, SecuritySettings
+from ..routes.helpers import admin_required, verify_turnstile
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -26,6 +26,8 @@ def register():
     subscription_id = data.get("subscription_id") or 1
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "User exists"}), 400
+    if not verify_turnstile(data.get("captcha")):
+        return jsonify({"error": "Captcha failed"}), 400
     user = User(email=email, role=role, subscription_id=subscription_id)
     user.set_password(password)
     db.session.add(user)
@@ -47,6 +49,11 @@ def login():
     user = User.query.filter_by(email=data["email"]).first()
     if not user or not user.check_password(data["password"]):
         return jsonify({"error":"Invalid credentials"}), 401
+    if not verify_turnstile(data.get("captcha")):
+        return jsonify({"error": "Captcha failed"}), 400
+    # security = SecuritySettings.query.get(user.id)
+    # if not security.verified:
+    #     return jsonify({"error": "Email not verified"}), 403
     access_token = create_access_token(identity=str(user.id))
     refresh_token = create_refresh_token(identity=str(user.id))
     response = jsonify({

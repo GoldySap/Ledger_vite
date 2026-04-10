@@ -134,14 +134,14 @@ function StockList({ stocks, setPortfolio }) {
             ...prev,
             cash: prev.cash - price,
             holdings: {
-            ...prev.holdings,
-            [symbol]: {
-                qty: newQty,
-                avgPrice: newAvg
-            }
+                ...prev.holdings,
+                [symbol]: {
+                    qty: newQty,
+                    avgPrice: newAvg
+                }
             }
         };
-        });
+    });
   };
 
   return (
@@ -187,7 +187,7 @@ function StockList({ stocks, setPortfolio }) {
   );
 }
 
-function StockDetail({ owned, setPortfolio }) {
+function StockDetail({ setPortfolio }) {
     const { symbol } = useParams();
     const [profile, setProfile] = useState({});
     const [quote, setQuote] = useState({});
@@ -319,14 +319,10 @@ export function Test() {
   return (
     <div style={{ padding: 20 }}>
       <Tabs />
-
       <Routes>
         <Route path="market" element={<StockList stocks={marketStocks} setPortfolio={setPortfolio} />}/>
-        <Route path="owned" element={<PortfolioDashboard portfolio={portfolio} />}/>
-        <Route path="stock/:symbol" element={
-                <StockDetail portfolio={portfolio} setPortfolio={setPortfolio} />
-            }
-        />
+        <Route path="owned" element={<PortfolioDashboard portfolio={portfolio} />} />
+        <Route path="stock/:symbol" element={<StockDetail setPortfolio={setPortfolio} />} />
         </Routes>
     </div>
   );

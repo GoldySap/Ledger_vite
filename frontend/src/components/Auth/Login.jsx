@@ -8,6 +8,7 @@ export function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { login } = useAuth();
@@ -24,7 +25,7 @@ export function AuthPage() {
       if (isLogin) {
         data = await call("/api/auth/login", {
           method: "POST",
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ email, password, captcha: captchaToken }),
         });
       } else {
         data = await call("/api/auth/register", {
@@ -38,7 +39,7 @@ export function AuthPage() {
         });
         data = await call("/api/auth/login", {
           method: "POST",
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ email, password, captcha: captchaToken }),
         });
       }
 

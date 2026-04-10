@@ -32,7 +32,7 @@ class Config:
     JWT_COOKIE_SECURE = True if os.environ.get("FLASK_ENV") == "production" else False
     JWT_COOKIE_SAMESITE = "None" if os.environ.get("FLASK_ENV") == "production" else "Lax"
     JWT_COOKIE_HTTPONLY = True
-    JWT_COOKIE_CSRF_PROTECT = False
+    JWT_COOKIE_CSRF_PROTECT = True
 
 class DevelopmentConfig(Config):
     DEBUG = True

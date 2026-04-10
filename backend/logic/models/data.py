@@ -79,7 +79,6 @@ class Transaction(db.Model):
 
     account = db.relationship("Account", back_populates="transactions")
 
-
 class Investment(db.Model):
     __tablename__ = "investments"
     id = db.Column(db.Integer, primary_key=True)
