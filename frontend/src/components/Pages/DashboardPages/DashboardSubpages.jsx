@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useApi } from "../../API/useApi";
+import { Test } from "./test.jsx"
 import "./wallet.css";
 import "./investments.css";
+import SettingsPage from "./settings.jsx";
 
 export function Finances() {
   const [tab, setTab] = useState("wallet");
@@ -159,11 +161,13 @@ export function Investments() {
                 <button onClick={() => setActiveTab("portfolio")}>Portfolio</button>
                 <button onClick={() => setActiveTab("market")}>Market</button>
                 <button onClick={() => setActiveTab("watchlist")}>Watchlist</button>
+                <button onClick={() => setActiveTab("test")}>Test</button>
             </div>
 
             {activeTab === "portfolio" && <PortfolioTab />}
             {activeTab === "market" && <MarketTab />}
             {activeTab === "watchlist" && <WatchlistTab />}
+            {activeTab === "test" && <Test />}
         </div>
     );
 }
@@ -416,6 +420,6 @@ export function Analytics() {
 
 export function Settings() {
     return (
-        <h1>Settings</h1>
+        <SettingsPage />
     );
 }

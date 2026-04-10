@@ -1,23 +1,26 @@
 import { useState, useEffect } from "react";
 import { useApi } from "../../API/useApi";
+import { App } from "./test"
 import "./investments.css";
 
 export default function InvestmentsPage() {
-    const [activeTab, setActiveTab] = useState("portfolio");
+    const [tab, setTab] = useState("portfolio");
 
     return (
         <div className="investments-container">
             <h1>Investments</h1>
 
             <div className="tab-nav">
-                <button onClick={() => setActiveTab("portfolio")}>Portfolio</button>
-                <button onClick={() => setActiveTab("market")}>Market</button>
-                <button onClick={() => setActiveTab("watchlist")}>Watchlist</button>
+                <button onClick={() => setTab("portfolio")}>Portfolio</button>
+                <button onClick={() => setTab("market")}>Market</button>
+                <button onClick={() => setTab("watchlist")}>Watchlist</button>
+                <button onClick={() => setTab("test")}>Test</button>
             </div>
 
-            {activeTab === "portfolio" && <PortfolioTab />}
-            {activeTab === "market" && <MarketTab />}
-            {activeTab === "watchlist" && <WatchlistTab />}
+            {tab === "portfolio" && <PortfolioTab />}
+            {tab === "market" && <MarketTab />}
+            {tab === "watchlist" && <WatchlistTab />}
+            {tab === "test" && <App />}
         </div>
     );
 }
