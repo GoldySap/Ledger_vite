@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 from ..extensions import db
 from ..models.data import User, SecuritySettings
 from ..routes.helpers import admin_required, verify_turnstile
+from ...app import limiter
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -16,6 +17,7 @@ def refresh():
     return response
 
 @auth_bp.route("/register", methods=["POST"])
+@limiter.limit("3 per minute")
 def register():
     data = request.get_json()
     if not data:
@@ -42,6 +44,7 @@ def register():
     })
 
 @auth_bp.route("/login", methods=["POST"])
+@limiter.limit("5 per minute")
 def login():
     data = request.get_json()
     if not data:

@@ -64,7 +64,7 @@ def bulk_update_users():
     code = data.get("code")
 
     # (optional) verify code later
-    # if code != "your-secret":
+    # if code != "secret":
     #     return jsonify({"error": "Invalid code"}), 403
 
     for user_id, changes in updates.items():

@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from logic.extensions import db, migrate, jwt
 from logic.routes.debug_routes import debug_bp, seed_all
@@ -10,6 +10,7 @@ from logic.routes.investment_routes import investment_bp
 from logic.routes.transaction_routes import transaction_bp
 from config import DevelopmentConfig, ProductionConfig
 from dotenv import load_dotenv
+from flask_limiter import Limiter
 
 load_dotenv()
 
@@ -25,7 +26,7 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
-    CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}}, allow_headers=["Content-Type", "Authorization"], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+    CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}}, allow_headers=["Content-Type", "Authorization", "X-CSRF-TOKEN"], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
     app.register_blueprint(debug_bp)
     app.register_blueprint(admin_bp, url_prefix="/api/admin")
@@ -41,6 +42,14 @@ def create_app():
     return app
 
 app = create_app()
+
+limiter = Limiter(app)
+
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        response = app.make_default_options_response()
+        return response
 
 with app.app_context():
     if os.environ.get("FLASK_ENV") == "development":
