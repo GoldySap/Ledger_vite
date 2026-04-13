@@ -3,7 +3,7 @@ from flask import Blueprint, request, jsonify
 from ..extensions import db
 from ..models.data import User, SecuritySettings
 from ..routes.helpers import admin_required, verify_turnstile
-from app import limiter
+from logic.extensions import limiter
 
 auth_bp = Blueprint("auth", __name__)
 
