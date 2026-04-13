@@ -10,7 +10,7 @@ from logic.routes.investment_routes import investment_bp
 from logic.routes.transaction_routes import transaction_bp
 from config import DevelopmentConfig, ProductionConfig
 from dotenv import load_dotenv
-from flask_limiter import Limiter
+from logic.extensions import limiter
 
 load_dotenv()
 
@@ -43,7 +43,7 @@ def create_app():
 
 app = create_app()
 
-limiter = Limiter(app)
+limiter.init_app(app)
 
 with app.app_context():
     if os.environ.get("FLASK_ENV") == "development":
