@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
+import { useApi } from "../../API/useApi";
 
 export default function Dashboard() {
+    const { call } = useApi();
+
     const [backendStatus, setBackendStatus] = useState("Checking...");
     const [error, setError] = useState(null);
     
-    const backendUrl = import.meta.env.VITE_BACKEND_URL;
-    const flaskState = import.meta.env.VITE_FLASK_ENV;
-    const flaskDBLocal = import.meta.env.VITE_FLASK_USE;
-    let fetchRoute = (flaskState == "production") ? `${backendUrl}/api/health` : (flaskDBLocal == "external") ? `${backendUrl}/api/health` : `/api/health`;
-
     useEffect(() => {
-        fetch(fetchRoute)
+        call("/api/health")
         .then(res => {
             if (!res.ok) throw new Error("Network response not ok");
             return res.json();

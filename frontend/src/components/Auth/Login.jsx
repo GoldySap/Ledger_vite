@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
-import { useApi } from "../API/useApi";
+import { api } from "../API/api";
 
 export function AuthPage() {
   const { call } = useApi();
@@ -13,6 +13,7 @@ export function AuthPage() {
   const [error, setError] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
+  const csrfToken = getCookie("csrf_access_token");
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -24,19 +25,11 @@ export function AuthPage() {
 
       if (isLogin) {
         data = await call("/api/auth/login", {
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-TOKEN": csrfToken
-          },    
           method: "POST",
           body: JSON.stringify({ email, password, captcha: captchaToken }),
         });
       } else {
         data = await call("/api/auth/register", {
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-TOKEN": csrfToken
-          },
           method: "POST",
           body: JSON.stringify({
             email,
@@ -46,10 +39,6 @@ export function AuthPage() {
           }),
         });
         data = await call("/api/auth/login", {
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-TOKEN": csrfToken
-          }, 
           method: "POST",
           body: JSON.stringify({ email, password, captcha: captchaToken }),
         });
