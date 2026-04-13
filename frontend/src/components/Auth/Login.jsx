@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
-import { api } from "../API/api";
+import { useApi } from "../API/useApi";
 
 export function AuthPage() {
   const { call } = useApi();
@@ -13,7 +13,6 @@ export function AuthPage() {
   const [error, setError] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
-  const csrfToken = getCookie("csrf_access_token");
 
   async function handleSubmit(e) {
     e.preventDefault();
