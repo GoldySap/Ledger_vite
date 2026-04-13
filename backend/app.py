@@ -45,12 +45,6 @@ app = create_app()
 
 limiter = Limiter(app)
 
-@app.before_request
-def handle_preflight():
-    if request.method == "OPTIONS":
-        response = app.make_default_options_response()
-        return response
-
 with app.app_context():
     if os.environ.get("FLASK_ENV") == "development":
         db.drop_all()
