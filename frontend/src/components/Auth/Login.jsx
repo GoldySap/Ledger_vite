@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import { useApi } from "../API/useApi";
@@ -8,11 +8,28 @@ export function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const turnstileRef = useRef(null);
   const [captchaToken, setCaptchaToken] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!window.turnstile || !turnstileRef.current) return;
+
+    turnstileRef.current.innerHTML = "";
+
+    window.turnstile.render(turnstileRef.current, {
+      sitekey: import.meta.env.VITE_TURNSTILE_SITE_KEY,
+      callback: (token) => {
+        console.log("CAPTCHA:", token);
+        setCaptchaToken(token);
+      },
+    });
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -25,7 +42,7 @@ export function AuthPage() {
       if (isLogin) {
         data = await call("/api/auth/login", {
           method: "POST",
-          body: JSON.stringify({ email, password, captcha: captchaToken }),
+          body: JSON.stringify({ email, password, captcha: captchaToken  }),
         });
       } else {
         data = await call("/api/auth/register", {
@@ -33,13 +50,14 @@ export function AuthPage() {
           body: JSON.stringify({
             email,
             password,
+            captcha: captchaToken,
             role: "user",
             subscription_id: 1,
           }),
         });
         data = await call("/api/auth/login", {
           method: "POST",
-          body: JSON.stringify({ email, password, captcha: captchaToken }),
+          body: JSON.stringify({ email, password, captcha: captchaToken  }),
         });
       }
 
@@ -81,10 +99,14 @@ export function AuthPage() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+
+        <div ref={turnstileRef}></div>
+
         <button disabled={loading}>
           {loading ? isLogin ? "Logging in..." : "Creating..." : isLogin ? "Login" : "Register"}
         </button>
       </form>
+
 
       <p>
         {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}

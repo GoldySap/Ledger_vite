@@ -11,14 +11,12 @@ export function Home() {
   
   useEffect(() => {
       api("/api/health")
-      .then(res => {
-          if (!res.ok) throw new Error("Network response not ok");
-          return res.json();
+      .then(data => {
+        setBackendStatus(data.status);
       })
-      .then(data => setBackendStatus(data.status))
       .catch(err => {
-          setError(err.message);
-          setBackendStatus("Failed");
+        setError(err.message);
+        setBackendStatus("Failed");
       });
   }, []);
   return (

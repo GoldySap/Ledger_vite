@@ -27,7 +27,9 @@ export function AuthProvider({ children }) {
                 const user = await api("/api/auth/me");
                 setUser(user);
             } catch (err) {
-                console.warn("No Valid User, logged out");
+                if (err.message !== "Request failed") {
+                    console.error(err);
+                }
                 setUser(null);
             }
             setLoading(false);

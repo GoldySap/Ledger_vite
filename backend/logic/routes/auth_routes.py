@@ -34,6 +34,7 @@ def register():
     user.set_password(password)
     db.session.add(user)
     db.session.commit()
+    db.session.close()
     return jsonify({
         "user": {
             "id": user.id,
@@ -77,7 +78,7 @@ def logout():
     unset_jwt_cookies(response)
     return response
 
-@auth_bp.route("/me")
+@auth_bp.route("/auth/me")
 @jwt_required()
 def me():
     user_id = get_jwt_identity()
