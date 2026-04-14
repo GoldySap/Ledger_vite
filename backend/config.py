@@ -34,6 +34,11 @@ class Config:
     JWT_COOKIE_HTTPONLY = True
     JWT_COOKIE_CSRF_PROTECT = True
     JWT_CSRF_IN_COOKIES = True
+    JWT_CSRF_CHECK_FORM = False
+    JWT_ACCESS_CSRF_COOKIE_NAME = "csrf_access_token"
+    JWT_REFRESH_CSRF_COOKIE_NAME = "csrf_refresh_token"
+    JWT_ACCESS_CSRF_HEADER_NAME = "X-CSRF-TOKEN"
+    JWT_REFRESH_CSRF_HEADER_NAME = "X-CSRF-TOKEN"
 
 class DevelopmentConfig(Config):
     DEBUG = True
@@ -50,6 +55,7 @@ class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = Config.SUBA_URL
     CORS_ORIGINS = list(filter(None, [
         "http://localhost:5124",
+        "http://127.0.0.1:5124",
         "https://ledger-vite.vercel.app",
         os.environ.get("VITE_BACKEND_URL")
     ]))
