@@ -23,9 +23,6 @@ def create_app():
     else:
         app.config.from_object(DevelopmentConfig)
 
-    db.init_app(app)
-    migrate.init_app(app, db)
-    jwt.init_app(app)
     CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}}, allow_headers=["Content-Type", "Authorization", "X-CSRF-TOKEN"], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
     app.register_blueprint(debug_bp)
@@ -44,6 +41,9 @@ def create_app():
 app = create_app()
 
 limiter.init_app(app)
+db.init_app(app)
+migrate.init_app(app, db)
+jwt.init_app(app)
 
 with app.app_context():
     if os.environ.get("FLASK_ENV") == "development":

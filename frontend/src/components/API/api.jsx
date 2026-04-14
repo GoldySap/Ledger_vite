@@ -42,7 +42,7 @@ export async function api(endpoint, options = {}) {
         const refreshRes = await fetch(`${backendUrl}/api/auth/refresh`, {
             headers: {
                 "Content-Type": "application/json",
-                "X-CSRF-TOKEN": getCookie("csrf_refresh_token") || ""
+                "X-CSRF-TOKEN": getCookie("csrf_refresh_token")
             },
             credentials: "include",
             method: "POST",
