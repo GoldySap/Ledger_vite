@@ -30,15 +30,15 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
     JWT_COOKIE_SECURE = True if os.environ.get("FLASK_ENV") == "production" else False
-    JWT_COOKIE_SAMESITE = "None" if os.environ.get("FLASK_ENV") == "production" else "Lax"
+    JWT_COOKIE_SAMESITE = "Lax" if os.environ.get("FLASK_ENV") == "production" else "Lax"
     JWT_COOKIE_HTTPONLY = True
-    JWT_COOKIE_CSRF_PROTECT = True
+    # JWT_COOKIE_CSRF_PROTECT = True
     # JWT_CSRF_IN_COOKIES = True
-    JWT_CSRF_CHECK_FORM = False
-    JWT_ACCESS_CSRF_COOKIE_NAME = "csrf_access_token"
-    JWT_REFRESH_CSRF_COOKIE_NAME = "csrf_refresh_token"
-    JWT_ACCESS_CSRF_HEADER_NAME = "X-CSRF-TOKEN"
-    JWT_REFRESH_CSRF_HEADER_NAME = "X-CSRF-TOKEN"
+    # JWT_CSRF_CHECK_FORM = False
+    # JWT_ACCESS_CSRF_COOKIE_NAME = "csrf_access_token"
+    # JWT_REFRESH_CSRF_COOKIE_NAME = "csrf_refresh_token"
+    # JWT_ACCESS_CSRF_HEADER_NAME = "X-CSRF-TOKEN"
+    # JWT_REFRESH_CSRF_HEADER_NAME = "X-CSRF-TOKEN"
 
 class DevelopmentConfig(Config):
     DEBUG = True
