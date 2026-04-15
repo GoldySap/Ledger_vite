@@ -45,7 +45,7 @@ export function AuthPage() {
           body: JSON.stringify({ 
             email, 
             password, 
-            // captcha: captchaToken 
+            captcha: captchaToken 
           }),
         });
       } else {
@@ -54,7 +54,7 @@ export function AuthPage() {
           body: JSON.stringify({
             email,
             password,
-            // captcha: captchaToken,
+            captcha: captchaToken,
             role: "user",
             subscription_id: 1,
           }),
@@ -64,7 +64,7 @@ export function AuthPage() {
           body: JSON.stringify({ 
             email, 
             password, 
-            // captcha: captchaToken
+            captcha: captchaToken
           }),
         });
       }

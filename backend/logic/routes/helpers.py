@@ -48,10 +48,29 @@ def verify_turnstile(token):
     )
     return res.json().get("success", False)
 
-def codeGenerator(type):
-    if type == "OTP":
-        return str(random.randint(100000, 999999))
-    if type == "TFA":
-        return
-    if type == "ADMIN":
-        return
+def generateCode(method):
+    match method:
+        case "OTP":
+            return str(random.randint(100000, 999999))
+        case "TFA":
+            return ""
+        case "ADMIN":
+            return ""
+        case _:
+            return "No Method Selected"
+
+def sendCode(code, method):
+    match method:
+        case "email":
+            return ""
+        case "sms":
+            return ""
+        case _:
+            return "No Method Selected"
+    return ""
+
+def verifyCode(code, input):
+    if code == input:
+        return True
+    else:
+        return False
