@@ -42,7 +42,11 @@ export function AuthPage() {
       if (isLogin) {
         data = await call("/api/auth/login", {
           method: "POST",
-          body: JSON.stringify({ email, password, captcha: captchaToken  }),
+          body: JSON.stringify({ 
+            email, 
+            password, 
+            // captcha: captchaToken 
+          }),
         });
       } else {
         data = await call("/api/auth/register", {
@@ -50,14 +54,18 @@ export function AuthPage() {
           body: JSON.stringify({
             email,
             password,
-            captcha: captchaToken,
+            // captcha: captchaToken,
             role: "user",
             subscription_id: 1,
           }),
         });
         data = await call("/api/auth/login", {
           method: "POST",
-          body: JSON.stringify({ email, password, captcha: captchaToken  }),
+          body: JSON.stringify({ 
+            email, 
+            password, 
+            // captcha: captchaToken
+          }),
         });
       }
 
