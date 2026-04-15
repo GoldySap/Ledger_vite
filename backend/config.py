@@ -31,7 +31,7 @@ class Config:
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
     JWT_COOKIE_SECURE = False if os.environ.get("FLASK_ENV") == "production" else False
     JWT_COOKIE_SAMESITE = "Lax" if os.environ.get("FLASK_ENV") == "production" else "Lax"
-    JWT_COOKIE_HTTPONLY = True
+    JWT_COOKIE_HTTPONLY = False
     JWT_COOKIE_CSRF_PROTECT = True
     JWT_CSRF_IN_COOKIES = True
     JWT_CSRF_CHECK_FORM = False
