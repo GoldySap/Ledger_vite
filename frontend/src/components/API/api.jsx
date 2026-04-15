@@ -1,16 +1,16 @@
-// function getCookie(name) {
-//   return document.cookie
-//     .split("; ")
-//     .find(row => row.startsWith(name + "="))
-//     ?.split("=")[1];
-// }
+function getCookie(name) {
+  return document.cookie
+    .split("; ")
+    .find(row => row.startsWith(name + "="))
+    ?.split("=")[1];
+}
 
-// function getCSRF(endpoint) {
-//   if (endpoint.includes("/auth/refresh")) {
-//     return getCookie("csrf_refresh_token");
-//   }
-//   return getCookie("csrf_access_token");
-// }
+function getCSRF(endpoint) {
+  if (endpoint.includes("/auth/refresh")) {
+    return getCookie("csrf_refresh_token");
+  }
+  return getCookie("csrf_access_token");
+}
 
 export async function api(endpoint, options = {}) {
     const BURL = import.meta.env.VITE_BACKEND_URL
@@ -18,13 +18,13 @@ export async function api(endpoint, options = {}) {
     const flaskDBLocal = import.meta.env.VITE_FLASK_USE;
     const backendUrl = (flaskState == "production") ? BURL : (flaskDBLocal == "external") ? BURL : BURL;
     const url = `${backendUrl}${endpoint.startsWith("/") ? endpoint : "/" + endpoint}`;
-    // const csrfToken = getCSRF(endpoint);
+    const csrfToken = getCSRF(endpoint);
 
     async function request() {
         return fetch(url, {
         headers: {
             "Content-Type": "application/json",
-            // "X-CSRF-TOKEN": csrfToken
+            "X-CSRF-TOKEN": csrfToken
         },   
         credentials: "include",
         ...options,
@@ -42,7 +42,7 @@ export async function api(endpoint, options = {}) {
         const refreshRes = await fetch(`${backendUrl}/api/auth/refresh`, {
             headers: {
                 "Content-Type": "application/json",
-                // "X-CSRF-TOKEN": getCookie("csrf_refresh_token")
+                "X-CSRF-TOKEN": getCookie("csrf_refresh_token")
             },
             credentials: "include",
             method: "POST",
