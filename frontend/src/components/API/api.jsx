@@ -20,14 +20,17 @@ export async function api(endpoint, options = {}) {
     const url = `${backendUrl}${endpoint.startsWith("/") ? endpoint : "/" + endpoint}`;
     const csrfToken = getCSRF(endpoint);
 
+    const headers = {
+        "Content-Type": "application/json",
+        "X-CSRF-TOKEN": csrfToken,
+        ...(options.headers || {})
+    };
+
     async function request() {
         return fetch(url, {
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-TOKEN": csrfToken
-        },   
-        credentials: "include",
-        ...options,
+            ...options,
+            headers,
+            credentials: "include",
         });
     }
 
@@ -45,6 +48,7 @@ export async function api(endpoint, options = {}) {
             },
             credentials: "include",
             method: "POST",
+            ...options
         });
 
         if (refreshRes.ok) {

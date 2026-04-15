@@ -109,7 +109,7 @@ export function AuthPage() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-
+        
         <div ref={turnstileRef}></div>
 
         <button disabled={loading}>

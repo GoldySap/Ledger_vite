@@ -1,4 +1,4 @@
-from flask_jwt_extended import create_access_token, create_refresh_token, set_access_cookies, set_refresh_cookies, unset_jwt_cookies, jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token, create_refresh_token, set_access_cookies, set_refresh_cookies, unset_jwt_cookies, jwt_required, get_jwt_identity, get_csrf_token
 from flask import Blueprint, request, jsonify
 from ..extensions import db
 from ..models.data import User, SecuritySettings
@@ -66,7 +66,9 @@ def login():
             "email": user.email,
             "role": user.role or "user",
             "subscription_id": user.subscription_id or 1
-        }
+        },
+        "csrf_access_token": get_csrf_token(access_token),
+        "csrf_refresh_token": get_csrf_token(refresh_token)
     })
     set_access_cookies(response, access_token)
     set_refresh_cookies(response, refresh_token)
