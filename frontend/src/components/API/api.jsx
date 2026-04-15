@@ -37,8 +37,7 @@ export async function api(endpoint, options = {}) {
         return null;
     }
 
-    if (
-        res.status === 401 && !endpoint.includes("/auth/login") && !endpoint.includes("/auth/register") && !endpoint.includes("/auth/refresh")) {
+    if (res.status === 401 && !endpoint.includes("/auth/login") && !endpoint.includes("/auth/register") && !endpoint.includes("/auth/refresh")) {
         const refreshRes = await fetch(`${backendUrl}/api/auth/refresh`, {
             headers: {
                 "Content-Type": "application/json",

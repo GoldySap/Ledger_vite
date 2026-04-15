@@ -12,7 +12,7 @@ auth_bp = Blueprint("auth", __name__)
 def refresh():
     identity = get_jwt_identity()
     access_token = create_access_token(identity=identity)
-    response = jsonify({"refresh":True})
+    response = jsonify({"refresh": True})
     set_access_cookies(response, access_token)
     return response
 
