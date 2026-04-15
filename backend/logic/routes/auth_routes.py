@@ -78,7 +78,7 @@ def logout():
     unset_jwt_cookies(response)
     return response
 
-@auth_bp.route("/auth/me")
+@auth_bp.route("/me")
 @jwt_required()
 def me():
     user_id = get_jwt_identity()
