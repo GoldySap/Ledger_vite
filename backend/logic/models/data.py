@@ -1,4 +1,5 @@
 from ..extensions import db
+from sqlalchemy import Enum
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class SubscriptionAccess(db.Model):
@@ -26,7 +27,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(200), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(20), default="user")
+    role = db.Column(Enum("user", "admin", name="role_enum"), default="user")
     subscription_id = db.Column(db.Integer, db.ForeignKey("subscriptions.id"), nullable=True)
     active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())

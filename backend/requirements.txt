@@ -24,6 +24,7 @@ packaging==26.0
 psycopg2-binary==2.9.11
 PyJWT==2.11.0
 PyMySQL==1.1.2
+pyotp==2.9.0
 python-dotenv==1.2.2
 requests==2.33.0
 SQLAlchemy==2.0.48

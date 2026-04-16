@@ -2,7 +2,7 @@ from flask_jwt_extended import get_jwt_identity, get_jwt
 from functools import wraps
 from flask import jsonify
 from ..models.data import User
-import random, requests, os, smtplib
+import random, pyotp, time, hashlib, hmac, os, requests, smtplib, secrets
 from email.message import EmailMessage
 
 
@@ -50,45 +50,69 @@ def verify_turnstile(token):
     )
     return res.json().get("success", False)
 
+def generateTOTPSecret():
+    return pyotp.random_base32()
+
 def generateCode(method):
     match method:
         case "OTP":
-            return str(random.randint(100000, 999999))
+            return secrets.randbelow(900000) + 100000
+        case "TOTP":
+            return getTOTPCode()
         case "TFA":
-            return ""
+            timestep = int(time.time() // 30)
+            msg = f"{timestep}".encode()
+            key = os.getenv("CODE_KEY").encode()
+
+            h = hmac.new(key, msg, hashlib.sha1).hexdigest()
+            return str(int(h, 16))[-6:]
         case "ADMIN":
-            return ""
+            return secrets.randbelow(900000) + 100000
         case _:
             return "No Method Selected"
 
-def sendCode(code, method, ):
+
+def sendCode(code, method, destination=None):
     match method:
         case "email":
-            # msg = EmailMessage()
-            # msg.set_content(f"Your verification code is: {code}")
+            if not destination:
+                return "No email provided"
+            msg = EmailMessage()
+            msg.set_content(f"Your verification code is: {code}")
 
-            # msg['Subject'] = 'Your Verification Code'
-            # msg['From'] = os.getenv("EMAIL_USER")
-            # msg['To'] = email
-            # try:
-            #     with smtplib.SMTP('smtp.gmail.com', 587) as server:
-            #         server.set_debuglevel(1)
-            #         server.starttls()
-            #         server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_APP_PASSWORD"))
-            #         server.send_message(msg)
-            #         server.quit()
-            #         print("Message sent successfully!")
-            # except Exception as e:
-            #     print(f"Error: {e}")
-            return ""
+            msg['Subject'] = 'Your Verification Code'
+            msg['From'] = os.getenv("EMAIL_USER")
+            msg['To'] = destination
+
+            try:
+                with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                    server.set_debuglevel(1)
+                    server.starttls()
+                    server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_APP_PASSWORD"))
+                    server.send_message(msg)
+                    server.quit()
+                    print("Message sent successfully!")
+            except Exception as e:
+                print(f"Error: {e}")
+            print(f"[EMAIL to {destination}] Your code is: {code}")
+            return True
         case "phonenumber":
-            return ""
+            if not destination:
+                return "No phone number provided"
+
+            # Placeholder for SMS API (Twilio etc.)
+            print(f"[SMS to {destination}] Your code is: {code}")
+            return True
         case _:
             return "No Method Selected"
-    return ""
+        
+def verifyCode(code, user_input):
+    return hmac.compare_digest(str(code), str(user_input))
 
-def verifyCode(code, input):
-    if code == input:
-        return True
-    else:
-        return False
+def getTOTPCode(secret):
+    totp = pyotp.TOTP(secret)
+    return totp.now()
+
+def verifyTOTP(secret, user_input):
+    totp = pyotp.TOTP(secret)
+    return totp.verify(user_input)

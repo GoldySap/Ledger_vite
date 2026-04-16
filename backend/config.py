@@ -2,6 +2,8 @@ import os
 from datetime import timedelta
 
 class Config:
+    IS_PROD = os.environ.get("FLASK_ENV") == "production"
+
     SECRET_KEY = os.environ.get("SECRET_KEY")
 
     DATABASE_USER = os.environ.get("DB_USER", "root")
@@ -14,7 +16,7 @@ class Config:
     EXTERNAL_DB_URL = os.environ.get("RENDER_DB_URL_EXTERNAL", "")
     INTERNAL_DB_URL = os.environ.get("RENDER_DB_URL_INTERNAL", "")
     SUBA_URL = f"postgresql+psycopg2://{SUBABASE_DB_URL}?sslmode=require"
-    REND_URL = f"postgresql+psycopg2://{INTERNAL_DB_URL}?sslmode=require" if os.environ.get("FLASK_ENV") == "production" else f"postgresql+psycopg2://{EXTERNAL_DB_URL}?sslmode=require"
+    REND_URL = f"postgresql+psycopg2://{INTERNAL_DB_URL}?sslmode=require" if IS_PROD else f"postgresql+psycopg2://{EXTERNAL_DB_URL}?sslmode=require"
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
@@ -29,8 +31,8 @@ class Config:
     JWT_TOKEN_LOCATION = ["cookies"]
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
-    JWT_COOKIE_SECURE = True if os.environ.get("FLASK_ENV") == "production" else False
-    JWT_COOKIE_SAMESITE = "None" if os.environ.get("FLASK_ENV") == "production" else "Lax"
+    JWT_COOKIE_SECURE = IS_PROD
+    JWT_COOKIE_SAMESITE = "None" if IS_PROD else "Lax"
     JWT_COOKIE_HTTPONLY = True
     JWT_COOKIE_CSRF_PROTECT = True
     JWT_CSRF_IN_COOKIES = True
