@@ -48,7 +48,7 @@ class DevelopmentConfig(Config):
     CORS_ORIGINS = list(filter(None, [
         "http://localhost:5124",
         "http://127.0.0.1:5124",
-        os.environ.get("VITE_BACKEND_URL")
+        # os.environ.get("VITE_BACKEND_URL")
     ]))
 
 
@@ -58,6 +58,6 @@ class ProductionConfig(Config):
     CORS_ORIGINS = list(filter(None, [
         "http://localhost:5124",
         "http://127.0.0.1:5124",
-        os.environ.get("VITE_FRONTEND_URL"),
-        os.environ.get("VITE_BACKEND_URL")
+        os.environ.get("VITE_FRONTEND_URL")
+        # os.environ.get("VITE_BACKEND_URL")
     ]))
