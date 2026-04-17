@@ -86,7 +86,7 @@ export function AuthPage() {
         navigate("/dashboard/user/home");
       }
       setCaptchaToken("");
-      window.turnstile?.reset();
+      window.turnstile.reset("#turnstile");
     } catch (err) {
       console.error(err);
       setError(err.message || "Something went wrong");
@@ -118,7 +118,7 @@ export function AuthPage() {
           required
         />
         
-        <div ref={turnstileRef}></div>
+        <div id="turnstile" ref={turnstileRef}></div>
 
         <button disabled={loading}>
           {loading ? isLogin ? "Logging in..." : "Creating..." : isLogin ? "Login" : "Register"}
@@ -128,7 +128,7 @@ export function AuthPage() {
 
       <p>
         {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-        <button type="button" onClick={() => {setIsLogin(!isLogin), setCaptchaToken(""), window.turnstile.reset()}} disabled={loading}>
+        <button type="button" onClick={() => {setIsLogin(!isLogin), setCaptchaToken(""), window.turnstile.reset("#turnstile")}} disabled={loading}>
           {isLogin ? "Register" : "Login"}
         </button>
       </p>

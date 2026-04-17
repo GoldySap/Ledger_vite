@@ -12,12 +12,7 @@ export function AuthProvider({ children }) {
     }
 
     async function logout() {
-        try {
-            await api("/api/auth/logout", { method: "POST" });
-        } catch (err) {
-            console.error("Logout failed:", err);
-        }
-
+        await api("/api/auth/logout", { method: "POST" });
         setUser(null);
     }
 
@@ -26,20 +21,18 @@ export function AuthProvider({ children }) {
             try {
                 const user = await api("/api/auth/me");
                 setUser(user);
-            } catch (err) {
-                if (err.message !== "Request failed") {
-                    console.error(err);
-                }
+            } catch {
                 setUser(null);
             }
             setLoading(false);
         }
+
         fetchUser();
     }, []);
 
     return (
         <AuthContext.Provider value={{ user, login, logout, loading }}>
-        {children}
+            {children}
         </AuthContext.Provider>
     );
 }
