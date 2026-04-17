@@ -33,12 +33,11 @@ class Config:
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
     JWT_COOKIE_SECURE = IS_PROD
     JWT_COOKIE_SAMESITE = "None" if IS_PROD else "Lax"
-    JWT_COOKIE_HTTPONLY = False
+    JWT_COOKIE_HTTPONLY = True
     JWT_COOKIE_CSRF_PROTECT = True
     JWT_CSRF_IN_COOKIES = True
     JWT_ACCESS_COOKIE_PATH = "/"
     JWT_REFRESH_COOKIE_PATH = "/"
-    JWT_COOKIE_DOMAIN = "ledger-vite.onrender.com"
     JWT_CSRF_CHECK_FORM = False
     JWT_ACCESS_CSRF_COOKIE_NAME = "csrf_access_token"
     JWT_REFRESH_CSRF_COOKIE_NAME = "csrf_refresh_token"
