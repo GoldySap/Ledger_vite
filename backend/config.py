@@ -38,7 +38,7 @@ class Config:
     JWT_CSRF_IN_COOKIES = True
     JWT_ACCESS_COOKIE_PATH = "/"
     JWT_REFRESH_COOKIE_PATH = "/"
-    JWT_COOKIE_DOMAIN = os.environ.get("VITE_FRONTEND_URL") if IS_PROD else "http://localhost:5124"
+    JWT_COOKIE_DOMAIN = "ledger-vite.onrender.com"
     JWT_CSRF_CHECK_FORM = False
     JWT_ACCESS_CSRF_COOKIE_NAME = "csrf_access_token"
     JWT_REFRESH_CSRF_COOKIE_NAME = "csrf_refresh_token"
