@@ -36,6 +36,9 @@ class Config:
     JWT_COOKIE_HTTPONLY = True
     JWT_COOKIE_CSRF_PROTECT = True
     JWT_CSRF_IN_COOKIES = True
+    JWT_ACCESS_COOKIE_PATH = "/"
+    JWT_REFRESH_COOKIE_PATH = "/"
+    JWT_COOKIE_DOMAIN = os.environ.get("VITE_FRONTEND_URL") if IS_PROD else "http://localhost:5124"
     JWT_CSRF_CHECK_FORM = False
     JWT_ACCESS_CSRF_COOKIE_NAME = "csrf_access_token"
     JWT_REFRESH_CSRF_COOKIE_NAME = "csrf_refresh_token"
@@ -47,8 +50,7 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = Config.SUBA_URL if os.environ.get("FLASK_USE") == "external" else Config.LOCAL_DB
     CORS_ORIGINS = list(filter(None, [
         "http://localhost:5124",
-        # "http://127.0.0.1:5124",
-        # os.environ.get("VITE_BACKEND_URL")
+        "http://127.0.0.1:5124",
     ]))
 
 
@@ -57,7 +59,6 @@ class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = Config.SUBA_URL
     CORS_ORIGINS = list(filter(None, [
         "http://localhost:5124",
-        # "http://127.0.0.1:5124",
+        "http://127.0.0.1:5124",
         os.environ.get("VITE_FRONTEND_URL")
-        # os.environ.get("VITE_BACKEND_URL")
     ]))

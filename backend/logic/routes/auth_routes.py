@@ -60,6 +60,8 @@ def login():
     #     return jsonify({"error": "Email not verified"}), 403
     access_token = create_access_token(identity=str(user.id))
     refresh_token = create_refresh_token(identity=str(user.id))
+    print(access_token)
+    print(refresh_token)
     response = jsonify({
         "user": {
             "id": user.id,

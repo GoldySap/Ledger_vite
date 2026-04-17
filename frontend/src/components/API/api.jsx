@@ -13,10 +13,11 @@ function getCSRF(endpoint) {
 }
 
 export async function api(endpoint, options = {}) {
-    const BURL = import.meta.env.VITE_BACKEND_URL
+    const EURL = import.meta.env.VITE_BACKEND_URL
+    const LURL = import.meta.env.VITE_LOCAL_BACKEND; 
     const flaskState = import.meta.env.VITE_FLASK_ENV;
     const flaskDBLocal = import.meta.env.VITE_FLASK_USE;
-    const backendUrl = (flaskState == "production") ? BURL : (flaskDBLocal == "external") ? BURL : BURL;
+    const backendUrl = (flaskState == "production") ? EURL : (flaskDBLocal == "external") ? EURL : LURL;
     const url = `${backendUrl}${endpoint.startsWith("/") ? endpoint : "/" + endpoint}`;
     const csrfToken = getCSRF(endpoint);
 
@@ -27,6 +28,7 @@ export async function api(endpoint, options = {}) {
     };
 
     async function request() {
+        console.log("CSRF:", csrfToken);
         return fetch(url, {
             ...options,
             headers,
