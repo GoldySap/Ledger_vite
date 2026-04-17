@@ -1,4 +1,4 @@
-from flask_jwt_extended import create_access_token, create_refresh_token, set_access_cookies, set_refresh_cookies, unset_jwt_cookies, jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token, create_refresh_token, set_access_cookies, set_refresh_cookies, unset_jwt_cookies, jwt_required, get_jwt_identity, get_csrf_token
 from flask import Blueprint, request, jsonify
 from ..extensions import db
 from ..models.data import User, SecuritySettings
@@ -60,15 +60,17 @@ def login():
     #     return jsonify({"error": "Email not verified"}), 403
     access_token = create_access_token(identity=str(user.id))
     refresh_token = create_refresh_token(identity=str(user.id))
-    print(access_token)
-    print(refresh_token)
+    csrf_access = get_csrf_token(access_token)
+    csrf_refresh = get_csrf_token(refresh_token)
     response = jsonify({
         "user": {
             "id": user.id,
             "email": user.email,
             "role": user.role or "user",
-            "subscription_id": user.subscription_id or 1
-        }
+            "subscription_id": user.subscription_id or 1,
+        },
+        "csrf_access_token": csrf_access,
+        "csrf_refresh_token": csrf_refresh
     })
     set_access_cookies(response, access_token)
     set_refresh_cookies(response, refresh_token)

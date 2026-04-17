@@ -17,6 +17,9 @@ export function AuthPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const csrfAccessTokenRef = useRef(null);
+  const csrfRefreshTokenRef = useRef(null);
+
   useEffect(() => {
     if (!window.turnstile || !turnstileRef.current) return;
 
@@ -49,7 +52,7 @@ export function AuthPage() {
           }),
         });
       } else {
-        data = await call("/api/auth/register", {
+        await call("/api/auth/register", {
           method: "POST",
           body: JSON.stringify({
             email,
@@ -71,6 +74,9 @@ export function AuthPage() {
 
       if (!data.user) throw new Error("User data missing from backend");
 
+      csrfAccessTokenRef.current = data.csrf_access_token;
+      csrfRefreshTokenRef.current = data.csrf_refresh_token;
+
       login(data.user);
 
       const role = data.user.role || "user";
@@ -79,6 +85,8 @@ export function AuthPage() {
       } else {
         navigate("/dashboard/user/home");
       }
+      setCaptchaToken("");
+      window.turnstile?.reset();
     } catch (err) {
       console.error(err);
       setError(err.message || "Something went wrong");
@@ -120,7 +128,7 @@ export function AuthPage() {
 
       <p>
         {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-        <button type="button" onClick={() => setIsLogin(!isLogin)} disabled={loading}>
+        <button type="button" onClick={() => {setIsLogin(!isLogin), setCaptchaToken(""), window.turnstile.reset()}} disabled={loading}>
           {isLogin ? "Register" : "Login"}
         </button>
       </p>

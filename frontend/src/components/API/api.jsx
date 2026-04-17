@@ -19,14 +19,8 @@ export async function api(endpoint, options = {}) {
     const flaskDBLocal = import.meta.env.VITE_FLASK_USE;
     const backendUrl = (flaskState == "production") ? EURL : (flaskDBLocal == "external") ? EURL : LURL;
     const url = `${backendUrl}${endpoint.startsWith("/") ? endpoint : "/" + endpoint}`;
-    const csrfAccessToken = document.cookie
-        .split("; ")
-        .find(c => c.startsWith("csrf_access_token="))
-        ?.split("=")[1];
-    const csrfRefreshToken = document.cookie
-        .split("; ")
-        .find(c => c.startsWith("csrf_refresh_token="))
-        ?.split("=")[1];
+    let csrfAccessToken = null;
+    let csrfRefreshToken = null;
 
     const headers = {
         "Content-Type": "application/json",
