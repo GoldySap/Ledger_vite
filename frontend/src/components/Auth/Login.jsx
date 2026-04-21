@@ -2,33 +2,33 @@ import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import { useApi } from "../API/useApi";
+import { useVerification } from "./VerificationContext";
 
 export function AuthPage() {
   const { call } = useApi();
+  const { requestVerification } = useVerification();
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const turnstileRef = useRef(null);
   const [captchaToken, setCaptchaToken] = useState("");
+  const widgetId = useRef(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { login } = useAuth();
-  const navigate = useNavigate();
-
-  const csrfAccessTokenRef = useRef(null);
-  const csrfRefreshTokenRef = useRef(null);
 
   useEffect(() => {
     if (!window.turnstile || !turnstileRef.current) return;
 
     turnstileRef.current.innerHTML = "";
 
-    window.turnstile.render(turnstileRef.current, {
+    widgetId.current = window.turnstile.render(turnstileRef.current, {
       sitekey: import.meta.env.VITE_TURNSTILE_SITE_KEY,
       callback: (token) => {
-        console.log("CAPTCHA:", token);
         setCaptchaToken(token);
       },
     });
@@ -51,8 +51,17 @@ export function AuthPage() {
             captcha: captchaToken 
           }),
         });
+
+        if (data["2fa_required"]) {
+          const code = await requestVerification();
+
+          data = await call("/api/auth/login/verify", {
+            method: "POST",
+            body: JSON.stringify({ email, code })
+          });
+        }
       } else {
-        await call("/api/auth/register", {
+        const res = await call("/api/auth/register", {
           method: "POST",
           body: JSON.stringify({
             email,
@@ -62,20 +71,20 @@ export function AuthPage() {
             subscription_id: 1,
           }),
         });
-        data = await call("/api/auth/login", {
-          method: "POST",
-          body: JSON.stringify({ 
-            email, 
-            password, 
-            captcha: captchaToken
-          }),
-        });
+
+        if (res.verify_required) {
+          const code = await requestVerification();
+
+          data = await call("/api/auth/register/verify", {
+            method: "POST",
+            body: JSON.stringify({ email, code })
+          });
+        } else {
+          data = res;
+        }
       }
 
       if (!data.user) throw new Error("User data missing from backend");
-
-      csrfAccessTokenRef.current = data.csrf_access_token;
-      csrfRefreshTokenRef.current = data.csrf_refresh_token;
 
       login(data.user);
 
@@ -86,7 +95,7 @@ export function AuthPage() {
         navigate("/dashboard/user/home");
       }
       setCaptchaToken("");
-      window.turnstile.reset("#turnstile");
+      window.turnstile.reset(widgetId.current);
     } catch (err) {
       console.error(err);
       setError(err.message || "Something went wrong");
@@ -128,7 +137,7 @@ export function AuthPage() {
 
       <p>
         {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-        <button type="button" onClick={() => {setIsLogin(!isLogin), setCaptchaToken(""), window.turnstile.reset("#turnstile")}} disabled={loading}>
+        <button type="button" onClick={() => {setIsLogin(!isLogin), setCaptchaToken(""), window.turnstile.reset(widgetId.current);}} disabled={loading}>
           {isLogin ? "Register" : "Login"}
         </button>
       </p>

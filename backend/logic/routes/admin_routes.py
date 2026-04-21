@@ -43,7 +43,6 @@ def get_users():
 
 @admin_bp.route("/users/<int:user_id>", methods=["PUT"])
 @jwt_required()
-@verified_required
 @admin_required
 def update_user(user_id):
     data = request.get_json()

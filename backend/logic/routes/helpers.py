@@ -1,10 +1,10 @@
-from flask_jwt_extended import get_jwt_identity, get_jwt
+from flask_jwt_extended import get_jwt_identity, get_jwt, create_access_token, create_refresh_token, set_access_cookies, set_refresh_cookies
 from functools import wraps
 from flask import jsonify
-from ..models.data import User
-import random, pyotp, time, hashlib, hmac, os, requests, smtplib, secrets
+from ..models.data import User, AuditLog
+import pyotp, hmac, os, requests, smtplib, secrets
+from datetime import datetime, timedelta, UTC
 from email.message import EmailMessage
-
 
 def admin_required(fn):
     @wraps(fn)
@@ -24,6 +24,35 @@ def verified_required(fn):
             return jsonify({"error": "Verification required"}), 403
         return fn(*args, **kwargs)
     return wrapper
+
+def verification_required(minutes=2):
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            user_id = int(get_jwt_identity())
+
+            if not is_verified_recently(user_id, minutes):
+                return jsonify({"error": "Verification required"}), 403
+
+            return fn(*args, **kwargs)
+        return wrapper
+    return decorator
+
+def is_verified_recently(user_id, minutes=2, vtype=None):
+    cutoff = datetime.now(UTC) - timedelta(minutes=minutes)
+
+    query = AuditLog.query.filter(
+        AuditLog.user_id == user_id,
+        AuditLog.action.like("verify_%"),
+        AuditLog.status == "success",
+        AuditLog.created_at >= cutoff
+    )
+
+    if vtype:
+        query = query.filter(AuditLog.action == f"verify_{vtype}")
+
+    return query.first() is not None
+
 
 def has_access(user, feature):
     return getattr(user.subscription.access, feature, False)
@@ -50,26 +79,38 @@ def verify_turnstile(token):
     )
     return res.json().get("success", False)
 
-def generateTOTPSecret():
+def generate_code():
+    return str(secrets.randbelow(900000) + 100000)
+
+def verify_code(code, user_input):
+    return hmac.compare_digest(str(code), str(user_input))
+
+def generate_totp_secret():
     return pyotp.random_base32()
 
-def generateCode(method):
-    match method:
-        case "OTP":
-            return secrets.randbelow(900000) + 100000
-        case "TOTP":
-            return getTOTPCode()
-        case "TFA":
-            timestep = int(time.time() // 30)
-            msg = f"{timestep}".encode()
-            key = os.getenv("CODE_KEY").encode()
+def get_totp_code(secret):
+    return pyotp.TOTP(secret).now()
 
-            h = hmac.new(key, msg, hashlib.sha1).hexdigest()
-            return str(int(h, 16))[-6:]
-        case "ADMIN":
-            return secrets.randbelow(900000) + 100000
-        case _:
-            return "No Method Selected"
+def verify_totp(secret, user_input):
+    return pyotp.TOTP(secret).verify(user_input)
+
+# def generateCode(method):
+#     match method:
+#         case "OTP":
+#             return secrets.randbelow(900000) + 100000
+#         case "TOTP":
+#             return get_totp_code()
+#         case "TFA":
+#             timestep = int(time.time() // 30)
+#             msg = f"{timestep}".encode()
+#             key = os.getenv("CODE_KEY").encode()
+
+#             h = hmac.new(key, msg, hashlib.sha1).hexdigest()
+#             return str(int(h, 16))[-6:]
+#         case "ADMIN":
+#             return secrets.randbelow(900000) + 100000
+#         case _:
+#             return "No Method Selected"
 
 
 def sendCode(code, method, destination=None):
@@ -106,13 +147,30 @@ def sendCode(code, method, destination=None):
         case _:
             return "No Method Selected"
         
-def verifyCode(code, user_input):
-    return hmac.compare_digest(str(code), str(user_input))
+def login_user_response(user):
+    access_token = create_access_token(identity=str(user.id))
+    refresh_token = create_refresh_token(identity=str(user.id))
+    response = jsonify({
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "role": user.role
+        }
+    })
+    set_access_cookies(response, access_token)
+    set_refresh_cookies(response, refresh_token)
+    return response
 
-def getTOTPCode(secret):
-    totp = pyotp.TOTP(secret)
-    return totp.now()
-
-def verifyTOTP(secret, user_input):
-    totp = pyotp.TOTP(secret)
-    return totp.verify(user_input)
+def verification_required(minutes=2):
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            user_id = int(get_jwt_identity())
+            user = User.query.get(user_id)
+            if not user or not user.last_verified_at:
+                return jsonify({"error": "Verification required"}), 403
+            if datetime.now(UTC) - user.last_verified_at > timedelta(minutes=minutes):
+                return jsonify({"error": "Verification expired"}), 403
+            return fn(*args, **kwargs)
+        return wrapper
+    return decorator

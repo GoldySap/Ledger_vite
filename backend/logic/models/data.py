@@ -33,7 +33,6 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     subscription = db.relationship("Subscription", backref="users")
-
     accounts = db.relationship("Account", back_populates="user")
 
     def set_password(self, password):
@@ -68,6 +67,16 @@ class SecuritySettings(db.Model):
     sms_2fa_enabled = db.Column(db.Boolean, default=False)
     totp_secret = db.Column(db.String(32))
     totp_enabled = db.Column(db.Boolean, default=False)
+
+class VerificationCode(db.Model):
+    __tablename__ = "verification_codes"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    code = db.Column(db.String(10), nullable=False)
+    method = db.Column(db.String(20))
+    type = db.Column(db.String(50))
+    expires_at = db.Column(db.DateTime, nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
 
 class Transaction(db.Model):
     __tablename__ = "transactions"
@@ -160,3 +169,15 @@ class PriceAlert(db.Model):
     
     user = db.relationship("User", backref="price_alerts")
     investment = db.relationship("Investment")
+
+class AuditLog(db.Model):
+    __tablename__ = "audit_logs"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    action = db.Column(db.String(100))  
+    # "login", "verify_code", "admin_delete", etc.
+    status = db.Column(db.String(20))  
+    # "success", "failed"
+    ip_address = db.Column(db.String(45))
+    user_agent = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
