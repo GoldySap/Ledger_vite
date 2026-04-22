@@ -18,51 +18,59 @@ def refresh():
     return response
 
 @auth_bp.route("/register", methods=["POST"])
-@limiter.limit("5 per minute")
 def register():
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "No data"}), 400
-    email = data.get("email")
-    password = data.get("password")
-    if User.query.filter_by(email=email).first():
-        return jsonify({"error": "User exists"}), 400
-    if not verify_turnstile(data.get("captcha")):
-        return jsonify({"error": "Captcha failed"}), 400
-    user = User(email=email)
-    user.set_password(password)
-    db.session.add(user)
-    db.session.commit()
-    code = generate_code()
-    sendCode(code, "email", user.email)
-    db.session.add(VerificationCode(
-        user_id=user.id,
-        code=code,
-        method="email",
-        type="email_verify",
-        expires_at=datetime.now(UTC) + timedelta(minutes=2)
-    ))
-    db.session.commit()
-    return jsonify({
-        "verify_required": True,
-        "email": user.email
-    })
+    try:
+        data = request.get_json()
+        email = data.get("email")
+        password = data.get("password")
+        if User.query.filter_by(email=email).first():
+            return jsonify({"error": "User exists"}), 400
+        user = User(email=email, active=True)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        db.session.add(SecuritySettings(user_id=user.id))
+        db.session.commit()
+        code = generate_code()
+        sendCode(code, "email", email)
+        db.session.add(VerificationCode(
+            user_id=user.id,
+            code=code,
+            method="email",
+            type="email_verify",
+            expires_at=datetime.now(UTC) + timedelta(minutes=2)
+        ))
+        db.session.commit()
+        return jsonify({
+            "verify_required": True,
+            "email": email
+        })
+    except Exception as e:
+        print("REGISTER ERROR:", e)
+        return jsonify({"error": str(e)}), 500
 
 @auth_bp.route("/register/verify", methods=["POST"])
 def register_verify():
     data = request.get_json()
-    user = User.query.filter_by(email=data["email"]).first()
-    if not user:
-        return jsonify({"error": "User not found"}), 404
+    email = data["email"]
+    code_input = data["code"]
+    user = User.query.filter_by(email=email).first()
     record = VerificationCode.query.filter_by(
         user_id=user.id,
         type="email_verify"
     ).order_by(VerificationCode.id.desc()).first()
-    if not record or record.expires_at < datetime.now(UTC):
+    now = datetime.now(UTC)
+    expires = record.expires_at
+    if expires.tzinfo is None:
+        expires = expires.replace(tzinfo=UTC)
+    if not record or expires < now:
         return jsonify({"error": "Code expired"}), 400
-    if not verify_code(record.code, data["code"]):
+    if not verify_code(record.code, code_input):
         return jsonify({"error": "Invalid code"}), 400
     db.session.delete(record)
+    security = SecuritySettings.query.get(user.id)
+    security.verified = True
+    db.session.commit()
     return login_user_response(user)
 
 @auth_bp.route("/login", methods=["POST"])
@@ -73,7 +81,11 @@ def login():
         return jsonify({"error": "Invalid credentials"}), 401
     if not verify_turnstile(data.get("captcha")):
         return jsonify({"error": "Captcha failed"}), 400
+    if not user.active:
+        return jsonify({"error": "Account Unaccessable"}), 403
     security = SecuritySettings.query.get(user.id)
+    if not security.verified:
+        return jsonify({"error": "Account not Verified"}), 403
     if security and security.email_2fa_enabled:
         code = generate_code()
         sendCode(code, "email", user.email)

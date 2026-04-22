@@ -8,7 +8,10 @@ export function useApi() {
     try {
       return await api(endpoint, options);
     } catch (err) {
-      if (err?.type === "SESSION_EXPIRED") logout();
+      if (err?.type === "SESSION_EXPIRED") {
+        logout();
+        return;
+      }
       throw err;
     }
   }

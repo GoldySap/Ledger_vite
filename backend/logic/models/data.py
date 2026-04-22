@@ -75,7 +75,7 @@ class VerificationCode(db.Model):
     code = db.Column(db.String(10), nullable=False)
     method = db.Column(db.String(20))
     type = db.Column(db.String(50))
-    expires_at = db.Column(db.DateTime, nullable=False)
+    expires_at = db.Column(db.DateTime(timezone=True), nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
 class Transaction(db.Model):

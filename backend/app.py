@@ -8,6 +8,7 @@ from logic.routes.auth_routes import auth_bp
 from logic.routes.finance_routes import finance_bp
 from logic.routes.investment_routes import investment_bp
 from logic.routes.transaction_routes import transaction_bp
+from logic.routes.security import security_bp
 from config import DevelopmentConfig, ProductionConfig
 from dotenv import load_dotenv
 from logic.extensions import limiter
@@ -28,6 +29,7 @@ def create_app():
     app.register_blueprint(debug_bp)
     app.register_blueprint(admin_bp, url_prefix="/api/admin")
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
+    app.register_blueprint(security_bp, url_prefix="/api/security")
     app.register_blueprint(finance_bp, url_prefix="/api")
     app.register_blueprint(investment_bp, url_prefix="/api/investment")
     app.register_blueprint(transaction_bp, url_prefix="/api")

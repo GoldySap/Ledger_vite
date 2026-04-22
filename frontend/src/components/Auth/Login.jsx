@@ -53,7 +53,9 @@ export function AuthPage() {
         });
 
         if (data["2fa_required"]) {
-          const code = await requestVerification();
+          const code = await requestVerification({type: "login_2fa", method: "email", email});
+
+          if (!code) return;
 
           data = await call("/api/auth/login/verify", {
             method: "POST",
@@ -73,7 +75,9 @@ export function AuthPage() {
         });
 
         if (res.verify_required) {
-          const code = await requestVerification();
+          const code = await requestVerification({type: "email_verify", method: "email", email});
+
+          if (!code) return;
 
           data = await call("/api/auth/register/verify", {
             method: "POST",

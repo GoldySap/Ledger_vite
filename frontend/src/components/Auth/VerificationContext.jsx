@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from "react";
 import { useApi } from "../API/useApi";
+import VerificationModal from "./Verification";
 
 const VerificationContext = createContext();
 
@@ -9,31 +10,27 @@ export function VerificationProvider({ children }) {
   const [config, setConfig] = useState(null);
   const [resolver, setResolver] = useState(null);
 
-  async function requestVerification({ type, method }) {
-    await call("/api/security/send", {
-      method: "POST",
-      body: JSON.stringify({ type, method }),
-    });
-
-    return new Promise((resolve) => {
-      setConfig({ type, method });
-      setResolver(() => resolve);
+  function requestVerification({ type, method, email }) {
+    return new Promise((resolve, reject) => {
+      setConfig({ type, method, email });
+      setResolver(() => ({ resolve, reject }));
     });
   }
 
   async function handleSubmit(code) {
     try {
-      await call("/api/security/verify", {
-        method: "POST",
-        body: JSON.stringify({
-          code,
-          type: config.type,
-        }),
-      });
+      // await call("/api/security/verify", {
+      //   method: "POST",
+      //   body: JSON.stringify({
+      //     code,
+      //     type: config.type
+      //   }),
+      // });
 
-      resolver(code);
+      resolver.resolve(code);
       close();
     } catch (err) {
+      resolver.reject(err);
       throw err;
     }
   }
@@ -53,7 +50,7 @@ export function VerificationProvider({ children }) {
           method={config.method}
           onSubmit={handleSubmit}
           onCancel={() => {
-            resolver(false);
+            resolver?.reject(new Error("Cancelled"));
             close();
           }}
         />
