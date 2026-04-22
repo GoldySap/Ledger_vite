@@ -1,7 +1,8 @@
 from flask_jwt_extended import get_jwt_identity, get_jwt, create_access_token, create_refresh_token, set_access_cookies, set_refresh_cookies
 from functools import wraps
 from flask import jsonify
-from ..models.data import User, AuditLog
+from ..extensions import db
+from ..models.data import User, AuditLog, VerificationCode
 import pyotp, hmac, os, requests, smtplib, secrets
 from datetime import datetime, timedelta, UTC
 from email.message import EmailMessage
@@ -174,3 +175,17 @@ def verification_required(minutes=2):
             return fn(*args, **kwargs)
         return wrapper
     return decorator
+
+def create_verification(user_id, method, vtype):
+    code = generate_code()
+
+    sendCode(code, method, User.query.get(user_id).email)
+
+    db.session.add(VerificationCode(
+        user_id=user_id,
+        code=code,
+        method=method,
+        type=vtype,
+        expires_at=datetime.now(UTC) + timedelta(minutes=2)
+    ))
+    db.session.commit()

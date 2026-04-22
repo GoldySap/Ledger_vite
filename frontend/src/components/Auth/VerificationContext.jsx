@@ -19,13 +19,13 @@ export function VerificationProvider({ children }) {
 
   async function handleSubmit(code) {
     try {
-      // await call("/api/security/verify", {
-      //   method: "POST",
-      //   body: JSON.stringify({
-      //     code,
-      //     type: config.type
-      //   }),
-      // });
+      await call("/api/security/verify", {
+        method: "POST",
+        body: JSON.stringify({
+          code,
+          type: config.type
+        }),
+      });
 
       resolver.resolve(code);
       close();

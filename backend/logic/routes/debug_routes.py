@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
 from sqlalchemy import text
 from ..extensions import db
-from ..models.data import User, Subscription
+from ..models.data import User, Subscription, SecuritySettings
 from ..routes.investment_routes import Investment
 import os
 
@@ -42,6 +42,9 @@ def seed_all():
         admin = User(email=ADMIN_EMAIL, role="admin", subscription_id=pro_sub.id)
         admin.set_password(ADMIN_PASSWORD)
         db.session.add(admin)
+    db.session.commit()
+    adminsec = User.query.filter_by(email=ADMIN_EMAIL).first()
+    db.session.add(SecuritySettings(user_id=adminsec.id, verified=True))
     db.session.commit()
 
     stocks = [

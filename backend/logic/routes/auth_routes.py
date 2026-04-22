@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, UTC
 from logic.extensions import limiter
 from ..extensions import db
 from ..models.data import User, SecuritySettings, VerificationCode
-from ..routes.helpers import login_user_response, verify_turnstile, generate_code, sendCode, verify_code
+from ..routes.helpers import login_user_response, verify_turnstile, generate_code, sendCode, verify_code, create_verification
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -29,17 +29,9 @@ def register():
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
-        db.session.add(SecuritySettings(user_id=user.id))
+        db.session.add(SecuritySettings(user_id=user.id, verified=False))
         db.session.commit()
-        code = generate_code()
-        sendCode(code, "email", email)
-        db.session.add(VerificationCode(
-            user_id=user.id,
-            code=code,
-            method="email",
-            type="email_verify",
-            expires_at=datetime.now(UTC) + timedelta(minutes=2)
-        ))
+        create_verification(user.id, "email", "email_verify")
         db.session.commit()
         return jsonify({
             "verify_required": True,
@@ -52,24 +44,12 @@ def register():
 @auth_bp.route("/register/verify", methods=["POST"])
 def register_verify():
     data = request.get_json()
-    email = data["email"]
-    code_input = data["code"]
-    user = User.query.filter_by(email=email).first()
-    record = VerificationCode.query.filter_by(
-        user_id=user.id,
-        type="email_verify"
-    ).order_by(VerificationCode.id.desc()).first()
-    now = datetime.now(UTC)
-    expires = record.expires_at
-    if expires.tzinfo is None:
-        expires = expires.replace(tzinfo=UTC)
-    if not record or expires < now:
-        return jsonify({"error": "Code expired"}), 400
-    if not verify_code(record.code, code_input):
-        return jsonify({"error": "Invalid code"}), 400
-    db.session.delete(record)
-    security = SecuritySettings.query.get(user.id)
+    user = User.query.filter_by(email=data["email"]).first()
+    security = SecuritySettings.query.filter_by(user_id=user.id).first()
+    if not security:
+        security = SecuritySettings(user_id=user.id)
     security.verified = True
+    db.session.add(security)
     db.session.commit()
     return login_user_response(user)
 
@@ -83,7 +63,11 @@ def login():
         return jsonify({"error": "Captcha failed"}), 400
     if not user.active:
         return jsonify({"error": "Account Unaccessable"}), 403
-    security = SecuritySettings.query.get(user.id)
+    security = SecuritySettings.query.filter_by(user_id=user.id).first()
+    if not security:
+        security = SecuritySettings(user_id=user.id, verified=False)
+        db.session.add(security)
+        db.session.commit()
     if not security.verified:
         return jsonify({"error": "Account not Verified"}), 403
     if security and security.email_2fa_enabled:
@@ -109,16 +93,6 @@ def login_verify():
     user = User.query.filter_by(email=data["email"]).first()
     if not user:
         return jsonify({"error": "User not found"}), 404
-    record = VerificationCode.query.filter_by(
-        user_id=user.id,
-        type="login_2fa"
-    ).order_by(VerificationCode.id.desc()).first()
-    if not record or record.expires_at < datetime.now(UTC):
-        return jsonify({"error": "Code expired"}), 400
-    if not verify_code(record.code, data["code"]):
-        return jsonify({"error": "Invalid code"}), 400
-    db.session.delete(record)
-    db.session.commit()
     return login_user_response(user)
 
 @auth_bp.route("/logout", methods=["POST"])
