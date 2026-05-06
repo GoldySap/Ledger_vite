@@ -65,32 +65,45 @@ export function AuthPage() {
       } else {
         const res = await call("/api/auth/register", {
           method: "POST",
-          body: JSON.stringify({
-            email,
-            password,
-            captcha: captchaToken,
-            role: "user",
-            subscription_id: 1,
-          }),
+          body: JSON.stringify({ email, password, captcha: captchaToken }),
         });
 
         if (res.verify_required) {
-          const code = await requestVerification({type: "email_verify", method: "email", email});
+          const code = await requestVerification({
+            type: "email_verify",
+            method: "email",
+            email
+          });
 
           if (!code) return;
 
-          data = await call("/api/auth/register/verify", {
+          const verified = await call("/api/security/verify/public", {
             method: "POST",
-            body: JSON.stringify({ email, code })
+            body: JSON.stringify({
+              email,
+              code,
+              type: "email_verify"
+            }),
           });
+
+          data = verified;
         } else {
           data = res;
         }
       }
 
-      if (!data.user) throw new Error("User data missing from backend");
+      // if (!data.user) throw new Error("User data missing from backend");
+      // if (data.verify_required) {
+      //   setError("Verification required. Check your email.");
+      //   setLoading(false);
+      //   return;
+      // }
 
       login(data.user);
+
+      if (isLogin) {
+        if (!data.user) throw new Error("Login failed");
+      }
 
       const role = data.user.role || "user";
       if (role === "admin") {
@@ -98,13 +111,14 @@ export function AuthPage() {
       } else {
         navigate("/dashboard/user/home");
       }
-      setCaptchaToken("");
-      window.turnstile.reset(widgetId.current);
+      setCaptchaToken("")
+      window.turnstile.reset(widgetId.current)
     } catch (err) {
       console.error(err);
       setError(err.message || "Something went wrong");
+      setCaptchaToken("")
+      window.turnstile.reset(widgetId.current)
     }
-
     setLoading(false);
   }
 

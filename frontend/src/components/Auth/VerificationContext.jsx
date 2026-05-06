@@ -10,7 +10,16 @@ export function VerificationProvider({ children }) {
   const [config, setConfig] = useState(null);
   const [resolver, setResolver] = useState(null);
 
-  function requestVerification({ type, method, email }) {
+  async function requestVerification({ type, method, email }) {
+    await call("/api/security/send/public", {
+      method: "POST",
+      body: JSON.stringify({
+        email,
+        type,
+        method
+      })
+    });
+
     return new Promise((resolve, reject) => {
       setConfig({ type, method, email });
       setResolver(() => ({ resolve, reject }));
@@ -19,9 +28,10 @@ export function VerificationProvider({ children }) {
 
   async function handleSubmit(code) {
     try {
-      await call("/api/security/verify", {
+      await call("/api/security/verify/public", {
         method: "POST",
         body: JSON.stringify({
+          email: config.email,
           code,
           type: config.type
         }),

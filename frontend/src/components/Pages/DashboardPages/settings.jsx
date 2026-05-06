@@ -1,126 +1,283 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useApi } from "../../API/useApi";
 import "./settings.css";
 
 export default function SettingsPage() {
     const [tab, setTab] = useState("account");
+
+    const tabs = [
+        { id: "account", label: "Account" },
+        { id: "security", label: "Security" },
+        { id: "subscription", label: "Subscription" },
+        { id: "activity", label: "Activity" }
+    ];
+
     return (
-        <>
-            <h1>Settings</h1>
-            <div class="settings-layout">
-                <div class="tabs">
-                    <div class="tab active" onClick={() => setTab("account")}>Account</div>
-                    <div class="tab" onClick={() => setTab("security")}>Security</div>
-                    <div class="tab" onClick={() => setTab("subscription")}>Subscription</div>
-                    <div class="tab" onClick={() => setTab("payments")}>Payments</div>
-                    <div class="tab" onClick={() => setTab("history")}>History</div>
-                </div>
-                
-                <div class="settings-content">
-                    {tab === "account" && <AccountTab />}
-                    {tab === "security" && <SecurityTab />}
-                    {tab === "subscription" && <SubscriptionTab />}
-                    {tab === "payments" && <PaymentsTab />}
-                    {tab === "history" && <HistoryTab />}
-                </div>
+        <div className="settings-settings">
+            <aside className="sidebar">
+                <h2 className="logo">Dashboard</h2>
+                {tabs.map(t => (
+                    <button
+                        key={t.id}
+                        className={`sidebar-item ${tab === t.id ? "active" : ""}`}
+                        onClick={() => setTab(t.id)}
+                    >
+                        {t.label}
+                    </button>
+                ))}
+            </aside>
+
+            <main className="content">
+                <Header tab={tab} />
+
+                {tab === "account" && <Account />}
+                {tab === "security" && <Security />}
+                {tab === "subscription" && <Subscription />}
+                {tab === "activity" && <Activity />}
+            </main>
+        </div>
+    );
+}
+
+function Header({ tab }) {
+    return (
+        <div className="header">
+            <h1>{tab.charAt(0).toUpperCase() + tab.slice(1)}</h1>
+            <p>Manage your {tab}</p>
+        </div>
+    );
+}
+
+function Account() {
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+
+    const [form, setForm] = useState({
+        email: "",
+        phone: ""
+    });
+
+    useEffect(() => {
+        setTimeout(() => {
+            setForm({ email: "user@email.com", phone: "12345678" });
+            setLoading(false);
+        }, 500);
+    }, []);
+
+    async function handleSubmit(e) {
+        e.preventDefault();
+        setSaving(true);
+
+        await new Promise(r => setTimeout(r, 800));
+
+        setSaving(false);
+        alert("Saved!");
+    }
+
+    if (loading) return <Card><p>Loading...</p></Card>;
+
+    return (
+        <Card>
+            <h2>Profile</h2>
+
+            <form onSubmit={handleSubmit}>
+                <Input
+                    label="Email"
+                    value={form.email}
+                    onChange={v => setForm({ ...form, email: v })}
+                />
+
+                <Input
+                    label="Phone"
+                    value={form.phone}
+                    onChange={v => setForm({ ...form, phone: v })}
+                />
+
+                <button className="primary" disabled={saving}>
+                    {saving ? "Saving..." : "Save changes"}
+                </button>
+            </form>
+        </Card>
+    );
+}
+
+function Security() {
+    const { call } = useApi();
+    const [sec, setSec] = useState(null);
+    const [showTotpModal, setShowTotpModal] = useState(false);
+    const [qr, setQr] = useState(null);
+    const [code, setCode] = useState("");
+
+    useEffect(() => {
+        load();
+    }, []);
+
+    async function load() {
+        const data = await call("/api/security");
+        setSec(data);
+    }
+
+    async function toggleEmail2FA() {
+        const res = await call("/api/security/email-2fa", { method: "POST" });
+        setSec(prev => ({ ...prev, ...res }));
+    }
+
+    async function startTOTPSetup() {
+        const res = await call("/api/security/totp/setup", { method: "POST" });
+        setQr(res.qr);
+        setShowTotpModal(true);
+    }
+
+    async function verifyTOTP() {
+        const res = await call("/api/security/totp/verify", {
+            method: "POST",
+            body: JSON.stringify({ code })
+        });
+
+        if (res.success) {
+            setShowTotpModal(false);
+            load();
+        }
+    }
+
+    if (!sec) return <p>Loading...</p>;
+
+    return (
+        <div>
+            <h2>Security</h2>
+
+            <div className="">
+                <h3>Two-Factor Authentication</h3>
+
+                <button onClick={toggleEmail2FA}>
+                    Email 2FA: {sec.email_2fa_enabled ? "On" : "Off"}
+                </button>
             </div>
-        </>
-    )
-}
 
-function AccountTab() {
-    return (
-        <div id="account" class="tab-section active">
-            <form>
-                <h2>Account details</h2>
-                <label>Username</label>
-                <input name="username" type="text" disabled/>
-                <label>Email</label>
-                <input name="email" type="email"/>
-                <label>Phone number</label>
-                <input name="phonenumber" type="phonenumber"/>
-                <button class="primary" type="submit">Save changes</button>
-            </form>
-        </div>
-    )
-}
-
-function SecurityTab() {
-    return ( 
-        <div id="security" class="tab-section">
-            <form>
-                <h2>Security</h2>
-                <h3>Two-Factor App (TFA/2FA)</h3>
-                <input type="text"/>
-                {/* <label><input name="email_2FA" type="checkbox" {% if g.security.email_2fa_enabled %}checked{% endif %}>Email 2FA</label> */}
-                {/* <label><input name="sms_2FA" type="checkbox" {% if g.security.sms_2fa_enabled %}checked{% endif %}>SMS 2FA</label> */}
-                <p>Email verified:
-                {/* {% if g.security.verified %} */}
-                    Verified
-                {/* {% else %} */}
-                    Not verified
-                </p>
-                <button class="primary" type="submit">Update security</button>
-                <p id="securityStatus" class="status"></p>
-                {/* <hr> */}
+            <div className="">
                 <h3>Authenticator App (TOTP)</h3>
-                {/* {% if g.security.totp_enabled %} */}
-                    <p>Authenticator is enabled</p>
-                    <a href="{{ url_for('totp_disable') }}"><button type="button" class="primary">Disable Authenticator</button></a>
-                {/* {% else %} */}
-                    <p>Authenticator is disabled</p>
-                    <a href="{{ url_for('totp_setup') }}"><button type="button" class="primary">Enable Authenticator</button></a>
-            </form>
+
+                <p>Status: {sec.totp_enabled ? "Enabled" : "Disabled"}</p>
+
+                {!sec.totp_enabled ? (
+                    <button onClick={startTOTPSetup}>Enable Authenticator</button>
+                ) : (
+                    <button onClick={() => call("/api/security/totp/disable", { method: "POST" })}>
+                        Disable
+                    </button>
+                )}
+            </div>
+
+            {showTotpModal && (
+                <div className="modal">
+                    <div className="modal-box">
+                        <h3>Scan this QR code</h3>
+
+                        <img src={qr} alt="TOTP QR" />
+
+                        <input
+                            placeholder="Enter 6-digit code"
+                            value={code}
+                            onChange={(e) => setCode(e.target.value)}
+                        />
+
+                        <button onClick={verifyTOTP}>
+                            Verify
+                        </button>
+
+                        <button onClick={() => setShowTotpModal(false)}>
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
-    )
+    );
 }
 
-function SubscriptionTab() {
+function Subscription() {
+    const { call } = useApi();
+    const [sub, setSub] = useState(null);
+
+    useEffect(() => {
+        call("/api/subscription").then(setSub);
+    }, []);
+
+    async function upgrade() {
+        await call("/api/subscription/upgrade", { method: "POST" });
+        const updated = await call("/api/subscription");
+        setSub(updated);
+    }
+
+    if (!sub) return <p>Loading...</p>;
+
     return (
-        <div id="subscription" class="tab-section">
-            <form id="subscriptionForm">
-                <h2>Subscription</h2>
-                {/* <p><strong>Current plan:</strong> {{ g.subscription.label | capitalize }}</p> */}
-                {/* {% if g.subscription.price != 0 %} */}
-                    {/* <p><strong>Price:</strong> {{ g.subscription.price }} $ / month</p> */}
-                {/* {% else %} */}
-                    <p><strong>Price:</strong> 0 $ / month</p>
-                {/* {% endif %} */}
-                {/* {% if g.subscription.label != "pro" %} */}
-                    <button class="primary" type="submit">Upgrade to Pro</button>
-            </form>
+        <div className="">
+            <h2>Subscription</h2>
+
+            <p><b>Plan:</b> {sub.label}</p>
+            <p><b>Price:</b> ${sub.price}/month</p>
+
+            {sub.label !== "pro" && (
+                <button onClick={upgrade}>
+                    Upgrade to Pro
+                </button>
+            )}
         </div>
-    )
+    );
 }
 
-function PaymentsTab() {
-    return (
-        <div id="payments" class="tab-section">
-            <form>
-                <h2>Saved cards</h2>
-                {/* {% for card in cards %} */}
-                <p>
-                    {/* CARD: **** **** **** {{ card.cardnumber[-4:] }} */}
-                    {/* {% if card.active %}(Active){% endif %} */}
-                </p>
-                {/* {% else %} */}
-                <p>No cards saved</p>
-            </form>
-        </div>
-    )
-}
+function Activity() {
+    const { call } = useApi();
+    const [logs, setLogs] = useState([]);
 
-function HistoryTab() {
+    useEffect(() => {
+        call("/api/security/history").then(setLogs);
+    }, []);
+
     return (
-        <div id="history" class="tab-section">
-            <form>
-                <h2>Account activity</h2>
+        <div className="">
+            <h2>Activity</h2>
+
+            {logs.length === 0 ? (
+                <p>No activity yet</p>
+            ) : (
                 <ul>
-                {/* {% for event in history %} */}
-                    {/* <li>{{ event.action }} – {{ event.created_at }}</li> */}
-                {/* {% else %} */}
-                    <li>No history available</li>
+                    {logs.map(l => (
+                        <li key={l.id}>
+                            {l.action} – {l.status}
+                        </li>
+                    ))}
                 </ul>
-            </form>
+            )}
         </div>
-    )
+    );
+}
+
+function Card({ children, danger }) {
+    return (
+        <div className={` ${danger ? "danger-card" : ""}`}>
+            {children}
+        </div>
+    );
+}
+
+function Input({ label, value, onChange }) {
+    return (
+        <div className="input-group">
+            <label>{label}</label>
+            <input value={value} onChange={e => onChange(e.target.value)} />
+        </div>
+    );
+}
+
+function Toggle({ label, enabled, onClick }) {
+    return (
+        <div className="toggle">
+            <span>{label}</span>
+            <button onClick={onClick} className={enabled ? "on" : ""}>
+                {enabled ? "Enabled" : "Disabled"}
+            </button>
+        </div>
+    );
 }

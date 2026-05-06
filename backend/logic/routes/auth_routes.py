@@ -3,8 +3,8 @@ from flask import Blueprint, request, jsonify
 from datetime import datetime, timedelta, UTC
 from logic.extensions import limiter
 from ..extensions import db
-from ..models.data import User, SecuritySettings, VerificationCode
-from ..routes.helpers import login_user_response, verify_turnstile, generate_code, sendCode, verify_code, create_verification
+from ..models.data import User, SecuritySettings, AuditLog
+from ..routes.helpers import login_user_response, verify_turnstile, create_verification
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -23,15 +23,24 @@ def register():
         data = request.get_json()
         email = data.get("email")
         password = data.get("password")
+        if not verify_turnstile(data.get("captcha")):
+            return jsonify({"error": "Captcha failed"}), 400
         if User.query.filter_by(email=email).first():
             return jsonify({"error": "User exists"}), 400
-        user = User(email=email, active=True)
+        user = User(email=email, subscription_id=1, active=True)
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
         db.session.add(SecuritySettings(user_id=user.id, verified=False))
         db.session.commit()
         create_verification(user.id, "email", "email_verify")
+        db.session.commit()
+        log = AuditLog(
+            user_id=user.id,
+            action="login",
+            status="success"
+        )
+        db.session.add(log)
         db.session.commit()
         return jsonify({
             "verify_required": True,
@@ -41,17 +50,21 @@ def register():
         print("REGISTER ERROR:", e)
         return jsonify({"error": str(e)}), 500
 
-@auth_bp.route("/register/verify", methods=["POST"])
-def register_verify():
-    data = request.get_json()
-    user = User.query.filter_by(email=data["email"]).first()
-    security = SecuritySettings.query.filter_by(user_id=user.id).first()
-    if not security:
-        security = SecuritySettings(user_id=user.id)
-    security.verified = True
-    db.session.add(security)
-    db.session.commit()
-    return login_user_response(user)
+# @auth_bp.route("/register/verify", methods=["POST"])
+# def register_verify():
+#     data = request.get_json()
+#     email = data["email"]
+#     code_input = data["code"]
+#     user = User.query.filter_by(email=email).first()
+#     if not user:
+#         return jsonify({"error": "User not found"}), 404
+#     security = SecuritySettings.query.filter_by(user_id=user.id).first()
+#     if not security:
+#         security = SecuritySettings(user_id=user.id)
+#     security.verified = True
+#     db.session.add(security)
+#     db.session.commit()
+#     return login_user_response(user)
 
 @auth_bp.route("/login", methods=["POST"])
 def login():
@@ -71,16 +84,7 @@ def login():
     if not security.verified:
         return jsonify({"error": "Account not Verified"}), 403
     if security and security.email_2fa_enabled:
-        code = generate_code()
-        sendCode(code, "email", user.email)
-        db.session.add(VerificationCode(
-            user_id=user.id,
-            code=code,
-            method="email",
-            type="login_2fa",
-            expires_at=datetime.now(UTC) + timedelta(minutes=2)
-        ))
-        db.session.commit()
+        create_verification(user.id, "email", "login_2fa")
         return jsonify({
             "2fa_required": True,
             "email": user.email
@@ -90,7 +94,8 @@ def login():
 @auth_bp.route("/login/verify", methods=["POST"])
 def login_verify():
     data = request.get_json()
-    user = User.query.filter_by(email=data["email"]).first()
+    email = data["email"]
+    user = User.query.filter_by(email=email).first()
     if not user:
         return jsonify({"error": "User not found"}), 404
     return login_user_response(user)
@@ -110,10 +115,33 @@ def me():
         response = jsonify({"error": "User not found"})
         unset_jwt_cookies(response)
         return response, 401
-
     return jsonify({
         "id": user.id,
         "email": user.email,
         "role": user.role,
-        "subscription_id": user.subscription_id
+        "subscription_id": user.subscription_id,
+        "created_at": user.created_at.isoformat()
     })
+
+@auth_bp.route("/update", methods=["PUT"])
+@jwt_required()
+def update_account():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    data = request.get_json()
+    if not data.get("email"):
+        return {"error": "Email required"}, 400
+    existing = User.query.filter_by(email=data["email"]).first()
+    if existing and existing.id != user.id:
+        return {"error": "Email already in use"}, 400
+    if "email" in data:
+        user.email = data["email"]
+    db.session.commit()
+    log = AuditLog(
+        user_id=user_id,
+        action="update_email",
+        status="success"
+    )
+    db.session.add(log)
+    db.session.commit()
+    return jsonify({"msg": "updated"})

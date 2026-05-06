@@ -43,7 +43,7 @@ function AdminTable({ endpoint }) {
             });
     }, [endpoint]);
 
-    async function saveChanges() {
+    async function saveChanges(code) {
         await call(`${endpoint}/bulk`, {
             method: "PUT",
             body: JSON.stringify({ updates: rowRefs.current, code }),
@@ -53,13 +53,11 @@ function AdminTable({ endpoint }) {
 
     async function verifyAndSave() {
         const code = prompt("Enter admin code");
-
         await call("/api/admin/verify", {
             method: "POST",
             body: JSON.stringify({ code }),
         });
-
-        await saveChanges();
+        await saveChanges(code);
     }
 
     // async function saveChanges() {

@@ -1,3 +1,23 @@
+// function getCookie(name) {
+//     return document.cookie
+//         .split("; ")
+//         .find(row => row.startsWith(name + "="))
+//         ?.split("=")[1];
+// }
+
+const getCsrfToken = (name) => {
+  const fetchName = name + "=";
+  const decodedCookie = decodeURIComponent(document.cookie);
+  const ca = decodedCookie.split(';');
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i].trim();
+    if (c.indexOf(fetchName) === 0) {
+      return c.substring(fetchName.length, c.length);
+    }
+  }
+  return "";
+};
+
 export async function api(endpoint, options = {}) {
     const EURL = import.meta.env.VITE_BACKEND_URL
     const LURL = import.meta.env.VITE_LOCAL_BACKEND; 
@@ -8,6 +28,7 @@ export async function api(endpoint, options = {}) {
 
     const headers = {
         "Content-Type": "application/json",
+        "X-CSRF-TOKEN": getCsrfToken("csrf_access_token"),
         ...(options.headers || {})
     };
 
@@ -29,6 +50,7 @@ export async function api(endpoint, options = {}) {
         const refreshRes = await fetch(`${backendUrl}/api/auth/refresh`, {
             headers: {
                 "Content-Type": "application/json",
+                "X-CSRF-TOKEN": getCsrfToken("csrf_refresh_token")
             },
             credentials: "include",
             method: "POST",

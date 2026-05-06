@@ -28,7 +28,7 @@ class User(db.Model):
     email = db.Column(db.String(200), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(Enum("user", "admin", name="role_enum"), default="user")
-    subscription_id = db.Column(db.Integer, db.ForeignKey("subscriptions.id"), nullable=True)
+    subscription_id = db.Column(db.Integer, db.ForeignKey("subscriptions.id"))
     active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
@@ -62,7 +62,7 @@ class Portfolio(db.Model):
 class SecuritySettings(db.Model):
     __tablename__ = "security_settings"
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)
-    verified = db.Column(db.Boolean, default=False)
+    verified = db.Column(db.Boolean, default=False, nullable=False)
     email_2fa_enabled = db.Column(db.Boolean, default=False)
     sms_2fa_enabled = db.Column(db.Boolean, default=False)
     totp_secret = db.Column(db.String(32))
@@ -82,9 +82,9 @@ class Transaction(db.Model):
     __tablename__ = "transactions"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, nullable=False)
-    account_id = db.Column(db.Integer, db.ForeignKey("accounts.id"))
+    account_id = db.Column(db.Integer, db.ForeignKey("accounts.id"), nullable=False)
     amount = db.Column(db.Float, nullable=False)
-    category = db.Column(db.String(100))
+    category = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     account = db.relationship("Account", back_populates="transactions")

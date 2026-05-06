@@ -13,10 +13,10 @@ class Config:
     LOCAL_DB = f"mysql+pymysql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{DATABASE_NAME}"
 
     SUBABASE_DB_URL = os.environ.get("SUPABASE_SESSION_POOL_URL", "")
-    EXTERNAL_DB_URL = os.environ.get("RENDER_DB_URL_EXTERNAL", "")
-    INTERNAL_DB_URL = os.environ.get("RENDER_DB_URL_INTERNAL", "")
-    SUBA_URL = f"postgresql+psycopg2://{SUBABASE_DB_URL}?sslmode=require"
-    REND_URL = f"postgresql+psycopg2://{INTERNAL_DB_URL}?sslmode=require" if IS_PROD else f"postgresql+psycopg2://{EXTERNAL_DB_URL}?sslmode=require"
+    # EXTERNAL_DB_URL = os.environ.get("RENDER_DB_URL_EXTERNAL", "")
+    # INTERNAL_DB_URL = os.environ.get("RENDER_DB_URL_INTERNAL", "")
+    URL = f"postgresql+psycopg2://{SUBABASE_DB_URL}?sslmode=require"
+    # REND_URL = f"postgresql+psycopg2://{INTERNAL_DB_URL}?sslmode=require" if IS_PROD else f"postgresql+psycopg2://{EXTERNAL_DB_URL}?sslmode=require"
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
@@ -46,7 +46,7 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = Config.SUBA_URL if os.environ.get("FLASK_USE") == "external" else Config.LOCAL_DB
+    SQLALCHEMY_DATABASE_URI = Config.URL if os.environ.get("FLASK_USE") == "external" else Config.LOCAL_DB
     CORS_ORIGINS = list(filter(None, [
         "http://localhost:5124",
         "http://127.0.0.1:5124",
@@ -55,7 +55,7 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = Config.SUBA_URL
+    SQLALCHEMY_DATABASE_URI = Config.URL
     CORS_ORIGINS = list(filter(None, [
         "http://localhost:5124",
         "http://127.0.0.1:5124",

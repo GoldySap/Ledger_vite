@@ -60,7 +60,7 @@ def bulk_update_users():
     data = request.get_json()
 
     updates = data.get("updates", {})
-    code = data.get("code")
+    # code = data.get("code")
 
     # (optional) verify code later
     # if code != "secret":

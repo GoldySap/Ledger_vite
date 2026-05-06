@@ -1,8 +1,8 @@
-from flask_jwt_extended import get_jwt_identity, get_jwt, create_access_token, create_refresh_token, set_access_cookies, set_refresh_cookies
+from flask_jwt_extended import get_jwt_identity, get_jwt, create_access_token, create_refresh_token, set_access_cookies, set_refresh_cookies, get_csrf_token
 from functools import wraps
 from flask import jsonify
 from ..extensions import db
-from ..models.data import User, AuditLog, VerificationCode
+from ..models.data import User, AuditLog, VerificationCode, SecuritySettings
 import pyotp, hmac, os, requests, smtplib, secrets
 from datetime import datetime, timedelta, UTC
 from email.message import EmailMessage
@@ -160,6 +160,13 @@ def login_user_response(user):
     })
     set_access_cookies(response, access_token)
     set_refresh_cookies(response, refresh_token)
+    log = AuditLog(
+        user_id=user.id,
+        action="login",
+        status="success"
+    )
+    db.session.add(log)
+    db.session.commit()
     return response
 
 def verification_required(minutes=2):
@@ -178,9 +185,7 @@ def verification_required(minutes=2):
 
 def create_verification(user_id, method, vtype):
     code = generate_code()
-
     sendCode(code, method, User.query.get(user_id).email)
-
     db.session.add(VerificationCode(
         user_id=user_id,
         code=code,

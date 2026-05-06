@@ -1,0 +1,124 @@
+.settings {
+    display: flex;
+    height: 100%;
+}
+
+.settings .sidebar {
+    width: 220px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 1.5rem;
+}
+
+.settings .logo {
+    margin-bottom: 1.5rem;
+}
+
+.settings .sidebar-item {
+    display: block;
+    width: 100%;
+    padding: 0.6rem;
+    margin-bottom: 0.4rem;
+    text-align: left;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 6px;
+    color: var(--text);
+}
+
+.settings .sidebar-item.active {
+    background: var(--accent);
+    color: white;
+}
+
+.settings .content {
+    flex: 1;
+    padding: 2rem;
+}
+
+.settings .header {
+    margin-bottom: 1.5rem;
+}
+
+.settings .header p {
+    color: var(--muted);
+}
+
+.settings .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+.settings .danger-card {
+    border-color: red;
+}
+
+.settings .input-group {
+    margin-bottom: 1rem;
+}
+
+.settings .input-group label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.2rem;
+}
+
+.settings .input-group input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.settings .primary {
+    background: var(--accent);
+    color: white;
+    padding: 0.6rem 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.settings .danger {
+    background: red;
+    color: white;
+    padding: 0.6rem 1rem;
+    border: none;
+    border-radius: 6px;
+}
+
+.settings .toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0.8rem 0;
+}
+
+.settings .toggle button {
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    cursor: pointer;
+}
+
+.settings .toggle button.on {
+    background: var(--accent);
+    color: white;
+}
+
+.settings .activity-list {
+    list-style: none;
+    padding: 0;
+}
+
+.settings .activity-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+}
