@@ -1,4 +1,4 @@
-from flask_jwt_extended import get_jwt_identity, get_jwt, create_access_token, create_refresh_token, set_access_cookies, set_refresh_cookies, get_csrf_token
+from flask_jwt_extended import get_jwt_identity, get_jwt, create_access_token, create_refresh_token, set_access_cookies, set_refresh_cookies
 from functools import wraps
 from flask import jsonify
 from ..extensions import db
