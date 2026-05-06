@@ -95,24 +95,6 @@ def get_totp_code(secret):
 def verify_totp(secret, user_input):
     return pyotp.TOTP(secret).verify(user_input)
 
-# def generateCode(method):
-#     match method:
-#         case "OTP":
-#             return secrets.randbelow(900000) + 100000
-#         case "TOTP":
-#             return get_totp_code()
-#         case "TFA":
-#             timestep = int(time.time() // 30)
-#             msg = f"{timestep}".encode()
-#             key = os.getenv("CODE_KEY").encode()
-
-#             h = hmac.new(key, msg, hashlib.sha1).hexdigest()
-#             return str(int(h, 16))[-6:]
-#         case "ADMIN":
-#             return secrets.randbelow(900000) + 100000
-#         case _:
-#             return "No Method Selected"
-
 
 def sendCode(code, method, destination=None):
     match method:

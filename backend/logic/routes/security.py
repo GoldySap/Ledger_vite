@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, UTC
 from ..extensions import db
 from ..models.data import User, VerificationCode, AuditLog, SecuritySettings
 from .helpers import generate_code, verify_code, login_user_response, sendCode
+import pyotp, secrets
 
 
 security_bp = Blueprint("security", __name__, url_prefix="/api/security")
@@ -160,6 +161,11 @@ def toggle_email_2fa():
     user_id = get_jwt_identity()
     sec = SecuritySettings.query.get(user_id)
 
+    if not sec:
+        sec = SecuritySettings(user_id=user_id)
+        db.session.add(sec)
+        db.session.commit()
+
     sec.email_2fa_enabled = not sec.email_2fa_enabled
     db.session.commit()
 
@@ -167,18 +173,91 @@ def toggle_email_2fa():
         "email_2fa_enabled": sec.email_2fa_enabled
     })
 
-@security_bp.route("/totp", methods=["POST"])
+@security_bp.route("/totp/setup", methods=["POST"])
 @jwt_required()
-def toggle_totp():
+def setup_totp():
     user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     sec = SecuritySettings.query.get(user_id)
 
-    sec.totp_enabled = not sec.totp_enabled
+    secret = pyotp.random_base32()
+
+    sec.totp_pending_secret = secret
+
+    uri = pyotp.TOTP(secret).provisioning_uri(
+        name=user.email,
+        issuer_name="Ledger"
+    )
+
     db.session.commit()
 
     return jsonify({
-        "totp_enabled": sec.totp_enabled
+        "qr": uri
     })
+
+@security_bp.route("/totp/confirm", methods=["POST"])
+@jwt_required()
+def confirm_totp():
+    user_id = get_jwt_identity()
+    sec = SecuritySettings.query.get(user_id)
+
+    code = request.json.get("code")
+
+    if not sec.totp_pending_secret:
+        return jsonify({"error": "No pending setup"}), 400
+
+    totp = pyotp.TOTP(sec.totp_pending_secret)
+
+    if not totp.verify(code):
+        return jsonify({"error": "Invalid code"}), 400
+
+    sec.totp_secret = sec.totp_pending_secret
+    sec.totp_pending_secret = None
+    sec.totp_enabled = True
+
+    sec.backup_codes = [secrets.token_hex(4) for _ in range(8)]
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "backup_codes": sec.backup_codes
+    })
+
+@security_bp.route("/totp/disable", methods=["POST"])
+@jwt_required()
+def disable_totp():
+    user_id = get_jwt_identity()
+    sec = SecuritySettings.query.get(user_id)
+
+    code = request.json.get("code")
+
+    if not sec.totp_enabled:
+        return jsonify({"totp_enabled": False})
+
+    totp = pyotp.TOTP(sec.totp_secret)
+
+    if not totp.verify(code):
+        return jsonify({"error": "Invalid code"}), 400
+
+    sec.totp_secret = None
+    sec.totp_enabled = False
+    sec.backup_codes = None
+
+    db.session.commit()
+
+    return jsonify({"totp_enabled": False})
+
+@security_bp.route("/totp/verify", methods=["POST"])
+@jwt_required()
+def verify_totp_route():
+    user_id = get_jwt_identity()
+    sec = SecuritySettings.query.get(user_id)
+    code = request.json.get("code")
+    totp = pyotp.TOTP(sec.totp_secret)
+    if totp.verify(code):
+        return jsonify({"success": True})
+    return jsonify({"error": "Invalid code"}), 400
 
 @security_bp.route("/history", methods=["GET"])
 @jwt_required()

@@ -50,22 +50,6 @@ def register():
         print("REGISTER ERROR:", e)
         return jsonify({"error": str(e)}), 500
 
-# @auth_bp.route("/register/verify", methods=["POST"])
-# def register_verify():
-#     data = request.get_json()
-#     email = data["email"]
-#     code_input = data["code"]
-#     user = User.query.filter_by(email=email).first()
-#     if not user:
-#         return jsonify({"error": "User not found"}), 404
-#     security = SecuritySettings.query.filter_by(user_id=user.id).first()
-#     if not security:
-#         security = SecuritySettings(user_id=user.id)
-#     security.verified = True
-#     db.session.add(security)
-#     db.session.commit()
-#     return login_user_response(user)
-
 @auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
@@ -76,18 +60,24 @@ def login():
         return jsonify({"error": "Captcha failed"}), 400
     if not user.active:
         return jsonify({"error": "Account Unaccessable"}), 403
-    security = SecuritySettings.query.filter_by(user_id=user.id).first()
-    if not security:
-        security = SecuritySettings(user_id=user.id, verified=False)
-        db.session.add(security)
+    sec = SecuritySettings.query.filter_by(user_id=user.id).first()
+    if not sec:
+        sec = SecuritySettings(user_id=user.id, verified=False)
+        db.session.add(sec)
         db.session.commit()
-    if not security.verified:
+    if not sec.verified:
         return jsonify({"error": "Account not Verified"}), 403
-    if security and security.email_2fa_enabled:
+    if sec and sec.email_2fa_enabled:
         create_verification(user.id, "email", "login_2fa")
         return jsonify({
             "2fa_required": True,
             "email": user.email
+        })
+    if sec and sec.sms_2fa_enabled:
+        create_verification(user.id, "sms", "login_2fa")
+        return jsonify({
+            "2fa_required": True,
+            "sms": user.phonenumber
         })
     return login_user_response(user)
 

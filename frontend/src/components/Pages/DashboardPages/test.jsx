@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, Link, useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+// import axios from "axios";
 
 const API_KEY = import.meta.env.VITE_FINNHUB_API_KEY;
 const BASE_URL = "https://finnhub.io/api/v1";

@@ -26,6 +26,7 @@ class User(db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(200), unique=True, nullable=False)
+    phonenumber = db.Column(db.String(200), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(Enum("user", "admin", name="role_enum"), default="user")
     subscription_id = db.Column(db.Integer, db.ForeignKey("subscriptions.id"))
@@ -66,7 +67,10 @@ class SecuritySettings(db.Model):
     email_2fa_enabled = db.Column(db.Boolean, default=False)
     sms_2fa_enabled = db.Column(db.Boolean, default=False)
     totp_secret = db.Column(db.String(32))
+    totp_pending_secret = db.Column(db.String(32))
     totp_enabled = db.Column(db.Boolean, default=False)
+    backup_codes = db.Column(db.JSON)
+
 
 class VerificationCode(db.Model):
     __tablename__ = "verification_codes"

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import QRCode from "qrcode";
 import { useApi } from "../../API/useApi";
 import "./settings.css";
 
@@ -104,6 +105,8 @@ function Account() {
 function Security() {
     const { call } = useApi();
     const [sec, setSec] = useState(null);
+    const [totpSetup, setTotpSetup] = useState(false);
+    const [backupCodes, setBackupCodes] = useState(null);
     const [showTotpModal, setShowTotpModal] = useState(false);
     const [qr, setQr] = useState(null);
     const [code, setCode] = useState("");
@@ -119,13 +122,53 @@ function Security() {
 
     async function toggleEmail2FA() {
         const res = await call("/api/security/email-2fa", { method: "POST" });
-        setSec(prev => ({ ...prev, ...res }));
+        setSec(prev => ({
+            ...prev,
+            email_2fa_enabled: res.email_2fa_enabled
+        }));
     }
 
     async function startTOTPSetup() {
-        const res = await call("/api/security/totp/setup", { method: "POST" });
-        setQr(res.qr);
+        const res = await call("/api/security/totp", { method: "POST" });
+        
+        if (!res?.qr) {
+            console.error("No QR received from backend:", res);
+            return;
+        }
+
+        const qrImage = await QRCode.toDataURL(res.qr)
+        console.log(qrImage);
+        setQr(qrImage);
         setShowTotpModal(true);
+        setTotpSetup(true);
+    }
+
+    async function disableTOTP() {
+        const res = await call("/api/security/totp/disable", {
+            method: "POST"
+        });
+
+        setSec(prev => ({
+            ...prev,
+            totp_enabled: res.totp_enabled,
+        }));
+    }
+
+    async function confirmTOTP() {
+        const res = await call("/api/security/totp/confirm", {
+            method: "POST",
+            body: JSON.stringify({ code })
+        });
+
+        if (res.success) {
+            setShowTotpModal(false);
+            setCode("");
+            setTotpSetup(false);
+
+            setBackupCodes(res.backup_codes);
+
+            await load();
+        }
     }
 
     async function verifyTOTP() {
@@ -162,9 +205,7 @@ function Security() {
                 {!sec.totp_enabled ? (
                     <button onClick={startTOTPSetup}>Enable Authenticator</button>
                 ) : (
-                    <button onClick={() => call("/api/security/totp/disable", { method: "POST" })}>
-                        Disable
-                    </button>
+                    <button onClick={disableTOTP}>Disable Authenticator</button>
                 )}
             </div>
 
@@ -181,16 +222,24 @@ function Security() {
                             onChange={(e) => setCode(e.target.value)}
                         />
 
-                        <button onClick={verifyTOTP}>
-                            Verify
-                        </button>
-
-                        <button onClick={() => setShowTotpModal(false)}>
-                            Cancel
-                        </button>
+                        <button onClick={confirmTOTP}>Verify</button>
+                        <button onClick={() => setShowTotpModal(false)}>Cancel</button>
                     </div>
                 </div>
             )}
+            {backupCodes && (
+                    <div className="modal">
+                        <div className="modal-box">
+                            <h3>Save your backup codes</h3>
+
+                            <ul>{backupCodes.map((c, i) => (<li key={i}>{c}</li>))}</ul>
+
+                            <p>These will NOT be shown again.</p>
+
+                            <button onClick={() => setBackupCodes(null)}>I have saved them</button>
+                        </div>
+                    </div>
+                )}
         </div>
     );
 }
@@ -218,11 +267,7 @@ function Subscription() {
             <p><b>Plan:</b> {sub.label}</p>
             <p><b>Price:</b> ${sub.price}/month</p>
 
-            {sub.label !== "pro" && (
-                <button onClick={upgrade}>
-                    Upgrade to Pro
-                </button>
-            )}
+            {sub.label !== "pro" && (<button onClick={upgrade}>Upgrade to Pro</button>)}
         </div>
     );
 }
@@ -244,9 +289,7 @@ function Activity() {
             ) : (
                 <ul>
                     {logs.map(l => (
-                        <li key={l.id}>
-                            {l.action} – {l.status}
-                        </li>
+                        <li key={l.id}>{l.action} – {l.status}</li>
                     ))}
                 </ul>
             )}
@@ -256,9 +299,7 @@ function Activity() {
 
 function Card({ children, danger }) {
     return (
-        <div className={` ${danger ? "danger-card" : ""}`}>
-            {children}
-        </div>
+        <div className={` ${danger ? "danger-card" : ""}`}>{children}</div>
     );
 }
 
