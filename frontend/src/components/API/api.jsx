@@ -8,6 +8,7 @@ export async function api(endpoint, options = {}) {
 
     const headers = {
         "Content-Type": "application/json",
+        "X-CSRF-TOKEN": "application/cookie/csrf_access_token",
         ...(options.headers || {})
     };
 
@@ -29,6 +30,7 @@ export async function api(endpoint, options = {}) {
         const refreshRes = await fetch(`${backendUrl}/api/auth/refresh`, {
             headers: {
                 "Content-Type": "application/json",
+                "X-CSRF-TOKEN": "application/cookie/csrf_refresh_token"
             },
             credentials: "include",
             method: "POST",
