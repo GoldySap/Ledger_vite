@@ -104,12 +104,14 @@ function Account() {
 
 function Security() {
     const { call } = useApi();
+
     const [sec, setSec] = useState(null);
-    const [totpSetup, setTotpSetup] = useState(false);
-    const [backupCodes, setBackupCodes] = useState(null);
-    const [showTotpModal, setShowTotpModal] = useState(false);
+
+    const [modalType, setModalType] = useState(null); 
+
     const [qr, setQr] = useState(null);
     const [code, setCode] = useState("");
+    const [backupCodes, setBackupCodes] = useState(null);
 
     useEffect(() => {
         load();
@@ -122,6 +124,7 @@ function Security() {
 
     async function toggleEmail2FA() {
         const res = await call("/api/security/email-2fa", { method: "POST" });
+
         setSec(prev => ({
             ...prev,
             email_2fa_enabled: res.email_2fa_enabled
@@ -129,29 +132,17 @@ function Security() {
     }
 
     async function startTOTPSetup() {
-        const res = await call("/api/security/totp", { method: "POST" });
-        
+        const res = await call("/api/security/totp/setup", { method: "POST" });
+
         if (!res?.qr) {
-            console.error("No QR received from backend:", res);
+            console.error("No QR received");
             return;
         }
 
-        const qrImage = await QRCode.toDataURL(res.qr)
-        console.log(qrImage);
+        const qrImage = await QRCode.toDataURL(res.qr);
+
         setQr(qrImage);
-        setShowTotpModal(true);
-        setTotpSetup(true);
-    }
-
-    async function disableTOTP() {
-        const res = await call("/api/security/totp/disable", {
-            method: "POST"
-        });
-
-        setSec(prev => ({
-            ...prev,
-            totp_enabled: res.totp_enabled,
-        }));
+        setModalType("setup");
     }
 
     async function confirmTOTP() {
@@ -161,25 +152,32 @@ function Security() {
         });
 
         if (res.success) {
-            setShowTotpModal(false);
             setCode("");
-            setTotpSetup(false);
-
             setBackupCodes(res.backup_codes);
+            setModalType("backup");
 
             await load();
         }
     }
 
-    async function verifyTOTP() {
-        const res = await call("/api/security/totp/verify", {
+    function startDisable() {
+        setModalType("disable");
+    }
+
+    async function disableTOTP() {
+        const res = await call("/api/security/totp/disable", {
             method: "POST",
             body: JSON.stringify({ code })
         });
 
-        if (res.success) {
-            setShowTotpModal(false);
-            load();
+        if (res.totp_enabled === false) {
+            setCode("");
+            setModalType(null);
+
+            setSec(prev => ({
+                ...prev,
+                totp_enabled: false
+            }));
         }
     }
 
@@ -189,32 +187,33 @@ function Security() {
         <div>
             <h2>Security</h2>
 
-            <div className="">
-                <h3>Two-Factor Authentication</h3>
-
+            <div>
+                <h3>Email 2FA</h3>
                 <button onClick={toggleEmail2FA}>
-                    Email 2FA: {sec.email_2fa_enabled ? "On" : "Off"}
+                    {sec.email_2fa_enabled ? "Disable" : "Enable"}
                 </button>
             </div>
 
-            <div className="">
-                <h3>Authenticator App (TOTP)</h3>
-
+            <div>
+                <h3>Authenticator (TOTP)</h3>
                 <p>Status: {sec.totp_enabled ? "Enabled" : "Disabled"}</p>
 
                 {!sec.totp_enabled ? (
-                    <button onClick={startTOTPSetup}>Enable Authenticator</button>
+                    <button onClick={startTOTPSetup}>
+                        Enable Authenticator
+                    </button>
                 ) : (
-                    <button onClick={disableTOTP}>Disable Authenticator</button>
+                    <button onClick={startDisable}>
+                        Disable Authenticator
+                    </button>
                 )}
             </div>
-
-            {showTotpModal && (
+            {modalType === "setup" && (
                 <div className="modal">
                     <div className="modal-box">
-                        <h3>Scan this QR code</h3>
+                        <h3>Scan QR Code</h3>
 
-                        <img src={qr} alt="TOTP QR" />
+                        <img src={qr} alt="QR" />
 
                         <input
                             placeholder="Enter 6-digit code"
@@ -222,24 +221,49 @@ function Security() {
                             onChange={(e) => setCode(e.target.value)}
                         />
 
-                        <button onClick={confirmTOTP}>Verify</button>
-                        <button onClick={() => setShowTotpModal(false)}>Cancel</button>
+                        <button onClick={confirmTOTP}>Confirm</button>
+                        <button onClick={() => setModalType(null)}>Cancel</button>
                     </div>
                 </div>
             )}
-            {backupCodes && (
-                    <div className="modal">
-                        <div className="modal-box">
-                            <h3>Save your backup codes</h3>
+            {modalType === "disable" && (
+                <div className="modal">
+                    <div className="modal-box">
+                        <h3>Disable Authenticator</h3>
 
-                            <ul>{backupCodes.map((c, i) => (<li key={i}>{c}</li>))}</ul>
+                        <p>Enter TOTP code</p>
 
-                            <p>These will NOT be shown again.</p>
+                        <input
+                            placeholder="Enter code"
+                            value={code}
+                            onChange={(e) => setCode(e.target.value)}
+                        />
 
-                            <button onClick={() => setBackupCodes(null)}>I have saved them</button>
-                        </div>
+                        <button onClick={disableTOTP}>Disable</button>
+                        <button onClick={() => setModalType(null)}>Cancel</button>
                     </div>
-                )}
+                </div>
+            )}
+            {modalType === "backup" && backupCodes && (
+                <div className="modal">
+                    <div className="modal-box">
+                        <h3>Backup Codes</h3>
+
+                        <p>These codes are one time use and can be used instead of the generated authenticator code if needed.</p>
+                        <p>Backup codes should only be used as a last resort incases like: losing or changing of mobile device, losing access to authenticator or the assosiated profile, etc.</p>
+
+                        <ul>
+                            {backupCodes.map((c, i) => (
+                                <li key={i}>{c}</li>
+                            ))}
+                        </ul>
+
+                        <p>Save these codes. They will not be shown again.</p>
+
+                        <button onClick={() => setModalType(null)}>I saved them</button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

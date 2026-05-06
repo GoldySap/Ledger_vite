@@ -24,125 +24,212 @@ export function Finances() {
 }
 
 function WalletTab() {
+    const { call } = useApi();
+    const [accounts, setAccounts] = useState([]);
+    const [selected, setSelected] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        load();
+    }, []);
+
+    async function load() {
+        const res = await call("/api/accounts/get");
+        setAccounts(res);
+    }
+
+    async function createAccount() {
+        setLoading(true);
+
+        await call("/api/accounts/create", {
+            method: "POST",
+            body: JSON.stringify({
+                name: "New Account",
+                provider: "Visa",
+                last4: "1234",
+                balance: 0
+            })
+        });
+
+        await load();
+        setLoading(false);
+    }
+
+    async function remove(id) {
+        await call(`/api/accounts/${id}`, { method: "DELETE" });
+        load();
+    }
+
+    async function setPrimary(id) {
+        await call(`/api/accounts/${id}/primary`, { method: "POST" });
+        load();
+    }
+
+    const total = accounts.reduce((sum, a) => sum + (a.balance || 0), 0);
+
     return (
-        <>
-            <h1>Wallet</h1>
-            {/* From Uiverse.io by byllzz */}
-            <div className="app-container">
-                <div className="wallet">
-                    <div className="wallet-back"></div>
-                    <div className="cards">
-                        <div className="card stripe">
-                            <div className="card-inner">
-                                <div className="card-top">
-                                    <span>Stripe</span>
-                                    <div className="chip"></div>
-                                </div>
-                                <div className="card-bottom">
-                                    <div className="card-info">
-                                        <span className="label">Holder</span
-                                        ><span className="value">ALEX SMITH</span>
-                                    </div>
-                                    <div className="card-number-wrapper">
-                                        <span className="hidden-stars">**** 4242</span>
-                                        <span className="card-number">5524 9910 4242</span>
-                                    </div>
-                                </div>
+        <div className="wallet">
+
+            <button onClick={createAccount} disabled={loading}>
+                + Add Account
+            </button>
+
+            <div className="cards">
+                {accounts.map(acc => (
+                    <div
+                        key={acc.id}
+                        className={`card ${acc.provider?.toLowerCase()}`}
+                        onClick={() => setSelected(acc.id)}
+                    >
+                        <div className="card-inner">
+                            <div className="card-top">
+                                <span>{acc.provider}</span>
+                                {acc.is_primary && <span>⭐</span>}
                             </div>
-                        </div>
-                        <div className="card wise">
-                            <div className="card-inner">
-                                <div className="card-top">
-                                    <span>Wise</span>
-                                    <div className="chip"></div>
-                                </div>
-                                <div className="card-bottom">
-                                    <div className="card-info">
-                                        <span className="label">Business</span
-                                        ><span className="value">STUDIO LLC</span>
-                                    </div>
-                                    <div className="card-number-wrapper">
-                                        <span className="hidden-stars">**** 8810</span>
-                                        <span className="card-number">9012 4432 8810</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="card paypal">
-                            <div className="card-inner">
-                                <div className="card-top">
-                                    <span>Pay<b style={{ color: "#0079C1"}}>Pal</b></span>
-                                    <div className="chip"></div>
-                                </div>
-                                <div className="card-bottom">
-                                    <div className="card-info">
-                                        <span className="label">Email</span
-                                        ><span className="value">hello@work.com</span>
-                                    </div>
-                                    <div className="card-number-wrapper">
-                                        <span className="hidden-stars">**** 0094</span>
-                                        <span className="card-number">3312 0045 0094</span>
-                                    </div>
-                                </div>
+
+                            <div className="card-bottom">
+                                <span>{acc.name}</span>
+                                <span>**** {acc.last4}</span>
+                                <span>${acc.balance}</span>
                             </div>
                         </div>
                     </div>
-                    <div className="pocket">
-                        <svg className="pocket-svg" viewBox="0 0 280 160" fill="none">
-                            <path
-                            d="M 0 20 C 0 10, 5 10, 10 10 C 20 10, 25 25, 40 25 L 240 25 C 255 25, 260 10, 270 10 C 275 10, 280 10, 280 20 L 280 120 C 280 155, 260 160, 240 160 L 40 160 C 20 160, 0 155, 0 120 Z"
-                            fill="#1e341e"
-                            ></path>
-                            <path
-                            d="M 8 22 C 8 16, 12 16, 15 16 C 23 16, 27 29, 40 29 L 240 29 C 253 29, 257 16, 265 16 C 268 16, 272 16, 272 22 L 272 120 C 272 150, 255 152, 240 152 L 40 152 C 25 152, 8 152, 8 120 Z"
-                            stroke="#3d5635"
-                            strokeWidth="1.5"
-                            strokeDasharray="6 4"
-                            ></path>
-                        </svg>
-                        <div className="pocket-content">
-                            <div style={{position: "relative", height: "24px", width: "100%"}}>
-                                <div className="balance-stars">******</div>
-                                <div className="balance-real">$12,450.00</div>
-                            </div>
-                            <div style={{color: "#698263", fontSize: "12px", fontWeight: 500}}>Total Balance</div>
-                            <div className="eye-icon-wrapper">
-                                <svg
-                                    className="eye-icon eye-slash"
-                                    width="20"
-                                    height="20"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                >
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                    <line x1="3" y1="3" x2="21" y2="21"></line>
-                                </svg>
-                                <svg
-                                    className="eye-icon eye-open"
-                                    style={{opacity: 0}}
-                                    width="20"
-                                    height="20"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                >
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                ))}
             </div>
-        </>
+
+            <div>Total: ${total}</div>
+
+            {selected && (
+                <div className="modal">
+                    <button onClick={() => setPrimary(selected)}>Set Primary</button>
+                    <button onClick={() => remove(selected)}>Delete</button>
+                    <button onClick={() => setSelected(null)}>Close</button>
+                </div>
+            )}
+        </div>
     );
 }
+
+// function WalletTab() {
+//     return (
+//         <>
+//             <h1>Wallet</h1>
+//             {/* From Uiverse.io by byllzz */}
+//             <div className="app-container">
+//                 <div className="wallet">
+//                     <div className="wallet-back"></div>
+//                     <div className="cards">
+//                         <div className="card stripe">
+//                             <div className="card-inner">
+//                                 <div className="card-top">
+//                                     <span>Stripe</span>
+//                                     <div className="chip"></div>
+//                                 </div>
+//                                 <div className="card-bottom">
+//                                     <div className="card-info">
+//                                         <span className="label">Holder</span
+//                                         ><span className="value">ALEX SMITH</span>
+//                                     </div>
+//                                     <div className="card-number-wrapper">
+//                                         <span className="hidden-stars">**** 4242</span>
+//                                         <span className="card-number">5524 9910 4242</span>
+//                                     </div>
+//                                 </div>
+//                             </div>
+//                         </div>
+//                         <div className="card wise">
+//                             <div className="card-inner">
+//                                 <div className="card-top">
+//                                     <span>Wise</span>
+//                                     <div className="chip"></div>
+//                                 </div>
+//                                 <div className="card-bottom">
+//                                     <div className="card-info">
+//                                         <span className="label">Business</span
+//                                         ><span className="value">STUDIO LLC</span>
+//                                     </div>
+//                                     <div className="card-number-wrapper">
+//                                         <span className="hidden-stars">**** 8810</span>
+//                                         <span className="card-number">9012 4432 8810</span>
+//                                     </div>
+//                                 </div>
+//                             </div>
+//                         </div>
+//                         <div className="card paypal">
+//                             <div className="card-inner">
+//                                 <div className="card-top">
+//                                     <span>Pay<b style={{ color: "#0079C1"}}>Pal</b></span>
+//                                     <div className="chip"></div>
+//                                 </div>
+//                                 <div className="card-bottom">
+//                                     <div className="card-info">
+//                                         <span className="label">Email</span
+//                                         ><span className="value">hello@work.com</span>
+//                                     </div>
+//                                     <div className="card-number-wrapper">
+//                                         <span className="hidden-stars">**** 0094</span>
+//                                         <span className="card-number">3312 0045 0094</span>
+//                                     </div>
+//                                 </div>
+//                             </div>
+//                         </div>
+//                     </div>
+//                     <div className="pocket">
+//                         <svg className="pocket-svg" viewBox="0 0 280 160" fill="none">
+//                             <path
+//                             d="M 0 20 C 0 10, 5 10, 10 10 C 20 10, 25 25, 40 25 L 240 25 C 255 25, 260 10, 270 10 C 275 10, 280 10, 280 20 L 280 120 C 280 155, 260 160, 240 160 L 40 160 C 20 160, 0 155, 0 120 Z"
+//                             fill="#1e341e"
+//                             ></path>
+//                             <path
+//                             d="M 8 22 C 8 16, 12 16, 15 16 C 23 16, 27 29, 40 29 L 240 29 C 253 29, 257 16, 265 16 C 268 16, 272 16, 272 22 L 272 120 C 272 150, 255 152, 240 152 L 40 152 C 25 152, 8 152, 8 120 Z"
+//                             stroke="#3d5635"
+//                             strokeWidth="1.5"
+//                             strokeDasharray="6 4"
+//                             ></path>
+//                         </svg>
+//                         <div className="pocket-content">
+//                             <div style={{position: "relative", height: "24px", width: "100%"}}>
+//                                 <div className="balance-stars">******</div>
+//                                 <div className="balance-real">$12,450.00</div>
+//                             </div>
+//                             <div style={{color: "#698263", fontSize: "12px", fontWeight: 500}}>Total Balance</div>
+//                             <div className="eye-icon-wrapper">
+//                                 <svg
+//                                     className="eye-icon eye-slash"
+//                                     width="20"
+//                                     height="20"
+//                                     viewBox="0 0 24 24"
+//                                     fill="none"
+//                                     strokeWidth="2"
+//                                     strokeLinecap="round"
+//                                     strokeLinejoin="round"
+//                                 >
+//                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+//                                     <circle cx="12" cy="12" r="3"></circle>
+//                                     <line x1="3" y1="3" x2="21" y2="21"></line>
+//                                 </svg>
+//                                 <svg
+//                                     className="eye-icon eye-open"
+//                                     style={{opacity: 0}}
+//                                     width="20"
+//                                     height="20"
+//                                     viewBox="0 0 24 24"
+//                                     fill="none"
+//                                     strokeWidth="2"
+//                                     strokeLinecap="round"
+//                                     strokeLinejoin="round"
+//                                 >
+//                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+//                                     <circle cx="12" cy="12" r="3"></circle>
+//                                 </svg>
+//                             </div>
+//                         </div>
+//                     </div>
+//                 </div>
+//             </div>
+//         </>
+//     );
+// }
 
 function BlankTab() {
     return (

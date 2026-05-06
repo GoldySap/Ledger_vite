@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, UTC
 from logic.extensions import limiter
 from ..extensions import db
 from ..models.data import User, SecuritySettings, AuditLog
-from ..routes.helpers import login_user_response, verify_turnstile, create_verification
+from ..routes.helpers import login_user_response, verify_turnstile, create_verification, verify_2fa
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -18,6 +18,7 @@ def refresh():
     return response
 
 @auth_bp.route("/register", methods=["POST"])
+@limiter.limit("5 per minute")
 def register():
     try:
         data = request.get_json()
@@ -51,6 +52,7 @@ def register():
         return jsonify({"error": str(e)}), 500
 
 @auth_bp.route("/login", methods=["POST"])
+@limiter.limit("5 per minute")
 def login():
     data = request.get_json()
     user = User.query.filter_by(email=data["email"]).first()
@@ -60,6 +62,7 @@ def login():
         return jsonify({"error": "Captcha failed"}), 400
     if not user.active:
         return jsonify({"error": "Account Unaccessable"}), 403
+    
     sec = SecuritySettings.query.filter_by(user_id=user.id).first()
     if not sec:
         sec = SecuritySettings(user_id=user.id, verified=False)
@@ -67,27 +70,39 @@ def login():
         db.session.commit()
     if not sec.verified:
         return jsonify({"error": "Account not Verified"}), 403
-    if sec and sec.email_2fa_enabled:
-        create_verification(user.id, "email", "login_2fa")
+    
+    methods = []
+
+    if sec.totp_enabled:
+        methods.append("totp")
+
+    if sec.email_2fa_enabled:
+        methods.append("email")
+
+    if sec.sms_2fa_enabled:
+        methods.append("sms")
+
+    if methods:
+        if "email" in methods:
+            create_verification(user.id, "email", "login_2fa")
+        if "sms" in methods:
+            create_verification(user.id, "phonenumber", "login_2fa")
+
         return jsonify({
             "2fa_required": True,
+            "methods": methods,
             "email": user.email
-        })
-    if sec and sec.sms_2fa_enabled:
-        create_verification(user.id, "sms", "login_2fa")
-        return jsonify({
-            "2fa_required": True,
-            "sms": user.phonenumber
         })
     return login_user_response(user)
 
 @auth_bp.route("/login/verify", methods=["POST"])
 def login_verify():
     data = request.get_json()
-    email = data["email"]
-    user = User.query.filter_by(email=email).first()
+    user = User.query.filter_by(email=data["email"]).first()
     if not user:
         return jsonify({"error": "User not found"}), 404
+    if not verify_2fa(user, data.get("code")):
+        return jsonify({"error": "Invalid or expired code"}), 400
     return login_user_response(user)
 
 @auth_bp.route("/logout", methods=["POST"])

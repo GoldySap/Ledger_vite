@@ -167,7 +167,8 @@ def verification_required(minutes=2):
 
 def create_verification(user_id, method, vtype):
     code = generate_code()
-    sendCode(code, method, User.query.get(user_id).email)
+    user = User.query.get(user_id)
+    sendCode(code, method, user.email)
     db.session.add(VerificationCode(
         user_id=user_id,
         code=code,
@@ -176,3 +177,38 @@ def create_verification(user_id, method, vtype):
         expires_at=datetime.now(UTC) + timedelta(minutes=2)
     ))
     db.session.commit()
+
+def verify_2fa(user, code, vtype="login_2fa"):
+    sec = SecuritySettings.query.get(user.id)
+
+    if sec and sec.totp_enabled and sec.totp_secret:
+        totp = pyotp.TOTP(sec.totp_secret)
+
+        if totp.verify(code):
+            return True
+
+        if sec.backup_codes and code in sec.backup_codes:
+            sec.backup_codes.remove(code)
+            db.session.commit()
+            return True
+
+        return False
+
+    record = VerificationCode.query.filter_by(
+        user_id=user.id,
+        type=vtype
+    ).order_by(VerificationCode.id.desc()).first()
+
+    if not record:
+        return False
+
+    if record.expires_at < datetime.now(UTC):
+        return False
+
+    if not verify_code(record.code, code):
+        return False
+
+    db.session.delete(record)
+    db.session.commit()
+
+    return True

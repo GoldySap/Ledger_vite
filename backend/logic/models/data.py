@@ -26,7 +26,7 @@ class User(db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(200), unique=True, nullable=False)
-    phonenumber = db.Column(db.String(200), unique=True, nullable=False)
+    phonenumber = db.Column(db.String(200))
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(Enum("user", "admin", name="role_enum"), default="user")
     subscription_id = db.Column(db.Integer, db.ForeignKey("subscriptions.id"))
@@ -46,10 +46,18 @@ class Account(db.Model):
     __tablename__ = "accounts"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
     name = db.Column(db.String(100), nullable=False)
+    provider = db.Column(db.String(50))
+    last4 = db.Column(db.String(4))
+
+    balance = db.Column(db.Float, default=0)
     currency = db.Column(db.String(3), default="USD")
+
+    is_primary = db.Column(db.Boolean, default=False)
+
     created_at = db.Column(db.DateTime, server_default=db.func.now())
-    
+
     user = db.relationship("User", back_populates="accounts")
     transactions = db.relationship("Transaction", back_populates="account", cascade="all, delete")
 
@@ -64,6 +72,7 @@ class SecuritySettings(db.Model):
     __tablename__ = "security_settings"
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)
     verified = db.Column(db.Boolean, default=False, nullable=False)
+    # Future: can replace verification booleans with verification_required and a json list for methods
     email_2fa_enabled = db.Column(db.Boolean, default=False)
     sms_2fa_enabled = db.Column(db.Boolean, default=False)
     totp_secret = db.Column(db.String(32))

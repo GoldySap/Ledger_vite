@@ -6,7 +6,7 @@ import { useVerification } from "./VerificationContext";
 
 export function AuthPage() {
   const { call } = useApi();
-  const { requestVerification } = useVerification();
+  const { requestCodeInput } = useVerification();
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -53,14 +53,26 @@ export function AuthPage() {
         });
 
         if (data["2fa_required"]) {
-          const code = await requestVerification({type: "login_2fa", method: "email", email});
+          if (data["2fa_required"]) {
+            const code = await requestCodeInput({
+              methods: data.methods
+            });
 
-          if (!code) return;
+            data = await call("/api/auth/login/verify", {
+              method: "POST",
+              body: JSON.stringify({ email, code })
+            });
+          }
+        }
+        if (data["totp_required"]) {
+            const code = prompt("Enter authenticator code");
 
-          data = await call("/api/auth/login/verify", {
-            method: "POST",
-            body: JSON.stringify({ email, code })
-          });
+            if (!code) return;
+
+            data = await call("/api/auth/login/totp", {
+                method: "POST",
+                body: JSON.stringify({ email, code })
+            });
         }
       } else {
         const res = await call("/api/auth/register", {

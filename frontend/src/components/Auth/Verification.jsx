@@ -1,8 +1,12 @@
 import { useState } from "react";
 
-export default function VerificationModal({ type, method, onSubmit, onCancel }) {
+export default function VerificationModal({ methods, message, onSubmit, onCancel }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
+
+  const primaryMethod = methods?.includes("totp")
+    ? "Authenticator app"
+    : methods?.[0] || "verification";
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -21,7 +25,7 @@ export default function VerificationModal({ type, method, onSubmit, onCancel }) 
         <h3>Verification Required</h3>
 
         <p>
-          Enter the code sent via <b>{method}</b>
+          {message || `Enter the code from your ${primaryMethod}`}
         </p>
 
         {error && <p style={{ color: "red" }}>{error}</p>}

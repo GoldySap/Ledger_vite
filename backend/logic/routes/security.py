@@ -69,44 +69,12 @@ def send_verification_public():
 
     return jsonify({"msg": "Code sent"})
 
-@security_bp.route("/verify", methods=["POST"])
-@jwt_required()
-def verify_verification():
-    user_id = int(get_jwt_identity())
-    data = request.get_json()
-    code_input = data.get("code")
-    vtype = data.get("type", "generic")
-    record = VerificationCode.query.filter_by(
-        user_id=user_id,
-        type=vtype
-    ).order_by(VerificationCode.id.desc()).first()
-    if not record:
-        return jsonify({"error": "No code found"}), 400
-    if record.expires_at < datetime.now(UTC):
-        return jsonify({"error": "Code expired"}), 400
-    if not verify_code(record.code, code_input):
-        db.session.add(AuditLog(
-            user_id=user_id,
-            action=f"verify_{vtype}",
-            status="failed"
-        ))
-        db.session.commit()
-        return jsonify({"error": "Invalid code"}), 400
-    db.session.delete(record)
-    db.session.add(AuditLog(
-        user_id=user_id,
-        action=f"verify_{vtype}",
-        status="success"
-    ))
-    db.session.commit()
-    return jsonify({"success": True})
-
 @security_bp.route("/verify/public", methods=["POST"])
 def verify_public():
     data = request.get_json()
 
     email = data.get("email")
-    code_input = data.get("code")
+    code = data.get("code")
     vtype = data.get("type")
 
     user = User.query.filter_by(email=email).first()
@@ -124,7 +92,7 @@ def verify_public():
     if record.expires_at < datetime.now(UTC):
         return jsonify({"error": "Code expired"}), 400
 
-    if not verify_code(record.code, code_input):
+    if not verify_code(record.code, code):
         return jsonify({"error": "Invalid code"}), 400
     
     if vtype == "email_verify":
@@ -134,7 +102,6 @@ def verify_public():
 
     db.session.delete(record)
     db.session.commit()
-
     return jsonify({"success": True})
 
 @security_bp.route("", methods=["GET"])
@@ -168,7 +135,6 @@ def toggle_email_2fa():
 
     sec.email_2fa_enabled = not sec.email_2fa_enabled
     db.session.commit()
-
     return jsonify({
         "email_2fa_enabled": sec.email_2fa_enabled
     })
@@ -190,7 +156,6 @@ def setup_totp():
     )
 
     db.session.commit()
-
     return jsonify({
         "qr": uri
     })
@@ -218,7 +183,6 @@ def confirm_totp():
     sec.backup_codes = [secrets.token_hex(4) for _ in range(8)]
 
     db.session.commit()
-
     return jsonify({
         "success": True,
         "backup_codes": sec.backup_codes
@@ -230,14 +194,22 @@ def disable_totp():
     user_id = get_jwt_identity()
     sec = SecuritySettings.query.get(user_id)
 
-    code = request.json.get("code")
+    code = str(request.json.get("code"))
 
     if not sec.totp_enabled:
         return jsonify({"totp_enabled": False})
 
     totp = pyotp.TOTP(sec.totp_secret)
 
-    if not totp.verify(code):
+    valid = False
+
+    if totp.verify(code):
+        valid = True
+    elif sec.backup_codes and code in sec.backup_codes:
+        sec.backup_codes.remove(code)
+        valid = True
+
+    if not valid:
         return jsonify({"error": "Invalid code"}), 400
 
     sec.totp_secret = None
@@ -245,19 +217,7 @@ def disable_totp():
     sec.backup_codes = None
 
     db.session.commit()
-
     return jsonify({"totp_enabled": False})
-
-@security_bp.route("/totp/verify", methods=["POST"])
-@jwt_required()
-def verify_totp_route():
-    user_id = get_jwt_identity()
-    sec = SecuritySettings.query.get(user_id)
-    code = request.json.get("code")
-    totp = pyotp.TOTP(sec.totp_secret)
-    if totp.verify(code):
-        return jsonify({"success": True})
-    return jsonify({"error": "Invalid code"}), 400
 
 @security_bp.route("/history", methods=["GET"])
 @jwt_required()
