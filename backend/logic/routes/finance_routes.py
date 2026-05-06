@@ -27,7 +27,7 @@ def get_subscription():
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
 
-    sub = user.subscription
+    sub = Subscription.query.get(user.subscription_id)
 
     return jsonify({
         "label": sub.label,
@@ -41,7 +41,7 @@ def upgrade():
     user = User.query.get(user_id)
 
     pro = Subscription.query.filter_by(label="pro").first()
-    user.subscription = pro
+    user.subscription_id = pro.id
 
     db.session.commit()
 
