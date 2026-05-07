@@ -27,7 +27,7 @@ export default function FinancesPage() {
                 </button>
             </div>
 
-            {tab === "wallet"       && <WalletTab />}
+            {tab === "wallet" && <WalletTab />}
             {tab === "transactions" && <TransactionsTab />}
         </div>
     );
@@ -126,6 +126,7 @@ function WalletTab() {
                     <button className="add-btn" onClick={() => setMode("create")}>Add your first account</button>
                 </div>
             ) : (
+                /* Parts from Uiverse.io by byllzz */
                 <div className="app-container">
                     <div className="wallet"
                     onMouseEnter={() => setIsHovered(true)}

@@ -97,34 +97,37 @@ def verify_totp(secret, user_input):
 
 
 def sendCode(code, method, destination=None):
+    send = True
     match method:
         case "email":
             if not destination:
-                return "No email provided"
-            msg = EmailMessage()
-            msg.set_content(f"Your verification code is: {code}")
+                    return "No email provided"
+            if send:
+                msg = EmailMessage()
+                msg.set_content(f"Your verification code is: {code}")
 
-            msg['Subject'] = 'Your Verification Code'
-            msg['From'] = os.getenv("EMAIL_USER")
-            msg['To'] = destination
+                msg['Subject'] = 'Your Verification Code'
+                msg['From'] = os.getenv("EMAIL_USER")
+                msg['To'] = destination
 
-            try:
-                with smtplib.SMTP('smtp.gmail.com', 587) as server:
-                    server.set_debuglevel(1)
-                    server.starttls()
-                    server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_APP_PASSWORD"))
-                    server.send_message(msg)
-                    server.quit()
-                    print("Message sent successfully!")
-            except Exception as e:
-                print(f"Error: {e}")
+                try:
+                    with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                        server.set_debuglevel(1)
+                        server.starttls()
+                        server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_APP_PASSWORD"))
+                        server.send_message(msg)
+                        server.quit()
+                        print("Message sent successfully!")
+                except Exception as e:
+                    print(f"Error: {e}")
             print(f"[EMAIL to {destination}] Your code is: {code}")
             return True
         case "phonenumber":
             if not destination:
                 return "No phone number provided"
-
-            # Placeholder for SMS API (Twilio etc.)
+            # if send:
+                # Placeholder for SMS API (Twilio etc.)
+                
             print(f"[SMS to {destination}] Your code is: {code}")
             return True
         case _:
