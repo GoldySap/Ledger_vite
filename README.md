@@ -11,7 +11,6 @@
 ------------------------------------------------------------------------
 
 ### Beskrivelse
-**Beskrivelse:**
 Ledger er en fullstack webapplikasjon for økonomistyring og investeringer. Systemet lar brukere registrere konto, logge inn sikkert, administrere bankkontoer, følge investeringer og få oversikt over økonomiske data gjennom et personlig dashboard. Prosjektet fokuserer på sikkerhet, databasehåndtering, API-integrasjon og moderne webutvikling med Flask og React.
 
 - **Hva er prosjektet?**
