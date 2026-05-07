@@ -3,6 +3,13 @@
     --walletHeight: 11rem;
 }
 
+.app-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* width: var(--walletWidth); */
+}
+
 .wallet {
   position: relative;
   width: var(--walletWidth);
@@ -15,7 +22,7 @@
   transition: transform 0.4s ease;
 }
 
-.wallet::after {
+/* .wallet::after {
   content: "Hover to see Balance";
   position: absolute;
   bottom: -30px;
@@ -24,7 +31,7 @@
   font-size: 14px;
   font-weight: 600;
   text-decoration: underline;
-}
+} */
 
 @keyframes slideIntoPocket {
   0% {
@@ -129,7 +136,7 @@
   letter-spacing: 1px;
   font-family: monospace;
 }
-
+/* 
 .stripe {
   background: #635bff;
   bottom: 90px;
@@ -158,13 +165,13 @@
 
 .paypal .label {
   color: #8c979d;
-}
+} */
 
 .pocket {
   position: absolute;
   bottom: 0;
   width: var(--walletWidth);
-  height: calc(var(--walletHeight) - 1rem);
+  height: calc(var(--walletHeight) - 2rem);
   z-index: 40;
   filter: drop-shadow(0 15px 25px rgba(20, 40, 20, 0.4));
 }
@@ -174,7 +181,7 @@
   top: 45px;
   width: 100%;
   text-align: center;
-  z-index: 50;
+  z-index: 15;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -225,7 +232,7 @@
   opacity: 1;
 }
 
-.wallet:hover .stripe {
+/* .wallet:hover .stripe {
   transform: translateY(-75px) rotate(-3deg);
 }
 
@@ -235,11 +242,27 @@
 
 .wallet:hover .paypal {
   transform: translateY(-10px);
-}
+} */
 
 .card:hover {
   z-index: 100 !important;
   transition-delay: 0s !important;
+}
+/* 
+.wallet:hover .card:nth-child(1) {
+  transform: translateY(-35px) rotate(-3deg);
+}
+
+.wallet:hover .card:nth-child(2) {
+  transform: translateY(-45px) rotate(2deg);
+}
+
+.wallet:hover .card:nth-child(3) {
+  transform: translateY(-60px);
+}
+
+.wallet:hover .card:hover {
+  transform: translateY(-60px) scale(1.05) rotate(0);
 }
 
 .wallet:hover .stripe:hover {
@@ -252,7 +275,7 @@
 
 .wallet:hover .paypal:hover {
   transform: translateY(-60px) scale(1.05) rotate(0);
-}
+} */
 
 .card:hover .hidden-stars {
   display: none;

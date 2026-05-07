@@ -80,9 +80,6 @@ class Account(db.Model):
 #     active = db.Column(db.Boolean, default=True)
 #     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
-#     user = db.relationship("User", back_populates="cards")
-#     accounts = db.relationship("Accounts", back_populates="cards", cascade="all, delete")
-
 class Portfolio(db.Model):
     __tablename__ = "portfolios"
     id = db.Column(db.Integer, primary_key=True)

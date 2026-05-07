@@ -89,7 +89,9 @@ def verify_public():
     if not record:
         return jsonify({"error": "No code found"}), 400
 
-    if record.expires_at < datetime.now(UTC):
+    expires_at_aware = record.expires_at.replace(tzinfo=UTC)
+
+    if expires_at_aware < datetime.now(UTC):
         return jsonify({"error": "Code expired"}), 400
 
     if not verify_code(record.code, code):

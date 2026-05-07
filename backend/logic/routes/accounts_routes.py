@@ -5,27 +5,17 @@ from ..extensions import db
 from ..models.data import User, Account, Subscription, SubscriptionAccess
 
 def can_create_account(user):
-    if not user.subscription_id:
-        return False
-
-    sub = Subscription.query.get(user.subscription_id)
-    if not sub:
-        return False
-
-    access = SubscriptionAccess.query.filter_by(subscription_id=sub.id).first()
-    if not access:
+    if not user.subscription or not user.subscription.access:
         return False
     
-    sub = Subscription.query.filter_by(id=user.subscription_id).first()
-    access = SubscriptionAccess.query.filter_by(subscription_id=sub.id).first()
-    max_accounts = access.max_accounts
-    current = Account.query.filter_by(user_id=user.id).count()
-    return current < max_accounts
+    max_accounts = user.subscription.access.max_accounts
+    current_count = Account.query.filter_by(user_id=user.id).count()
+    return current_count <= max_accounts
 
 accounts_bp = Blueprint("accounts", __name__, url_prefix="/api/accounts")
 
 @accounts_bp.route("/get", methods=["GET"])
-@limiter.limit("5 per minute")
+@limiter.limit("10 per minute")
 @jwt_required()
 def get_accounts():
     user_id = get_jwt_identity()
@@ -50,6 +40,13 @@ def get_accounts():
 @jwt_required()
 def create_account():
     user = User.query.get(get_jwt_identity())
+
+    print(f"User ID: {user.id}")
+    print(f"User subscription_id: {user.subscription_id}")
+    print(f"User.subscription: {user.subscription}")
+    if user.subscription:
+        print(f"Subscription ID: {user.subscription.id}")
+        print(f"Subscription.access: {user.subscription.access}")
 
     if not can_create_account(user):
         return jsonify({"error": "Account limit reached"}), 403

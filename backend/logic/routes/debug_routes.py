@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
 from sqlalchemy import text
 from ..extensions import db
-from ..models.data import User, Subscription, SecuritySettings
+from ..models.data import User, Subscription, SecuritySettings, SubscriptionAccess
 from ..routes.investment_routes import Investment
 import os
 
@@ -31,6 +31,40 @@ def seed_all():
     for s in subs:
         if not Subscription.query.filter_by(label=s["label"]).first():
             db.session.add(Subscription(**s))
+    db.session.commit()
+
+    access_config = {
+        "Free": {
+            "can_export_data": False,
+            "has_finance_access": False,
+            "has_investment_access": False,
+            "has_analytics_access": False,
+            "max_accounts": 1,
+            "max_portfolio_transfer_rate": 100
+        },
+        "Basic": {
+            "can_export_data": True,
+            "has_finance_access": True,
+            "has_investment_access": False,
+            "has_analytics_access": False,
+            "max_accounts": 3,
+            "max_portfolio_transfer_rate": 500
+        },
+        "Pro": {
+            "can_export_data": True,
+            "has_finance_access": True,
+            "has_investment_access": True,
+            "has_analytics_access": True,
+            "max_accounts": 10,
+            "max_portfolio_transfer_rate": 5000
+        }
+    }
+
+    for label, config in access_config.items():
+        sub = Subscription.query.filter_by(label=label).first()
+        if sub and not sub.access:
+            access = SubscriptionAccess(subscription_id=sub.id, **config)
+            db.session.add(access)
     db.session.commit()
 
     pro_sub = Subscription.query.filter_by(label="Pro").first()

@@ -90,9 +90,10 @@ function WalletTab() {
         );
     }
 
-    const total    = accounts.reduce((s, a) => s + (a.balance ?? 0), 0);
+    const total = accounts.reduce((s, a) => s + (a.balance ?? 0), 0);
     const primary  = accounts.find(a => a.is_primary);
     const selected_acc = accounts.find(a => a.id === selected);
+    const [isHovered, setIsHovered] = useState(false);
 
     return (
         <div className="wallet-tab">
@@ -125,16 +126,76 @@ function WalletTab() {
                     <button className="add-btn" onClick={() => setMode("create")}>Add your first account</button>
                 </div>
             ) : (
-                <div className="cards-grid">
-                    {accounts.map((acc, idx) => (
-                        <BankCard
-                            key={acc.id}
-                            acc={acc}
-                            idx={idx}
-                            selected={selected === acc.id}
-                            onClick={() => setSelected(selected === acc.id ? null : acc.id)}
-                        />
-                    ))}
+                <div className="app-container">
+                    <div className="wallet"
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                    >
+                        <div className="wallet-back"></div>
+                        <div className="cards">
+                            {accounts.map((acc, idx) => (
+                                <BankCard
+                                    key={acc.id}
+                                    acc={acc}
+                                    idx={idx}
+                                    selected={selected === acc.id}
+                                    onClick={() => setSelected(selected === acc.id ? null : acc.id)}
+                                    isHovered={isHovered}
+                                />
+                            ))}
+                        </div>
+                        <div className="pocket">
+                            <svg className="pocket-svg" viewBox="0 0 280 160" fill="none">
+                                <path
+                                d="M 0 20 C 0 10, 5 10, 10 10 C 20 10, 25 25, 40 25 L 240 25 C 255 25, 260 10, 270 10 C 275 10, 280 10, 280 20 L 280 120 C 280 155, 260 160, 240 160 L 40 160 C 20 160, 0 155, 0 120 Z"
+                                fill="#1e341e"
+                                ></path>
+                                <path
+                                d="M 8 22 C 8 16, 12 16, 15 16 C 23 16, 27 29, 40 29 L 240 29 C 253 29, 257 16, 265 16 C 268 16, 272 16, 272 22 L 272 120 C 272 150, 255 152, 240 152 L 40 152 C 25 152, 8 152, 8 120 Z"
+                                stroke="#3d5635"
+                                strokeWidth="1.5"
+                                strokeDasharray="6 4"
+                                ></path>
+                            </svg>
+                            <div className="pocket-content">
+                                <div style={{position: "relative", height: "24px", width: "100%"}}>
+                                    <div className="balance-stars">******</div>
+                                    <div className="balance-real">{fmt(total)}</div>
+                                </div>
+                                <div style={{color: "#698263", fontSize: "12px", fontWeight: 500}}>Hover To View Total Balance</div>
+                                <div className="eye-icon-wrapper">
+                                    <svg
+                                        className="eye-icon eye-slash"
+                                        width="20"
+                                        height="20"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    >
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                        <line x1="3" y1="3" x2="21" y2="21"></line>
+                                    </svg>
+                                    <svg
+                                        className="eye-icon eye-open"
+                                        style={{opacity: 0}}
+                                        width="20"
+                                        height="20"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    >
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -158,7 +219,7 @@ function WalletTab() {
                             <i className="ti ti-trash" /> Delete
                         </button>
                         <button className="drawer-btn close-btn" onClick={() => setSelected(null)}>
-                            <i className="ti ti-x" />
+                            <i className="ti ti-x" /> Deselect
                         </button>
                     </div>
                 </div>
@@ -175,12 +236,25 @@ const CARD_PALETTES = [
     { bg: "linear-gradient(135deg, #450a0a 0%, #991b1b 100%)", text: "#fee2e2", accent: "#fca5a5" },
 ];
 
-function BankCard({ acc, idx, selected, onClick }) {
+function BankCard({ acc, idx, selected, onClick, isHovered }) {
     const pal = CARD_PALETTES[idx % CARD_PALETTES.length];
+    const [isHoveringCard, setIsHoveringCard] = useState(false);
     return (
         <div
-            className={`bank-card ${selected ? "selected" : ""}`}
-            style={{ background: pal.bg, color: pal.text }}
+            className={`card ${selected ? "selected" : ""}`}
+            onMouseEnter={() => setIsHoveringCard(true)}
+            onMouseLeave={() => setIsHoveringCard(false)}
+            style={{
+                background: pal.bg,
+                color: pal.text,
+                bottom: `${20 + idx * 25}px`,
+                zIndex: isHoveringCard ? 100 : 40 - (idx * 5),
+                animationDelay: `${idx * 0.1}s`,
+                transitionDelay: isHoveringCard ? `0s` : "",
+                transform: isHovered
+                    ? `translateY(-${30 + (idx * 20)}px) rotate(${idx % 2 ? "" : "-"}${4 -idx}deg)`
+                    : `translateY(0px) rotate(0deg)`,
+                }}
             onClick={onClick}
         >
             {acc.is_primary && (
@@ -188,22 +262,24 @@ function BankCard({ acc, idx, selected, onClick }) {
                     <i className="ti ti-star-filled" /> Primary
                 </span>
             )}
-            <div className="card-top-row">
-                <span className="card-provider">{acc.provider ?? "Account"}</span>
-                <div className="card-chip" />
-            </div>
-            <div className="card-number">
-                <span>••••</span><span>••••</span><span>••••</span>
-                <span>{acc.last4 ?? "????"}  </span>
-            </div>
-            <div className="card-bottom-row">
-                <div>
-                    <div className="card-meta-label">Account name</div>
-                    <div className="card-meta-value">{acc.name}</div>
+            <div className="card-inner">
+                <div className="card-top">
+                    <span className="card-provider">{acc.provider ?? "Account"}</span>
+                    <div className="card-chip" />
                 </div>
-                <div className="card-balance" style={{ color: pal.accent }}>
-                    {fmt(acc.balance)}
-                    <span className="card-currency">{acc.currency}</span>
+                <div className="card-number">
+                        <span>••••</span><span>••••</span><span>••••</span>
+                        <span>{acc.last4 ?? "????"}  </span>
+                    </div>
+                <div className="card-bottom">
+                    <div className="card-info">
+                        <div className="card-meta-label">Account name</div>
+                        <div className="card-meta-value">{acc.name}</div>
+                    </div>
+                    <div className="card-balance" style={{ color: pal.accent }}>
+                        {fmt(acc.balance)}
+                        <span className="card-currency">{acc.currency}</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -278,11 +354,11 @@ function TransactionsTab() {
             .catch(() => setError("Could not load transactions."));
     }, []);
 
-    if (error)  return <p className="muted">{error}</p>;
-    if (!txns)  return <p className="muted loading-text">Loading…</p>;
+    if (error) return <p className="muted">{error}</p>;
+    if (!txns) return <p className="muted loading-text">Loading…</p>;
 
     const categories = ["all", ...new Set(txns.map(t => t.category).filter(Boolean))];
-    const visible    = filter === "all" ? txns : txns.filter(t => t.category === filter);
+    const visible = filter === "all" ? txns : txns.filter(t => t.category === filter);
 
     return (
         <div className="txns-tab">
