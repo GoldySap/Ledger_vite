@@ -10,7 +10,7 @@ class SubscriptionAccess(db.Model):
     has_finance_access = db.Column(db.Boolean, default=False)
     has_investment_access = db.Column(db.Boolean, default=False)
     has_analytics_access = db.Column(db.Boolean, default=False)
-    max_accounts = db.Column(db.Integer, default=1)
+    max_accounts = db.Column(db.Integer, default=2)
     max_portfolio_transfer_rate = db.Column(db.Integer, default=1000)
     
     subscription = db.relationship("Subscription", backref=db.backref("access", uselist=False))
@@ -49,6 +49,7 @@ class Account(db.Model):
 
     name = db.Column(db.String(100), nullable=False)
     provider = db.Column(db.String(50))
+    cardnumber = db.Column(db.String(12))
     last4 = db.Column(db.String(4))
 
     balance = db.Column(db.Float, default=0)

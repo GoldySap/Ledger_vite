@@ -3,7 +3,7 @@ import { useApi } from "../../API/useApi";
 import { Test } from "./test.jsx"
 import "./wallet.css";
 import "./investments.css";
-import SettingsPage from "./settings.jsx";
+import SettingsPage from "./settingstest.jsx";
 
 export function Finances() {
   const [tab, setTab] = useState("wallet");
@@ -18,16 +18,18 @@ export function Finances() {
       </div>
 
       {tab === "wallet" && <WalletTab />}
-      {tab === "blank" && <BlankTab />}
+      {tab === "blank" && <Test />}
     </div>
   );
 }
 
 function WalletTab() {
     const { call } = useApi();
+
     const [accounts, setAccounts] = useState([]);
     const [selected, setSelected] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const [mode, setMode] = useState("view");
+    const [editingAccount, setEditingAccount] = useState(null);
 
     useEffect(() => {
         load();
@@ -35,28 +37,33 @@ function WalletTab() {
 
     async function load() {
         const res = await call("/api/accounts/get");
-        setAccounts(res);
+        setAccounts(res || []);
     }
 
-    async function createAccount() {
-        setLoading(true);
-
+    async function create(data) {
         await call("/api/accounts/create", {
             method: "POST",
-            body: JSON.stringify({
-                name: "New Account",
-                provider: "Visa",
-                last4: "1234",
-                balance: 0
-            })
+            body: JSON.stringify(data)
         });
+        setMode("view");
+        load();
+    }
 
-        await load();
-        setLoading(false);
+    async function update(data) {
+        await call(`/api/accounts/${editingAccount.id}/update`, {
+            method: "PUT",
+            body: JSON.stringify(data)
+        });
+        setMode("view");
+        setEditingAccount(null);
+        load();
     }
 
     async function remove(id) {
-        await call(`/api/accounts/${id}`, { method: "DELETE" });
+        if (!confirm("Delete this account?")) return;
+
+        await call(`/api/accounts/${id}/delete`, { method: "DELETE" });
+        setSelected(null);
         load();
     }
 
@@ -65,12 +72,34 @@ function WalletTab() {
         load();
     }
 
+    if (mode === "create") {
+        return (
+            <AccountForm
+                onSubmit={create}
+                onCancel={() => setMode("view")}
+            />
+        );
+    }
+
+    if (mode === "edit") {
+        return (
+            <AccountForm
+                initial={editingAccount}
+                onSubmit={update}
+                onCancel={() => {
+                    setMode("view");
+                    setEditingAccount(null);
+                }}
+            />
+        );
+    }
+
     const total = accounts.reduce((sum, a) => sum + (a.balance || 0), 0);
 
     return (
         <div className="wallet">
 
-            <button onClick={createAccount} disabled={loading}>
+            <button onClick={() => setMode("create")}>
                 + Add Account
             </button>
 
@@ -78,34 +107,110 @@ function WalletTab() {
                 {accounts.map(acc => (
                     <div
                         key={acc.id}
-                        className={`card ${acc.provider?.toLowerCase()}`}
+                        className={`card ${selected === acc.id ? "active" : ""}`}
                         onClick={() => setSelected(acc.id)}
                     >
-                        <div className="card-inner">
-                            <div className="card-top">
-                                <span>{acc.provider}</span>
-                                {acc.is_primary && <span>⭐</span>}
-                            </div>
+                        <div className="card-top">
+                            <span>{acc.provider}</span>
+                            {acc.is_primary && <span>⭐</span>}
+                        </div>
 
-                            <div className="card-bottom">
-                                <span>{acc.name}</span>
-                                <span>**** {acc.last4}</span>
-                                <span>${acc.balance}</span>
-                            </div>
+                        <div className="card-bottom">
+                            <span>{acc.name}</span>
+                            <span>**** {acc.last4}</span>
+                            <span>${acc.balance}</span>
                         </div>
                     </div>
                 ))}
             </div>
 
-            <div>Total: ${total}</div>
+            <div className="total">Total: ${total}</div>
 
             {selected && (
-                <div className="modal">
-                    <button onClick={() => setPrimary(selected)}>Set Primary</button>
-                    <button onClick={() => remove(selected)}>Delete</button>
-                    <button onClick={() => setSelected(null)}>Close</button>
+                <div className="action-panel">
+                    <button onClick={() => {
+                        const acc = accounts.find(a => a.id === selected);
+                        setEditingAccount(acc);
+                        setMode("edit");
+                    }}>
+                        Edit
+                    </button>
+
+                    <button onClick={() => setPrimary(selected)}>
+                        Set Primary
+                    </button>
+
+                    <button onClick={() => remove(selected)}>
+                        Delete
+                    </button>
+
+                    <button onClick={() => setSelected(null)}>
+                        Close
+                    </button>
                 </div>
             )}
+        </div>
+    );
+}
+
+function AccountForm({ initial = {}, onSubmit, onCancel }) {
+    const [name, setName] = useState(initial.name || "");
+    const [provider, setProvider] = useState(initial.provider || "");
+    const [cardNumber, setCardNumber] = useState("");
+
+    function handleSubmit() {
+        if (!name || !provider) {
+            alert("Missing required fields");
+            return;
+        }
+
+        if (!initial.id) {
+            if (cardNumber.length < 12) {
+                alert("Invalid card number");
+                return;
+            }
+        }
+
+        onSubmit({
+            name,
+            provider,
+            last4: initial.id ? initial.last4 : cardNumber.slice(-4)
+        });
+    }
+
+    return (
+        <div className="form-container">
+            <h2>{initial.id ? "Edit Account" : "Create Account"}</h2>
+
+            <input
+                placeholder="Account Name"
+                value={name}
+                onChange={e => setName(e.target.value)}
+            />
+
+            <input
+                placeholder="Provider (Visa, Bank...)"
+                value={provider}
+                onChange={e => setProvider(e.target.value)}
+            />
+
+            {!initial.id && (
+                <input
+                    placeholder="Card Number (12+ character)"
+                    value={cardNumber}
+                    onChange={e => setCardNumber(e.target.value)}
+                />
+            )}
+
+            <div className="form-actions">
+                <button onClick={handleSubmit}>
+                    Save
+                </button>
+
+                <button onClick={onCancel}>
+                    Cancel
+                </button>
+            </div>
         </div>
     );
 }

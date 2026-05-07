@@ -52,7 +52,7 @@ export function NavSide({ children }) {
 
                 <div className="nav-section">
                     <NavLink to="/" className={({ isActive }) => isActive ? "primary" : "" }>Back</NavLink>
-                    <NavLink onClick={()=>{handleLogout()}} to="/" className={({ isActive }) => isActive ? "exits primary" : "exits" }>Logout</NavLink>
+                    <NavLink onClick={()=>{handleLogout()}} to="/" className={({ isActive }) => isActive ? "Expandeble-Btn primary" : "Expandeble-Btn" }>Logout</NavLink>
                 </div>
             </nav>
 

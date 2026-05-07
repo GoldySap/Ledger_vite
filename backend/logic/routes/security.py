@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime, timedelta, UTC
 from ..extensions import db
-from ..models.data import User, VerificationCode, AuditLog, SecuritySettings
+from ..models.data import User, VerificationCode, AuditLog, SecuritySettings, Subscription
 from .helpers import generate_code, verify_code, login_user_response, sendCode
 import pyotp, secrets
 
@@ -104,6 +104,7 @@ def verify_public():
     db.session.commit()
     return jsonify({"success": True})
 
+
 @security_bp.route("", methods=["GET"])
 @jwt_required()
 def get_security():
@@ -119,7 +120,8 @@ def get_security():
         "verified": sec.verified,
         "email_2fa_enabled": sec.email_2fa_enabled,
         "sms_2fa_enabled": sec.sms_2fa_enabled,
-        "totp_enabled": sec.totp_enabled
+        "totp_enabled": sec.totp_enabled,
+        "backup_codes": sec.backup_codes
     })
 
 @security_bp.route("/email-2fa", methods=["POST"])

@@ -5,6 +5,17 @@ from ..extensions import db
 from ..models.data import User, Account, Subscription, SubscriptionAccess
 
 def can_create_account(user):
+    if not user.subscription_id:
+        return False
+
+    sub = Subscription.query.get(user.subscription_id)
+    if not sub:
+        return False
+
+    access = SubscriptionAccess.query.filter_by(subscription_id=sub.id).first()
+    if not access:
+        return False
+    
     sub = Subscription.query.filter_by(id=user.subscription_id).first()
     access = SubscriptionAccess.query.filter_by(subscription_id=sub.id).first()
     max_accounts = access.max_accounts
@@ -39,9 +50,7 @@ def get_accounts():
 @jwt_required()
 def create_account():
     user = User.query.get(get_jwt_identity())
-    
-    if not user.subscription_id:
-        return jsonify({"error": "No subscription"}), 403
+
     if not can_create_account(user):
         return jsonify({"error": "Account limit reached"}), 403
 
@@ -62,6 +71,32 @@ def create_account():
 
     return jsonify({"msg": "created"})
 
+@accounts_bp.route("/<int:id>/update", methods=["PUT"])
+@jwt_required()
+def update_account(id):
+    user_id = get_jwt_identity()
+    acc = Account.query.get(id)
+
+    if not acc or acc.user_id != user_id:
+        return jsonify({"error": "Not found"}), 404
+
+    data = request.get_json()
+
+    if "name" in data:
+        acc.name = data["name"]
+
+    if "provider" in data:
+        acc.provider = data["provider"]
+
+    if "last4" in data:
+        if len(data["last4"]) != 4 or not data["last4"].isdigit():
+            return jsonify({"error": "Invalid last4"}), 400
+        acc.last4 = data["last4"]
+
+    db.session.commit()
+
+    return jsonify({"success": True})
+
 @accounts_bp.route("/<int:id>/primary", methods=["POST"])
 @limiter.limit("10 per minute")
 @jwt_required()
@@ -75,6 +110,22 @@ def set_primary(id):
         return jsonify({"error": "Not found"}), 404
 
     acc.is_primary = True
+    db.session.commit()
+
+    return jsonify({"success": True})
+
+@accounts_bp.route("/<int:id>/delete", methods=["DELETE"])
+@limiter.limit("10 per minute")
+@jwt_required()
+def delete_account(id):
+    user_id = get_jwt_identity()
+
+    acc = Account.query.get(id)
+
+    if not acc or acc.user_id != user_id:
+        return jsonify({"error": "Not found"}), 404
+
+    db.session.delete(acc)
     db.session.commit()
 
     return jsonify({"success": True})

@@ -342,32 +342,83 @@ Forklar ruter og funksjoner (kort).
 
 ### 8. Sikkerhet og pålitelighet
 
--   .env\
--   Miljøvariabler\
--   Parameteriserte spørringer\
--   Validering\
--   Feilhåndtering
+## Sikkerhetstiltak
+
+* Passord hashes med Werkzeug
+* Miljøvariabler lagres i `.env`
+* Rollebasert tilgang
+* Tofaktorautentisering (2FA)
+* Verifikasjonskoder med utløpstid
+* Audit logging
+
+## Pålitelighet
+
+* Feilhåndtering i API
+* Datavalidering
+* Cascade delete for relasjoner
+* Databaseindekser på prisdata
 
 ------------------------------------------------------------------------
 
-### 9. Feilsøking og testing
+# 9. Feilsøking og testing
 
--   Typiske feil\
--   Hvordan du løste dem\
--   Testmetoder
+## Typiske feil
+
+| Problem                  | Løsning                                      |
+| ------------------------ | -----------------------------------------    |
+| Database kobler ikke til | Sjekke DATABASE_URL og Netverk               |
+| CORS-feil                | Konfigurere Flask-CORS eller skjekk terminal |
+| Feil ved login           | Kontrollere data og requests                 |
+| API returnerer feil      | Debugging i Flask eller skjekke inspector    |
+
+## Testmetoder
+- Testing av API-ruter
+- Testing av databaseoperasjoner
+- Manuell frontend-testing
+- Kontroll av rollebasert tilgang
+- Skjekke netverks forespørsler og tilbakemedlinger
+- Skjekke terminal for meldinger
 
 ------------------------------------------------------------------------
 
-### 10. Konklusjon og refleksjon
+# 10. Konklusjon og refleksjon
 
--   Hva lærte du?\
--   Hva fungerte bra?\
--   Hva ville du gjort annerledes?\
--   Hva var utfordrende?
+## Hva lærte jeg?
+
+- Hvordan bygge fullstack webapplikasjoner
+- Databasearkitektur og relasjoner
+- API-utvikling
+- Sikker autentisering
+- Hosting og deployment
+
+## Hva fungerte bra?
+
+- Databaseoppsettet
+- Strukturert backend
+- Rolle- og abonnementssystem
+- Investeringstabeller og relasjoner
+
+## Hva var utfordrende?
+
+- Relasjoner mellom mange tabeller
+- Sikkerhet og 2FA
+- Deployment mellom frontend og backend
+- Håndtering av investeringstransaksjoner
+
+## Hva ville jeg gjort annerledes?
+
+- Laget flere automatiserte tester
+- Optimalisert API tidligere
+- Planlagt frontend-design tidligere i prosjektet
 
 ------------------------------------------------------------------------
 
-### 11. Kildeliste
+# 11. Kildeliste
 
--   w3schools\
--   flask.palletsprojects.com
+- Flask Documentation — https://flask.palletsprojects.com/
+- SQLAlchemy Documentation — https://www.sqlalchemy.org/
+- React Documentation — https://react.dev/
+- MDN Web Docs — https://developer.mozilla.org/
+- W3Schools — https://www.w3schools.com/
+- Render Documentation — https://render.com/docs
+- Vercel Documentation — https://vercel.com/docs

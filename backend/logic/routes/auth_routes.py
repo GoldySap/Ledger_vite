@@ -56,10 +56,10 @@ def register():
 def login():
     data = request.get_json()
     user = User.query.filter_by(email=data["email"]).first()
-    if not user or not user.check_password(data["password"]):
-        return jsonify({"error": "Invalid credentials"}), 401
     if not verify_turnstile(data.get("captcha")):
         return jsonify({"error": "Captcha failed"}), 400
+    if not user or not user.check_password(data["password"]):
+        return jsonify({"error": "Invalid credentials"}), 401
     if not user.active:
         return jsonify({"error": "Account Unaccessable"}), 403
     

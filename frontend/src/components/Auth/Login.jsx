@@ -81,7 +81,7 @@ export function AuthPage() {
         });
 
         if (res.verify_required) {
-          const code = await requestVerification({
+          const code = await requestCodeInput({
             type: "email_verify",
             method: "email",
             email
