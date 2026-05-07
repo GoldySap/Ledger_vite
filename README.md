@@ -17,12 +17,11 @@ Ledger er en fullstack webapplikasjon for økonomistyring og investeringer. Syst
 Målet med prosjektet er å utvikle en moderne og sikker webapplikasjon hvor brukere kan simulere invisteringer og holde oversikt over (fiktiv) økonomisk informasjon på ett sted. Systemet kombinerer kontohåndtering, investeringsovervåkning og abonnementstilgang i én løsning.
 
 Prosjektet demonstrerer:
-
-Fullstack webutvikling
-Databasehåndtering med SQLAlchemy
-Autentisering og sikkerhet
-Rollebasert tilgangskontroll
-API-basert datavisualisering
+- Fullstack webutvikling
+- Databasehåndtering med SQLAlchemy
+- Autentisering og sikkerhet
+- Rollebasert tilgangskontroll
+- API-basert datavisualisering
 
 - **Hvilket problem løser det?**
 Mange mangler en enkel og strukturert måte å samle økonomisk informasjon og abonnementstilgang på ett sted. Prosjektet viser også hvordan slike systemer bygges teknisk. 

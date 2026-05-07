@@ -57,10 +57,31 @@ class Account(db.Model):
 
     is_primary = db.Column(db.Boolean, default=False)
 
+    active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     user = db.relationship("User", back_populates="accounts")
     transactions = db.relationship("Transaction", back_populates="account", cascade="all, delete")
+
+class Card(db.Model):
+    __tablename__ = "cards"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    provider = db.Column(db.String(50))
+    cardnumber = db.Column(db.String(12))
+    securitycode = db.Column(db.Integer)
+    last4 = db.Column(db.String(4))
+
+    currency = db.Column(db.String(3), default="USD")
+
+    expires_at = db.Column(db.DateTime(timezone=True), nullable=False)
+
+    active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    user = db.relationship("User", back_populates="cards")
+    accounts = db.relationship("Accounts", back_populates="cards", cascade="all, delete")
 
 class Portfolio(db.Model):
     __tablename__ = "portfolios"
@@ -80,7 +101,6 @@ class SecuritySettings(db.Model):
     totp_pending_secret = db.Column(db.String(32))
     totp_enabled = db.Column(db.Boolean, default=False)
     backup_codes = db.Column(db.JSON)
-
 
 class VerificationCode(db.Model):
     __tablename__ = "verification_codes"

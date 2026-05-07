@@ -7,342 +7,551 @@ export default function SettingsPage() {
     const [tab, setTab] = useState("account");
 
     const tabs = [
-        { id: "account", label: "Account" },
-        { id: "security", label: "Security" },
-        { id: "subscription", label: "Subscription" },
-        { id: "activity", label: "Activity" }
+        { id: "account",      label: "Account",      icon: "ti-user" },
+        { id: "security",     label: "Security",     icon: "ti-shield-lock" },
+        { id: "subscription", label: "Subscription", icon: "ti-crown" },
+        { id: "activity",     label: "Activity",     icon: "ti-list" },
     ];
 
     return (
-        <div className="settings-settings">
-            <aside className="sidebar">
-                <h2 className="logo">Dashboard</h2>
+        <div className="settings-page">
+            <div className="settings-header">
+                <h1>Settings</h1>
+                <p>Manage your account, security, and subscription</p>
+            </div>
+
+            <div className="settings-tabs" role="tablist">
                 {tabs.map(t => (
                     <button
                         key={t.id}
-                        className={`sidebar-item ${tab === t.id ? "active" : ""}`}
+                        role="tab"
+                        aria-selected={tab === t.id}
+                        className={`settings-tab ${tab === t.id ? "active" : ""}`}
                         onClick={() => setTab(t.id)}
                     >
+                        <i className={`ti ${t.icon}`} aria-hidden="true" />
                         {t.label}
                     </button>
                 ))}
-            </aside>
+            </div>
 
-            <main className="content">
-                <Header tab={tab} />
-
-                {tab === "account" && <Account />}
-                {tab === "security" && <Security />}
-                {tab === "subscription" && <Subscription />}
-                {tab === "activity" && <Activity />}
-            </main>
+            <div className="settings-content">
+                {tab === "account"      && <AccountTab />}
+                {tab === "security"     && <SecurityTab />}
+                {tab === "subscription" && <SubscriptionTab />}
+                {tab === "activity"     && <ActivityTab />}
+            </div>
         </div>
     );
 }
 
-function Header({ tab }) {
-    return (
-        <div className="header">
-            <h1>{tab.charAt(0).toUpperCase() + tab.slice(1)}</h1>
-            <p>Manage your {tab}</p>
-        </div>
-    );
-}
-
-function Account() {
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-
-    const [form, setForm] = useState({
-        email: "",
-        phone: ""
-    });
+function AccountTab() {
+    const { call } = useApi();
+    const [loading,   setLoading]   = useState(true);
+    const [saving,    setSaving]    = useState(false);
+    const [deleting,  setDeleting]  = useState(false);
+    const [form,      setForm]      = useState({ email: "", phone: "" });
+    const [showDelete, setShowDelete] = useState(false);
+    const [deleteConfirm, setDeleteConfirm] = useState("");
 
     useEffect(() => {
-        setTimeout(() => {
-            setForm({ email: "user@email.com", phone: "12345678" });
+        call("/api/auth/me").then(user => {
+            if (user) setForm({ email: user.email ?? "", phone: user.phonenumber ?? "" });
             setLoading(false);
-        }, 500);
+        });
     }, []);
 
-    async function handleSubmit(e) {
-        e.preventDefault();
+    async function handleSave() {
         setSaving(true);
-
-        await new Promise(r => setTimeout(r, 800));
-
+        await call("/api/auth/update", {
+            method: "PUT",
+            body: JSON.stringify({ email: form.email }),
+        });
         setSaving(false);
-        alert("Saved!");
     }
 
-    if (loading) return <Card><p>Loading...</p></Card>;
+    async function handleDelete() {
+        if (deleteConfirm !== "DELETE") return;
+        setDeleting(true);
+        // await call("/api/auth/delete", { method: "DELETE" });
+        alert("Account deletion not yet implemented on the backend.");
+        setDeleting(false);
+        setShowDelete(false);
+        setDeleteConfirm("");
+    }
+
+    if (loading) return <Section><p className="muted">Loading…</p></Section>;
 
     return (
-        <Card>
-            <h2>Profile</h2>
+        <>
+            <Section title="Profile" icon="ti-user-circle">
+                <div className="two-col">
+                    <Field label="Email address">
+                        <input
+                            type="email"
+                            value={form.email}
+                            onChange={e => setForm({ ...form, email: e.target.value })}
+                        />
+                    </Field>
+                    <Field label="Phone number">
+                        <input
+                            type="tel"
+                            value={form.phone}
+                            onChange={e => setForm({ ...form, phone: e.target.value })}
+                            disabled
+                            title="Phone updates coming soon"
+                        />
+                    </Field>
+                </div>
+                <div className="align-right">
+                    <Btn primary onClick={handleSave} disabled={saving}>
+                        <i className="ti ti-check" aria-hidden="true" />
+                        {saving ? "Saving…" : "Save changes"}
+                    </Btn>
+                </div>
+            </Section>
 
-            <form onSubmit={handleSubmit}>
-                <Input
-                    label="Email"
-                    value={form.email}
-                    onChange={v => setForm({ ...form, email: v })}
-                />
+            <Section title="Danger zone" icon="ti-trash">
+                <div className="row-between">
+                    <div>
+                        <div className="field-title">Delete account</div>
+                        <div className="muted sm">Permanently remove your account and all data</div>
+                    </div>
+                    <Btn danger sm onClick={() => setShowDelete(true)}>
+                        <i className="ti ti-trash" aria-hidden="true" /> Delete
+                    </Btn>
+                </div>
+            </Section>
 
-                <Input
-                    label="Phone"
-                    value={form.phone}
-                    onChange={v => setForm({ ...form, phone: v })}
-                />
-
-                <button className="primary" disabled={saving}>
-                    {saving ? "Saving..." : "Save changes"}
-                </button>
-            </form>
-        </Card>
+            {showDelete && (
+                <Modal title="Delete account" onClose={() => { setShowDelete(false); setDeleteConfirm(""); }}>
+                    <p>This is permanent and cannot be undone. Type <strong>DELETE</strong> to confirm.</p>
+                    <input
+                        placeholder="Type DELETE to confirm"
+                        value={deleteConfirm}
+                        onChange={e => setDeleteConfirm(e.target.value)}
+                    />
+                    <div className="modal-actions">
+                        <Btn onClick={() => { setShowDelete(false); setDeleteConfirm(""); }}>Cancel</Btn>
+                        <Btn danger onClick={handleDelete} disabled={deleteConfirm !== "DELETE" || deleting}>
+                            {deleting ? "Deleting…" : "Delete account"}
+                        </Btn>
+                    </div>
+                </Modal>
+            )}
+        </>
     );
 }
 
-function Security() {
+function SecurityTab() {
     const { call } = useApi();
+    const [sec,      setSec]      = useState(null);
+    const [modal,    setModal]    = useState(null);
+    const [qr,       setQr]       = useState(null);
+    const [code,     setCode]     = useState("");
+    const [newCodes, setNewCodes] = useState([]);
 
-    const [sec, setSec] = useState(null);
-
-    const [modalType, setModalType] = useState(null); 
-
-    const [qr, setQr] = useState(null);
-    const [code, setCode] = useState("");
-    const [backupCodes, setBackupCodes] = useState(null);
-
-    useEffect(() => {
-        load();
-    }, []);
+    useEffect(() => { load(); }, []);
 
     async function load() {
         const data = await call("/api/security");
-        setSec(data);
+        if (data) setSec(data);
     }
 
     async function toggleEmail2FA() {
         const res = await call("/api/security/email-2fa", { method: "POST" });
-
-        setSec(prev => ({
-            ...prev,
-            email_2fa_enabled: res.email_2fa_enabled
-        }));
+        if (res) setSec(prev => ({ ...prev, email_2fa_enabled: res.email_2fa_enabled }));
     }
 
-    async function startTOTPSetup() {
+    async function startSetup() {
         const res = await call("/api/security/totp/setup", { method: "POST" });
-
-        if (!res?.qr) {
-            console.error("No QR received");
-            return;
-        }
-
-        const qrImage = await QRCode.toDataURL(res.qr);
-
-        setQr(qrImage);
-        setModalType("setup");
+        if (!res?.qr) return;
+        const img = await QRCode.toDataURL(res.qr);
+        setQr(img);
+        setCode("");
+        setModal("setup");
     }
 
     async function confirmTOTP() {
         const res = await call("/api/security/totp/confirm", {
             method: "POST",
-            body: JSON.stringify({ code })
+            body: JSON.stringify({ code }),
         });
-
-        if (res.success) {
+        if (res?.success) {
+            setNewCodes(res.backup_codes ?? []);
             setCode("");
-            setBackupCodes(res.backup_codes);
-            setModalType("backup");
-
-            await load();
+            setModal("backup-new");
+            load();
         }
-    }
-
-    function startDisable() {
-        setModalType("disable");
     }
 
     async function disableTOTP() {
         const res = await call("/api/security/totp/disable", {
             method: "POST",
-            body: JSON.stringify({ code })
+            body: JSON.stringify({ code }),
         });
-
-        if (res.totp_enabled === false) {
+        if (res?.totp_enabled === false) {
             setCode("");
-            setModalType(null);
-
-            setSec(prev => ({
-                ...prev,
-                totp_enabled: false
-            }));
+            setModal(null);
+            setSec(prev => ({ ...prev, totp_enabled: false, backup_codes: null }));
         }
     }
 
-    if (!sec) return <p>Loading...</p>;
+    async function viewBackupCodes() {
+        if (!sec?.totp_enabled) { setModal("backup-empty"); return; }
+        const data = await call("/api/security");
+        if (data) setSec(data);
+        setModal("backup-view");
+    }
+
+    if (!sec) return <Section><p className="muted">Loading…</p></Section>;
 
     return (
-        <div>
-            <h2>Security</h2>
+        <>
+            <Section title="Email 2FA" icon="ti-mail">
+                <ToggleRow
+                    title="Email verification"
+                    desc="Receive a one-time code via email on each login"
+                    checked={!!sec.email_2fa_enabled}
+                    onChange={toggleEmail2FA}
+                />
+            </Section>
 
-            <div>
-                <h3>Email 2FA</h3>
-                <button onClick={toggleEmail2FA}>
-                    {sec.email_2fa_enabled ? "Disable" : "Enable"}
-                </button>
-            </div>
-
-            <div>
-                <h3>Authenticator (TOTP)</h3>
-                <p>Status: {sec.totp_enabled ? "Enabled" : "Disabled"}</p>
-
-                {!sec.totp_enabled ? (
-                    <button onClick={startTOTPSetup}>
-                        Enable Authenticator
-                    </button>
-                ) : (
-                    <button onClick={startDisable}>
-                        Disable Authenticator
-                    </button>
-                )}
-            </div>
-            {modalType === "setup" && (
-                <div className="modal">
-                    <div className="modal-box">
-                        <h3>Scan QR Code</h3>
-
-                        <img src={qr} alt="QR" />
-
-                        <input
-                            placeholder="Enter 6-digit code"
-                            value={code}
-                            onChange={(e) => setCode(e.target.value)}
-                        />
-
-                        <button onClick={confirmTOTP}>Confirm</button>
-                        <button onClick={() => setModalType(null)}>Cancel</button>
+            <Section title="Authenticator app (TOTP)" icon="ti-device-mobile">
+                <div className="toggle-row">
+                    <div className="tr-info">
+                        <h4>Time-based one-time password</h4>
+                        <p>Use Google Authenticator, Authy, or similar</p>
+                    </div>
+                    <div className="inline-gap">
+                        <span className={`badge ${sec.totp_enabled ? "enabled" : "disabled"}`}>
+                            {sec.totp_enabled ? "Enabled" : "Disabled"}
+                        </span>
+                        <Btn sm onClick={sec.totp_enabled
+                            ? () => { setCode(""); setModal("disable"); }
+                            : startSetup
+                        }>
+                            {sec.totp_enabled ? "Disable" : "Enable"}
+                        </Btn>
                     </div>
                 </div>
-            )}
-            {modalType === "disable" && (
-                <div className="modal">
-                    <div className="modal-box">
-                        <h3>Disable Authenticator</h3>
+            </Section>
 
-                        <p>Enter TOTP code</p>
-
-                        <input
-                            placeholder="Enter code"
-                            value={code}
-                            onChange={(e) => setCode(e.target.value)}
-                        />
-
-                        <button onClick={disableTOTP}>Disable</button>
-                        <button onClick={() => setModalType(null)}>Cancel</button>
+            <Section title="Backup codes" icon="ti-key">
+                <div className="row-between">
+                    <div>
+                        <div className="field-title">Recovery codes</div>
+                        <div className="muted sm">One-time codes if you lose access to your authenticator</div>
                     </div>
+                    <Btn sm onClick={viewBackupCodes}>
+                        <i className="ti ti-eye" aria-hidden="true" /> View
+                    </Btn>
                 </div>
-            )}
-            {modalType === "backup" && backupCodes && (
-                <div className="modal">
-                    <div className="modal-box">
-                        <h3>Backup Codes</h3>
+            </Section>
 
-                        <p>These codes are one time use and can be used instead of the generated authenticator code if needed.</p>
-                        <p>Backup codes should only be used as a last resort incases like: losing or changing of mobile device, losing access to authenticator or the assosiated profile, etc.</p>
-
-                        <ul>
-                            {backupCodes.map((c, i) => (
-                                <li key={i}>{c}</li>
-                            ))}
-                        </ul>
-
-                        <p>Save these codes. They will not be shown again.</p>
-
-                        <button onClick={() => setModalType(null)}>I saved them</button>
+            {modal === "setup" && (
+                <Modal title="Set up authenticator" onClose={() => setModal(null)}>
+                    <p>Scan the QR code with your app, then enter the 6-digit code to confirm.</p>
+                    {qr && <img src={qr} alt="TOTP QR code" className="qr-img" />}
+                    <input
+                        placeholder="6-digit code"
+                        maxLength={6}
+                        value={code}
+                        onChange={e => setCode(e.target.value)}
+                    />
+                    <div className="modal-actions">
+                        <Btn onClick={() => setModal(null)}>Cancel</Btn>
+                        <Btn primary onClick={confirmTOTP}>Confirm</Btn>
                     </div>
-                </div>
+                </Modal>
             )}
-        </div>
+
+            {modal === "disable" && (
+                <Modal title="Disable authenticator" onClose={() => setModal(null)}>
+                    <p>Enter your current TOTP code or a backup code to confirm.</p>
+                    <input
+                        placeholder="Enter code"
+                        maxLength={8}
+                        value={code}
+                        onChange={e => setCode(e.target.value)}
+                    />
+                    <div className="modal-actions">
+                        <Btn onClick={() => setModal(null)}>Cancel</Btn>
+                        <Btn danger onClick={disableTOTP}>Disable</Btn>
+                    </div>
+                </Modal>
+            )}
+
+            {modal === "backup-new" && (
+                <Modal title="Save your backup codes" onClose={() => setModal(null)}>
+                    <p>Store these somewhere safe. Each code can only be used once and <strong>will not be shown again</strong>.</p>
+                    <BackupGrid codes={newCodes} />
+                    <div className="modal-actions">
+                        <CopyBtn text={newCodes.join("\n")} />
+                        <Btn primary onClick={() => setModal(null)}>I've saved them</Btn>
+                    </div>
+                </Modal>
+            )}
+
+            {modal === "backup-view" && (
+                <Modal title="Backup codes" onClose={() => setModal(null)}>
+                    {sec.backup_codes?.length > 0 ? (
+                        <>
+                            <p>Your remaining recovery codes. Used codes are automatically removed.</p>
+                            <BackupGrid codes={sec.backup_codes} />
+                            <div className="modal-actions">
+                                <CopyBtn text={sec.backup_codes.join("\n")} />
+                                <Btn primary onClick={() => setModal(null)}>Close</Btn>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <p>All backup codes have been used. Disable and re-enable your authenticator to generate new ones.</p>
+                            <div className="modal-actions">
+                                <Btn primary onClick={() => setModal(null)}>Close</Btn>
+                            </div>
+                        </>
+                    )}
+                </Modal>
+            )}
+
+            {modal === "backup-empty" && (
+                <Modal title="No backup codes" onClose={() => setModal(null)}>
+                    <p>Enable the authenticator app first to generate backup codes.</p>
+                    <div className="modal-actions">
+                        <Btn primary onClick={() => setModal(null)}>Close</Btn>
+                    </div>
+                </Modal>
+            )}
+        </>
     );
 }
 
-function Subscription() {
+function SubscriptionTab() {
     const { call } = useApi();
-    const [sub, setSub] = useState(null);
+    const [sub,   setSub]   = useState(null);
+    const [subdata, setSubData] = useState(null);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
-        call("/api/subscription").then(setSub);
+        call("/api/subscription/user")
+            .then(data => {
+                if (data?.label) setSub(data);
+                else setError("Could not load subscription data.");
+            })
+            .catch(() => setError("Could not load subscription data."));
+        call("/api/subscriptions/subs")
+            .then(data => {
+                if (data) setSubData(data);
+                else setError("Could not load subscription data.");
+            })
+            .catch(() => setError("Could not load subscription data."));
     }, []);
 
     async function upgrade() {
-        await call("/api/subscription/upgrade", { method: "POST" });
-        const updated = await call("/api/subscription");
-        setSub(updated);
+        const res = await call("/api/subscription/upgrade", { method: "POST" });
+        if (res?.label) setSub(res);
     }
 
-    if (!sub) return <p>Loading...</p>;
+    if (error) return <Section><p className="muted">{error}</p></Section>;
+    if (!sub)  return <Section><p className="muted">Loading…</p></Section>;
+
+    const isPro = sub.label?.toLowerCase() === "pro";
 
     return (
-        <div className="">
-            <h2>Subscription</h2>
-
-            <p><b>Plan:</b> {sub.label}</p>
-            <p><b>Price:</b> ${sub.price}/month</p>
-
-            {sub.label !== "pro" && (<button onClick={upgrade}>Upgrade to Pro</button>)}
-        </div>
+        <>
+            {Array.isArray(subdata) &&
+                subdata.map((s, i) => (
+                    <PlanCard
+                        key={i}
+                        name={s.name}
+                        price={s.price}
+                    />
+                ))
+            }
+            <PlanCard
+                name="Free"
+                price="$0 / month"
+                current={!isPro}
+                features={["2 accounts", "$1,000/mo transfers", "Basic analytics"]}
+            />
+            <PlanCard
+                name="Pro"
+                price="$12 / month"
+                current={isPro}
+                recommended
+                features={[
+                    "Unlimited accounts",
+                    "Unlimited transfers",
+                    "Finance & investments",
+                    "Advanced analytics",
+                    "Data export",
+                ]}
+                action={!isPro
+                    ? <Btn primary onClick={upgrade}><i className="ti ti-arrow-up" aria-hidden="true" /> Upgrade</Btn>
+                    : null
+                }
+            />
+        </>
     );
 }
 
-function Activity() {
+function ActivityTab() {
     const { call } = useApi();
-    const [logs, setLogs] = useState([]);
+    const [logs,  setLogs]  = useState(null);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
-        call("/api/security/history").then(setLogs);
+        call("/api/security/history")
+            .then(data => {
+                if (Array.isArray(data)) setLogs(data);
+                else setError("Could not load activity log.");
+            })
+            .catch(() => setError("Could not load activity log."));
     }, []);
 
-    return (
-        <div className="">
-            <h2>Activity</h2>
+    if (error) return <Section><p className="muted">{error}</p></Section>;
+    if (!logs) return <Section><p className="muted">Loading…</p></Section>;
 
+    return (
+        <Section title="Recent activity" icon="ti-list">
             {logs.length === 0 ? (
-                <p>No activity yet</p>
+                <p className="muted">No activity yet.</p>
             ) : (
-                <ul>
-                    {logs.map(l => (
-                        <li key={l.id}>{l.action} – {l.status}</li>
-                    ))}
-                </ul>
+                <table className="logs-table">
+                    <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th>Status</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {logs.map(l => (
+                            <tr key={l.id}>
+                                <td>{l.action.replace(/_/g, " ")}</td>
+                                <td>
+                                    <span className={`status-dot ${l.status}`} />
+                                    {l.status}
+                                </td>
+                                <td className="muted">
+                                    {new Date(l.created_at).toLocaleString("en-US", {
+                                        month: "short", day: "numeric",
+                                        hour: "2-digit", minute: "2-digit",
+                                    })}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             )}
+        </Section>
+    );
+}
+
+function Section({ title, icon, children }) {
+    return (
+        <div className="settings-section">
+            {title && (
+                <div className="section-title">
+                    {icon && <i className={`ti ${icon}`} aria-hidden="true" />}
+                    {title}
+                </div>
+            )}
+            {children}
         </div>
     );
 }
 
-function Card({ children, danger }) {
+function Field({ label, children }) {
     return (
-        <div className={` ${danger ? "danger-card" : ""}`}>{children}</div>
-    );
-}
-
-function Input({ label, value, onChange }) {
-    return (
-        <div className="input-group">
+        <div className="field">
             <label>{label}</label>
-            <input value={value} onChange={e => onChange(e.target.value)} />
+            {children}
         </div>
     );
 }
 
-function Toggle({ label, enabled, onClick }) {
+function ToggleRow({ title, desc, checked, onChange }) {
     return (
-        <div className="toggle">
-            <span>{label}</span>
-            <button onClick={onClick} className={enabled ? "on" : ""}>
-                {enabled ? "Enabled" : "Disabled"}
-            </button>
+        <div className="toggle-row">
+            <div className="tr-info">
+                <h4>{title}</h4>
+                <p>{desc}</p>
+            </div>
+            <label className="switch">
+                <input type="checkbox" checked={checked} onChange={onChange} />
+                <span className="switch-track" />
+            </label>
+        </div>
+    );
+}
+
+function Btn({ children, primary, danger, sm, onClick, disabled }) {
+    const cls = ["btn", primary && "primary", danger && "danger", sm && "sm"]
+        .filter(Boolean).join(" ");
+    return (
+        <button className={cls} onClick={onClick} disabled={disabled}>
+            {children}
+        </button>
+    );
+}
+
+function Modal({ title, children, onClose }) {
+    return (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+            <div className="modal-box">
+                <h3>{title}</h3>
+                {children}
+            </div>
+        </div>
+    );
+}
+
+function BackupGrid({ codes }) {
+    return (
+        <div className="backup-grid">
+            {(codes ?? []).map((c, i) => (
+                <div key={i} className="backup-code">{c}</div>
+            ))}
+        </div>
+    );
+}
+
+function CopyBtn({ text }) {
+    const [copied, setCopied] = useState(false);
+    function copy() {
+        navigator.clipboard?.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+    }
+    return (
+        <Btn onClick={copy}>
+            <i className={`ti ${copied ? "ti-check" : "ti-copy"}`} aria-hidden="true" />
+            {copied ? "Copied" : "Copy all"}
+        </Btn>
+    );
+}
+
+function PlanCard({ name, price, current, recommended, features, action }) {
+    return (
+        <div className={`plan-card ${current ? "current" : ""} ${recommended && !current ? "recommended" : ""}`}>
+            <div className="plan-info">
+                <div className="plan-header">
+                    <span className="plan-name">{name}</span>
+                    {current              && <span className="badge free">Current plan</span>}
+                    {recommended && !current && <span className="badge pro">Recommended</span>}
+                </div>
+                <div className="plan-price">{price}</div>
+                <div className="plan-features">
+                    {features.map((f, i) => (
+                        <span key={i} className="plan-feature">
+                            <i className="ti ti-check" aria-hidden="true" /> {f}
+                        </span>
+                    ))}
+                </div>
+            </div>
+            {action && <div className="plan-action">{action}</div>}
         </div>
     );
 }
