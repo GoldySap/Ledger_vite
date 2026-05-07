@@ -11,11 +11,18 @@
 ------------------------------------------------------------------------
 
 ### Beskrivelse
-**Beskrivelse:**
-Prosjektet går ut på å utvikle en webapplikasjon der brukere kan opprette konto, logge inn og få tilgang til et personlig dashboard for økonomisk oversikt.
+Ledger er en fullstack webapplikasjon for økonomistyring og investeringer. Systemet lar brukere registrere konto, logge inn sikkert, administrere bankkontoer, følge investeringer og få oversikt over økonomiske data gjennom et personlig dashboard. Prosjektet fokuserer på sikkerhet, databasehåndtering, API-integrasjon og moderne webutvikling med Flask og React.
 
 - **Hva er prosjektet?**
-Et fullstack websystem som lar brukere administrere konto, abonnement og økonomisk data gjennom et sikkert innloggingssystem.
+Målet med prosjektet er å utvikle en moderne og sikker webapplikasjon hvor brukere kan simulere invisteringer og holde oversikt over (fiktiv) økonomisk informasjon på ett sted. Systemet kombinerer kontohåndtering, investeringsovervåkning og abonnementstilgang i én løsning.
+
+Prosjektet demonstrerer:
+
+Fullstack webutvikling
+Databasehåndtering med SQLAlchemy
+Autentisering og sikkerhet
+Rollebasert tilgangskontroll
+API-basert datavisualisering
 
 - **Hvilket problem løser det?**
 Mange mangler en enkel og strukturert måte å samle økonomisk informasjon og abonnementstilgang på ett sted. Prosjektet viser også hvordan slike systemer bygges teknisk. 
@@ -30,7 +37,6 @@ Løsningen gir brukeren oversikt, samtidig som den demonstrerer praktisk bruk av
 - Prosjektet er også laget for læring og demonstrasjon av IT-utvikling
 
 ---
-
 ### 2. Funksjonelle krav
 
 Systemet skal minst ha følgende funksjoner:
@@ -47,21 +53,26 @@ Systemet skal minst ha følgende funksjoner:
 ------------------------------------------------------------------------
 
 ### 3. Teknologivalg
-
 **Programmeringsspråk**
 - HTML / CSS / JavaScript / Python
 
 **Rammeverk / Plattform**
-- React (rammeverk) / Flask (backend) / Vercel (Frontend hosting / Platform), Render (Backend hosting / Platform)
+- React (frontend rammeverk) / Flask (backend) / Vercel (Frontend hosting / Platform), Render (Backend hosting / Platform)
 
 **Database**
-- MariaDB / Render
+- MariaDB (Rasberry pi / wsl) / Supabase (PostgreSQL)
 
 **Verktøy**
 - GitHub
 - GitHub Projects (Kanban)
 - Waitress
 - Raspberry Pi (server)
+
+**Viktige Packer**
+- SQLAlchemy (Python)
+- Flask Migration (Python)
+- Flask Cors (Python)
+- React Router Dom (Javascript Node)
 
 ------------------------------------------------------------------------
 
