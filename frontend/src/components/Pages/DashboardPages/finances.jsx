@@ -35,11 +35,13 @@ export default function FinancesPage() {
 
 function WalletTab() {
     const { call } = useApi();
-    const [accounts, setAccounts]           = useState([]);
-    const [selected, setSelected]           = useState(null);
-    const [mode, setMode]                   = useState("view");
+    const [accounts, setAccounts] = useState([]);
+    const [selected, setSelected] = useState(null);
+    const [mode, setMode] = useState("view");
     const [editingAccount, setEditingAccount] = useState(null);
-    const [loading, setLoading]             = useState(true);
+    const [loading, setLoading] = useState(true);
+    const [isHovered, setIsHovered] = useState(false);
+
 
     useEffect(() => { load(); }, []);
 
@@ -93,7 +95,6 @@ function WalletTab() {
     const total = accounts.reduce((s, a) => s + (a.balance ?? 0), 0);
     const primary  = accounts.find(a => a.is_primary);
     const selected_acc = accounts.find(a => a.id === selected);
-    const [isHovered, setIsHovered] = useState(false);
 
     return (
         <div className="wallet-tab">
@@ -126,7 +127,7 @@ function WalletTab() {
                     <button className="add-btn" onClick={() => setMode("create")}>Add your first account</button>
                 </div>
             ) : (
-                /* Parts from Uiverse.io by byllzz */
+                /* From Uiverse.io by byllzz */
                 <div className="app-container">
                     <div className="wallet"
                     onMouseEnter={() => setIsHovered(true)}
@@ -288,10 +289,10 @@ function BankCard({ acc, idx, selected, onClick, isHovered }) {
 }
 
 function AccountForm({ initial = {}, onSubmit, onCancel }) {
-    const [name,       setName]       = useState(initial.name     ?? "");
-    const [provider,   setProvider]   = useState(initial.provider ?? "");
+    const [name, setName] = useState(initial.name ?? "");
+    const [provider, setProvider] = useState(initial.provider ?? "");
     const [cardNumber, setCardNumber] = useState("");
-    const [currency,   setCurrency]   = useState(initial.currency ?? "USD");
+    const [currency, setCurrency] = useState(initial.currency ?? "USD");
 
     function handleSubmit() {
         if (!name || !provider) { alert("Name and provider are required"); return; }
@@ -313,15 +314,17 @@ function AccountForm({ initial = {}, onSubmit, onCancel }) {
                         <input placeholder="e.g. Visa, Chase" value={provider} onChange={e => setProvider(e.target.value)} />
                     </div>
                     {!initial.id && (
-                        <div className="form-field full">
-                            <label>Card number</label>
-                            <input
-                                placeholder="12+ digits"
-                                value={cardNumber}
-                                maxLength={19}
-                                onChange={e => setCardNumber(e.target.value.replace(/\D/g, ""))}
-                            />
-                        </div>
+                        <>
+                            <div className="form-field full">
+                                <label>Card number</label>
+                                <input
+                                    placeholder="12+ digits"
+                                    value={cardNumber}
+                                    maxLength={19}
+                                    onChange={e => setCardNumber(e.target.value.replace(/\D/g, ""))}
+                                />
+                            </div>
+                        </>
                     )}
                     <div className="form-field">
                         <label>Currency</label>

@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 from flask_cors import CORS
 from logic.extensions import db, migrate, jwt
 from logic.routes.debug_routes import debug_bp, seed_all

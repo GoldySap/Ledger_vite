@@ -55,7 +55,7 @@ def seed_all():
             "has_finance_access": True,
             "has_investment_access": True,
             "has_analytics_access": True,
-            "max_accounts": 10,
+            "max_accounts": 5,
             "max_portfolio_transfer_rate": 5000
         }
     }

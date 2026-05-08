@@ -2,7 +2,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask import Blueprint, request, jsonify
 from logic.extensions import limiter
 from ..extensions import db
-from ..models.data import User, Account, Subscription, SubscriptionAccess
+from ..models.data import User, Account, AuditLog
 
 def can_create_account(user):
     if not user.subscription or not user.subscription.access:
@@ -18,9 +18,38 @@ accounts_bp = Blueprint("accounts", __name__, url_prefix="/api/accounts")
 @limiter.limit("10 per minute")
 @jwt_required()
 def get_accounts():
-    user_id = get_jwt_identity()
+    user = User.query.get(get_jwt_identity())
 
-    accounts = Account.query.filter_by(user_id=user_id).all()
+    accounts = Account.query.filter_by(user_id=user.id, active=True).all()
+    max_accounts = user.subscription.access.max_accounts
+
+    active_accounts = (
+        Account.query
+            .filter_by(user_id=user.id, active=True)
+            .order_by(Account.created_at.asc())
+            .all()
+    )
+
+    extra_accounts = len(active_accounts) - max_accounts
+    current_count = Account.query.filter_by(user_id=user.id, active=True).count()
+
+    if extra_accounts > 0:
+        for i in range(extra_accounts):
+            active_accounts[-(i + 1)].active = False
+
+    # inactive_accounts = (
+    #     Account.query
+    #         .filter_by(user_id=user.id, active=False)
+    #         .order_by(Account.created_at.asc())
+    #         .all()
+    # )
+
+    # available_slots = max_accounts - current_count
+
+    # for account in inactive_accounts[:available_slots]:
+    #     account.active = True
+
+    # db.session.commit()
 
     return jsonify([
         {
@@ -41,13 +70,6 @@ def get_accounts():
 def create_account():
     user = User.query.get(get_jwt_identity())
 
-    print(f"User ID: {user.id}")
-    print(f"User subscription_id: {user.subscription_id}")
-    print(f"User.subscription: {user.subscription}")
-    if user.subscription:
-        print(f"Subscription ID: {user.subscription.id}")
-        print(f"Subscription.access: {user.subscription.access}")
-
     if not can_create_account(user):
         return jsonify({"error": "Account limit reached"}), 403
 
@@ -60,10 +82,19 @@ def create_account():
         last4=data.get("last4"),
         balance=data.get("balance", 0),
         currency=data.get("currency", "USD"),
-        is_primary=False
+        is_primary=False,
+        active=True
     )
 
     db.session.add(account)
+    db.session.commit()
+
+    log = AuditLog(
+        user_id=user.id,
+        action="account_creation",
+        status="success"
+    )
+    db.session.add(log)
     db.session.commit()
 
     return jsonify({"msg": "created"})
@@ -71,10 +102,10 @@ def create_account():
 @accounts_bp.route("/<int:id>/update", methods=["PUT"])
 @jwt_required()
 def update_account(id):
-    user_id = get_jwt_identity()
-    acc = Account.query.get(id)
+    user = User.query.get(get_jwt_identity())
+    acc = Account.query.filter_by(id=id, user_id=user.id, active=True).first()
 
-    if not acc or acc.user_id != user_id:
+    if not acc or acc.user_id != user.id:
         return jsonify({"error": "Not found"}), 404
 
     data = request.get_json()
@@ -92,18 +123,26 @@ def update_account(id):
 
     db.session.commit()
 
+    log = AuditLog(
+        user_id=user.id,
+        action="account_update",
+        status="success"
+    )
+    db.session.add(log)
+    db.session.commit()
+
     return jsonify({"success": True})
 
 @accounts_bp.route("/<int:id>/primary", methods=["POST"])
 @limiter.limit("10 per minute")
 @jwt_required()
 def set_primary(id):
-    user_id = get_jwt_identity()
+    user = User.query.get(get_jwt_identity())
+    acc = Account.query.filter_by(id=id, user_id=user.id, active=True).first()
 
-    Account.query.filter_by(user_id=user_id).update({"is_primary": False})
+    Account.query.filter_by(user_id=user.id).update({"is_primary": False})
 
-    acc = Account.query.get(id)
-    if not acc or acc.user_id != user_id:
+    if not acc or acc.user_id != user.id:
         return jsonify({"error": "Not found"}), 404
 
     acc.is_primary = True
@@ -115,14 +154,21 @@ def set_primary(id):
 @limiter.limit("10 per minute")
 @jwt_required()
 def delete_account(id):
-    user_id = get_jwt_identity()
+    user = User.query.get(get_jwt_identity())
+    acc = Account.query.filter_by(id=id, user_id=user.id, active=True).first()
 
-    acc = Account.query.get(id)
-
-    if not acc or acc.user_id != user_id:
+    if not acc or acc.user_id != user.id:
         return jsonify({"error": "Not found"}), 404
 
-    db.session.delete(acc)
+    acc.active = False
+    db.session.commit()
+
+    log = AuditLog(
+        user_id=user.id,
+        action="account_deletion",
+        status="success"
+    )
+    db.session.add(log)
     db.session.commit()
 
     return jsonify({"success": True})

@@ -49,7 +49,7 @@ class Account(db.Model):
 
     name = db.Column(db.String(100), nullable=False)
     provider = db.Column(db.String(50))
-    cardnumber = db.Column(db.String(12))
+    cardnumber = db.Column(db.String(12), unique=True)
     last4 = db.Column(db.String(4))
 
     balance = db.Column(db.Float, default=0)
@@ -67,16 +67,16 @@ class Account(db.Model):
 #     __tablename__ = "cards"
 #     id = db.Column(db.Integer, primary_key=True)
 #     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+#     account_id = db.Column(db.Integer, db.ForeignKey("cards.id"), nullable=False)
 
 #     provider = db.Column(db.String(50))
-#     cardnumber = db.Column(db.String(12))
+#     cardnumber = db.Column(db.String(12), unique=True)
 #     securitycode = db.Column(db.Integer)
 #     last4 = db.Column(db.String(4))
-
-#     currency = db.Column(db.String(3), default="USD")
-
 #     expires_at = db.Column(db.DateTime(timezone=True), nullable=False)
 
+#     currency = db.Column(db.String(3), default="USD")
+    
 #     active = db.Column(db.Boolean, default=True)
 #     created_at = db.Column(db.DateTime, server_default=db.func.now())
 

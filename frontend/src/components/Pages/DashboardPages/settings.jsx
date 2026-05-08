@@ -36,10 +36,10 @@ export default function SettingsPage() {
             </div>
 
             <div className="settings-content">
-                {tab === "account"      && <AccountTab />}
-                {tab === "security"     && <SecurityTab />}
+                {tab === "account" && <AccountTab />}
+                {tab === "security" && <SecurityTab />}
                 {tab === "subscription" && <SubscriptionTab />}
-                {tab === "activity"     && <ActivityTab />}
+                {tab === "activity" && <ActivityTab />}
             </div>
         </div>
     );
@@ -47,10 +47,10 @@ export default function SettingsPage() {
 
 function AccountTab() {
     const { call } = useApi();
-    const [loading,   setLoading]   = useState(true);
-    const [saving,    setSaving]    = useState(false);
-    const [deleting,  setDeleting]  = useState(false);
-    const [form,      setForm]      = useState({ email: "", phone: "" });
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [form, setForm] = useState({ email: "", phone: "" });
     const [showDelete, setShowDelete] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState("");
 
@@ -73,11 +73,11 @@ function AccountTab() {
     async function handleDelete() {
         if (deleteConfirm !== "DELETE") return;
         setDeleting(true);
-        // await call("/api/auth/delete", { method: "DELETE" });
-        alert("Account deletion not yet implemented on the backend.");
+        await call("/api/auth/delete", { method: "POST" });
         setDeleting(false);
         setShowDelete(false);
         setDeleteConfirm("");
+        window.location.reload();
     }
 
     if (loading) return <Section><p className="muted">Loading…</p></Section>;
@@ -145,10 +145,10 @@ function AccountTab() {
 
 function SecurityTab() {
     const { call } = useApi();
-    const [sec,      setSec]      = useState(null);
-    const [modal,    setModal]    = useState(null);
-    const [qr,       setQr]       = useState(null);
-    const [code,     setCode]     = useState("");
+    const [sec, setSec] = useState(null);
+    const [modal, setModal] = useState(null);
+    const [qr, setQr] = useState(null);
+    const [code, setCode] = useState("");
     const [newCodes, setNewCodes] = useState([]);
 
     useEffect(() => { load(); }, []);
@@ -330,7 +330,7 @@ function SecurityTab() {
 function SubscriptionTab() {
     const { call } = useApi();
     const [sub,   setSub]   = useState(null);
-    const [subdata, setSubData] = useState(null);
+    const [plans, setPlans] = useState([]);
     const [error, setError] = useState(null);
 
     useEffect(() => {
@@ -340,58 +340,60 @@ function SubscriptionTab() {
                 else setError("Could not load subscription data.");
             })
             .catch(() => setError("Could not load subscription data."));
-        call("/api/subscriptions/subs")
+        call("/api/subscription/subs")
             .then(data => {
-                if (data) setSubData(data);
-                else setError("Could not load subscription data.");
+                if (Array.isArray(data)) {
+                    setPlans(data);
+                } else if (Array.isArray(data?.data)) {
+                    setPlans(data.data);
+                } else {
+                    setPlans([]);
+                }
             })
             .catch(() => setError("Could not load subscription data."));
     }, []);
 
-    async function upgrade() {
-        const res = await call("/api/subscription/upgrade", { method: "POST" });
-        if (res?.label) setSub(res);
+    async function upgrade(planId) {
+        const res = await call("/api/subscription/upgrade", {
+            method: "POST",
+            body: JSON.stringify({ subscription_id: planId }),
+        });
+
+        if (res?.label) {
+            setSub(res);
+        }
     }
 
     if (error) return <Section><p className="muted">{error}</p></Section>;
     if (!sub)  return <Section><p className="muted">Loading…</p></Section>;
 
-    const isPro = sub.label?.toLowerCase() === "pro";
-
     return (
         <>
-            {Array.isArray(subdata) &&
-                subdata.map((s, i) => (
+            {plans.map(plan => {
+                const current =
+                    sub.label?.toLowerCase() === plan.label?.toLowerCase();
+
+                return (
                     <PlanCard
-                        key={i}
-                        name={s.name}
-                        price={s.price}
+                        key={plan.id}
+                        name={plan.label}
+                        price={`$${plan.price} / month`}
+                        current={current}
+                        recommended={plan.label?.toLowerCase() === "pro"}
+                        features={plan.features || []}
+                        action={
+                            !current ? (
+                                <Btn
+                                    primary
+                                    onClick={() => upgrade(plan.id)}
+                                >
+                                    <i className="ti ti-arrow-up" aria-hidden="true"/>Upgrade
+                                </Btn>
+                            ) : null
+                        }
                     />
-                ))
-            }
-            <PlanCard
-                name="Free"
-                price="$0 / month"
-                current={!isPro}
-                features={["2 accounts", "$1,000/mo transfers", "Basic analytics"]}
-            />
-            <PlanCard
-                name="Pro"
-                price="$12 / month"
-                current={isPro}
-                recommended
-                features={[
-                    "Unlimited accounts",
-                    "Unlimited transfers",
-                    "Finance & investments",
-                    "Advanced analytics",
-                    "Data export",
-                ]}
-                action={!isPro
-                    ? <Btn primary onClick={upgrade}><i className="ti ti-arrow-up" aria-hidden="true" /> Upgrade</Btn>
-                    : null
-                }
-            />
+                );
+            })}
         </>
     );
 }
@@ -539,8 +541,8 @@ function PlanCard({ name, price, current, recommended, features, action }) {
             <div className="plan-info">
                 <div className="plan-header">
                     <span className="plan-name">{name}</span>
-                    {current              && <span className="badge free">Current plan</span>}
-                    {recommended && !current && <span className="badge pro">Recommended</span>}
+                    {current && <span className="badge current">Current plan</span>}
+                    {recommended && !current && <span className="badge recommended">Recommended</span>}
                 </div>
                 <div className="plan-price">{price}</div>
                 <div className="plan-features">

@@ -107,6 +107,14 @@ def login_verify():
 
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
+    user = User.query.get(get_jwt_identity())
+    log = AuditLog(
+        user_id=user.id,
+        action="logout",
+        status="success"
+    )
+    db.session.add(log)
+    db.session.commit()
     response = jsonify({"msg": "Logged out"})
     unset_jwt_cookies(response)
     return response
@@ -131,8 +139,7 @@ def me():
 @auth_bp.route("/update", methods=["PUT"])
 @jwt_required()
 def update_account():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = User.query.get(get_jwt_identity())
     data = request.get_json()
     if not data.get("email"):
         return {"error": "Email required"}, 400
@@ -143,10 +150,29 @@ def update_account():
         user.email = data["email"]
     db.session.commit()
     log = AuditLog(
-        user_id=user_id,
+        user_id=user.id,
         action="update_email",
         status="success"
     )
     db.session.add(log)
     db.session.commit()
     return jsonify({"msg": "updated"})
+
+@auth_bp.route("/delete", methods=["POST"])
+@jwt_required()
+def delete_account():
+    user = User.query.get(get_jwt_identity())
+
+    log = AuditLog(
+        user_id=user.id,
+        action="deletion",
+        status="success"
+    )
+    db.session.add(log)
+    db.session.commit()
+
+    user.active = False
+    db.session.commit()
+    response = jsonify({"msg": "Account Deleted"})
+    unset_jwt_cookies(response)
+    return response

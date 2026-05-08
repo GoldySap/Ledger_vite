@@ -3,6 +3,7 @@ import { useApi } from "../../API/useApi";
 import { Test } from "./test.jsx"
 import FinancesPage from "./finances.jsx"
 import InvestmentsPage from "./investments.jsx";
+import AnalyticsPage from "./Analytics.jsx";
 import "./wallet.css";
 import "./investments.css";
 import SettingsPage from "./settings.jsx";
@@ -18,13 +19,9 @@ export function Investments() {
 }
 
 export function Analytics() {
-    return (
-        <h1>Analytics</h1>
-    );
+    return <AnalyticsPage />;
 }
 
 export function Settings() {
-    return (
-        <SettingsPage />
-    );
+    return <SettingsPage />;
 }

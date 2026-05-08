@@ -43,7 +43,7 @@ function PortfolioTab({ onBrowse }) {
     const { call } = useApi();
     const [data,  setData]  = useState(null);
     const [trade, setTrade] = useState(null);
-    const [chart, setChart] = useState(null); // holding to show chart for
+    const [chart, setChart] = useState(null);
     const [error, setError] = useState(null);
 
     const load = useCallback(() => {
@@ -62,7 +62,7 @@ function PortfolioTab({ onBrowse }) {
     return (
         <div className="portfolio-tab">
             <div className="port-summary">
-                <SummaryCard label="Total value"    value={fmt(data.total_value)} />
+                <SummaryCard label="Total value" value={fmt(data.total_value)} />
                 <SummaryCard label="Total invested" value={fmt(data.total_invested)} />
                 <SummaryCard
                     label="Gain / loss"
@@ -128,7 +128,7 @@ function HoldingRow({ h, onSell, onChart }) {
             </div>
             <div className="holding-actions">
                 <button className="inv-btn sm" onClick={onChart} title="Price chart">
-                    <i className="ti ti-chart-line" />
+                    <i className="ti ti-chart-line" /> Chart
                 </button>
                 <button className="inv-btn sm danger" onClick={onSell}>
                     <i className="ti ti-trending-down" /> Sell
@@ -147,8 +147,6 @@ function MarketTab({ onTabChange }) {
     const [chart,    setChart]    = useState(null);
     const [watchlistIds, setWatchlistIds] = useState(new Set());
     const intervalRef = useRef(null);
-
-    // Load watchlist so we can show ★ on already-watched items
     const loadWatchlist = useCallback(async () => {
         const res = await call(`${API}/watchlist`);
         if (res?.watchlist) {
@@ -262,15 +260,14 @@ function MarketRow({ r, watched, onTrade, onChart, onWatch }) {
             </span>
             <div className="market-row-actions">
                 <button className="inv-btn sm" title="Price chart" onClick={onChart}>
-                    Chart
-                    <i className="ti ti-chart-line" />
+                    <i className="ti ti-chart-line" /> Chart
                 </button>
                 <button
                     className={`inv-btn sm ${watched ? "watched" : ""}`}
                     title={watched ? "In watchlist" : "Add to watchlist"}
                     onClick={onWatch}
-                > Watch
-                    <i className={`ti ${watched ? "ti-star-filled" : "ti-star"}`} />
+                >
+                    <i className={`ti ${watched ? "ti-star-filled" : "ti-star"}`} /> Watch
                 </button>
                 <button className="inv-btn sm primary" onClick={onTrade}>
                     <i className="ti ti-plus" /> Trade
@@ -331,13 +328,13 @@ function WatchlistTab({ onBrowse }) {
                                 </span>
                                 <div className="wl-actions">
                                     <button className="inv-btn sm" title="Price chart" onClick={() => setChart(i)}>
-                                        <i className="ti ti-chart-line" />
+                                        <i className="ti ti-chart-line" /> Chart
                                     </button>
                                     <button className="inv-btn sm primary" onClick={() => setTrade(i)}>
                                         <i className="ti ti-plus" /> Trade
                                     </button>
                                     <button className="inv-btn sm danger" onClick={() => remove(i.id)}>
-                                        <i className="ti ti-trash" />
+                                        <i className="ti ti-trash" /> Remove
                                     </button>
                                 </div>
                             </div>
@@ -363,7 +360,6 @@ function WatchlistTab({ onBrowse }) {
     );
 }
 
-
 function TradeModal({ stock, mode, holdingId, maxQty, onClose, onDone }) {
     const { call } = useApi();
     const [qty,     setQty]     = useState(1);
@@ -379,11 +375,10 @@ function TradeModal({ stock, mode, holdingId, maxQty, onClose, onDone }) {
         setErr(null);
         try {
             if (mode === "buy") {
-                // FIX: ensure investment_id is a number, not undefined
                 if (!stock.id) { setErr("Invalid stock."); setLoading(false); return; }
                 await call(`${API}/holdings/buy`, {
                     method: "POST",
-                    body: JSON.stringify({ investment_id: Number(stock.id), quantity: Number(qty) }),
+                    body: JSON.stringify({ investment_id: Number(stock.id), symbol: stock.symbol, quantity: Number(qty) }),
                 });
             } else {
                 await call(`${API}/holdings/${holdingId}/sell`, {
@@ -464,7 +459,6 @@ function ChartModal({ investment, onClose }) {
             .catch(() => setHistory([]));
     }, [investment.id, range]);
 
-    // Draw SVG sparkline
     useEffect(() => {
         if (!history || history.length < 2) return;
         const canvas = canvasRef.current;

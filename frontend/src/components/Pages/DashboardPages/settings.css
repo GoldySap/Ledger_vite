@@ -190,8 +190,8 @@
     color: var(--muted);
     border: 1px solid var(--border);
 }
-.badge.free { background: #e2e0d8; color: #4a4845; }
-.badge.pro  { background: #9FE1CB; color: #085041; }
+.badge.current { background: #e2e0d8; color: #4a4845; }
+.badge.recommended  { background: #9FE1CB; color: #085041; }
 
 .plan-card {
     border: 1px solid var(--border);
@@ -203,8 +203,7 @@
     justify-content: space-between;
     gap: 0.75rem;
 }
-.plan-card.current    { border-color: var(--accent); border-width: 1.5px; }
-.plan-card.recommended { border-color: var(--accent); border-width: 1.5px; }
+.plan-card.current, .plan-card.recommended { border-color: var(--accent); border-width: 1.5px; }
 .plan-info     { flex: 1; }
 .plan-header   { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; }
 .plan-name     { font-size: 0.9375rem; font-weight: 500; color: var(--text, #111); }
