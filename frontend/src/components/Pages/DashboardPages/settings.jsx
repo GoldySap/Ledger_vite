@@ -53,6 +53,7 @@ function AccountTab() {
     const [form, setForm] = useState({ email: "", phone: "" });
     const [showDelete, setShowDelete] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState("");
+    const [message, setMessage] = useState({ type: "", text: "" });
 
     useEffect(() => {
         call("/api/auth/me").then(user => {
@@ -73,18 +74,39 @@ function AccountTab() {
     async function handleDelete() {
         if (deleteConfirm !== "DELETE") return;
         setDeleting(true);
-        await call("/api/auth/delete", { method: "POST" });
+        
+        try {
+            await call("/api/auth/delete", { method: "POST" });
+            window.location.href = "/";
+        } catch (err) {
+            setMessage({ type: "error", text: "Failed to delete account" });
+        }
         setDeleting(false);
         setShowDelete(false);
         setDeleteConfirm("");
-        window.location.reload();
     }
+
+    // async function handleDelete() {
+    //     if (deleteConfirm !== "DELETE") return;
+    //     setDeleting(true);
+    //     await call("/api/auth/delete", { method: "POST" });
+    //     setDeleting(false);
+    //     setShowDelete(false);
+    //     setDeleteConfirm("");
+    //     window.location.reload();
+    // }
 
     if (loading) return <Section><p className="muted">Loading…</p></Section>;
 
     return (
         <>
-            <Section title="Profile" icon="ti-user-circle">
+            {message.text && (
+                <div className={`message message-${message.type}`}>
+                    {message.text}
+                </div>
+            )}
+
+            <Section title="Profile information" icon="ti-user-circle">
                 <div className="two-col">
                     <Field label="Email address">
                         <input
@@ -103,12 +125,25 @@ function AccountTab() {
                         />
                     </Field>
                 </div>
-                <div className="align-right">
+                <div className="align">
                     <Btn primary onClick={handleSave} disabled={saving}>
                         <i className="ti ti-check" aria-hidden="true" />
                         {saving ? "Saving…" : "Save changes"}
                     </Btn>
                 </div>
+            </Section>
+
+            <Section title="Account preferences" icon="ti-settings">
+                <ToggleRow
+                    title="Email notifications"
+                    desc="Receive emails about your account activity"
+                    onChange={() => {}}
+                />
+                <ToggleRow
+                    title="Marketing emails"
+                    desc="Receive product updates and special offers"
+                    onChange={() => {}}
+                />
             </Section>
 
             <Section title="Danger zone" icon="ti-trash">
@@ -130,6 +165,7 @@ function AccountTab() {
                         placeholder="Type DELETE to confirm"
                         value={deleteConfirm}
                         onChange={e => setDeleteConfirm(e.target.value)}
+                        autoFocus
                     />
                     <div className="modal-actions">
                         <Btn onClick={() => { setShowDelete(false); setDeleteConfirm(""); }}>Cancel</Btn>

@@ -106,6 +106,7 @@ def login_verify():
     return login_user_response(user)
 
 @auth_bp.route("/logout", methods=["POST"])
+@jwt_required()
 def logout():
     user = User.query.get(get_jwt_identity())
     log = AuditLog(

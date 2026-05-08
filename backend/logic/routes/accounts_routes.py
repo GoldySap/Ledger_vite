@@ -49,7 +49,7 @@ def get_accounts():
     # for account in inactive_accounts[:available_slots]:
     #     account.active = True
 
-    # db.session.commit()
+    db.session.commit()
 
     return jsonify([
         {
@@ -80,7 +80,7 @@ def create_account():
         name=data["name"],
         provider=data.get("provider"),
         last4=data.get("last4"),
-        balance=data.get("balance", 0),
+        balance=data.get("balance", 1000),
         currency=data.get("currency", "USD"),
         is_primary=False,
         active=True
