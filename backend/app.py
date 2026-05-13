@@ -3,6 +3,7 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 from logic.extensions import db, migrate, jwt
 from logic.routes.debug_routes import debug_bp, seed_all
+from logic.routes.faq_routes import faq_bp
 from logic.routes.admin_routes import admin_bp
 from logic.routes.auth_routes import auth_bp
 from logic.routes.finance_routes import finance_bp
@@ -28,6 +29,7 @@ def create_app():
     CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}}, allow_headers=["Content-Type", "Authorization", "X-CSRF-TOKEN"], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
     app.register_blueprint(debug_bp)
+    app.register_blueprint(faq_bp)
     app.register_blueprint(admin_bp, url_prefix="/api/admin")
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(security_bp, url_prefix="/api/security")

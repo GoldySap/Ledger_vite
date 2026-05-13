@@ -9,6 +9,7 @@ import { DashboardLayout, AdminDashboardLayout } from "./components/Layout/Dashb
 import { AuthProvider } from "./components/Auth/AuthContext";
 import { ProtectedRoute  } from "./components/Auth/ProtectedRoute";
 import { VerificationProvider } from "./components/Auth/VerificationContext";
+import FaqPage from "./components/Pages/HomePages/faq";
 import "./components/Nav/Nav.css";
 import "./App.css";
 
@@ -23,7 +24,7 @@ function App() {
               <Route index element={<Home />} />
               <Route path="features" element={<h1>Features</h1>} />
               <Route path="pricing" element={<h1>Pricing</h1>} />
-              <Route path="about" element={<h1>About</h1>} />
+              <Route path="support" element={<FaqPage />} />
               <Route path="login" element={<AuthPage />} />
               <Route path="*" element={<h1>404 Not Found</h1>} />
             </Route>
