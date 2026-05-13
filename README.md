@@ -27,7 +27,7 @@ Ledger lar brukere:
 5. Forklare sikkerhetstiltak (hashing, JWT, 2FA, rollebasert tilgang)
 6. Forklare datamodellen og relasjonene i databasen
 
-**Kanban-board:** https://github.com/GoldySap/ledger/projects
+**Kanban-board:** https://github.com/GoldySap/Ledger_vite/projects
 
 ---
 
