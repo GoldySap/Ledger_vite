@@ -11,6 +11,7 @@ class SubscriptionAccess(db.Model):
     has_investment_access = db.Column(db.Boolean, default=False)
     has_analytics_access = db.Column(db.Boolean, default=False)
     max_accounts = db.Column(db.Integer, default=2)
+    max_cards_per_accounts = db.Column(db.Integer, default=1)
     max_portfolio_transfer_rate = db.Column(db.Integer, default=1000)
     
     subscription = db.relationship("Subscription", backref=db.backref("access", uselist=False))
@@ -216,23 +217,50 @@ class AuditLog(db.Model):
 class FaqItem(db.Model):
     __tablename__ = "faq_items"
 
-    id = db.Column(db.Integer, primary_key=True)
-    category = db.Column(db.String(50), nullable=False, index=True)
-    question = db.Column(db.String(500), nullable=False)
-    answer = db.Column(db.Text, nullable=False)
-    sort_order = db.Column(db.Integer, default=0)
-    published = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, server_default=db.func.now())
-    updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+    id         = db.Column(db.Integer, primary_key=True)
+    category   = db.Column(db.String(50),  nullable=False, index=True)
+    question   = db.Column(db.String(500), nullable=False)
+    answer     = db.Column(db.Text,        nullable=False)
+    sort_order = db.Column(db.Integer,     default=0)
+    published  = db.Column(db.Boolean,     default=True)
+    created_at = db.Column(db.DateTime,    server_default=db.func.now())
+    updated_at = db.Column(db.DateTime,    server_default=db.func.now(), onupdate=db.func.now())
 
     def to_dict(self):
         return {
-            "id": self.id,
-            "category": self.category,
-            "question": self.question,
-            "answer": self.answer,
+            "id":         self.id,
+            "category":   self.category,
+            "question":   self.question,
+            "answer":     self.answer,
             "sort_order": self.sort_order,
-            "published": self.published,
+            "published":  self.published,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
+
+
+class UserQuestion(db.Model):
+    __tablename__ = "user_questions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    name = db.Column(db.String(100), nullable=True)
+    email = db.Column(db.String(150), nullable=True)
+    question = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default="pending")
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    user = db.relationship("User", backref="faq_questions")
+
+    def to_dict(self, admin=False):
+        d = {
+            "id": self.id,
+            "question": self.question,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+        if admin:
+            d["name"]    = self.name
+            d["email"]   = self.email
+            d["user_id"] = self.user_id
+        return d

@@ -127,7 +127,7 @@ def sendCode(code, method, destination=None):
                 return "No phone number provided"
             # if send:
                 # Placeholder for SMS API (Twilio etc.)
-                
+
             print(f"[SMS to {destination}] Your code is: {code}")
             return True
         case _:
@@ -189,7 +189,7 @@ def verify_2fa(user, code, vtype="login_2fa"):
 
         if totp.verify(code):
             return True
-
+        
         if sec.backup_codes and code in sec.backup_codes:
             sec.backup_codes.remove(code)
             db.session.commit()

@@ -7,7 +7,7 @@ export function Management() {
 
   return (
     <div>
-      <h1>Admin Management</h1>
+      <h1>Management</h1>
 
       <div className="tabs">
         <button onClick={() => setTab("users")}>Users</button>

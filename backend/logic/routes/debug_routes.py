@@ -41,6 +41,7 @@ def seed_all():
             "has_investment_access": False,
             "has_analytics_access": False,
             "max_accounts": 1,
+            "max_cards_per_accounts": 1,
             "max_portfolio_transfer_rate": 100
         },
         "Basic": {
@@ -49,6 +50,7 @@ def seed_all():
             "has_investment_access": False,
             "has_analytics_access": False,
             "max_accounts": 3,
+            "max_cards_per_accounts": 2,
             "max_portfolio_transfer_rate": 500
         },
         "Pro": {
@@ -57,6 +59,7 @@ def seed_all():
             "has_investment_access": True,
             "has_analytics_access": True,
             "max_accounts": 5,
+            "max_cards_per_accounts": 3,
             "max_portfolio_transfer_rate": 5000
         }
     }
@@ -71,25 +74,26 @@ def seed_all():
     pro_sub = Subscription.query.filter_by(label="Pro").first()
     ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL")
     ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
-    
+
     admin = User.query.filter_by(email=ADMIN_EMAIL).first()
     if not admin:
         admin = User(email=ADMIN_EMAIL, role="admin", subscription_id=pro_sub.id)
         admin.set_password(ADMIN_PASSWORD)
         db.session.add(admin)
-    db.session.commit()
-    adminsec = User.query.filter_by(email=ADMIN_EMAIL).first()
-    db.session.add(SecuritySettings(user_id=adminsec.id, verified=True))
-    db.session.commit()
+        db.session.commit()
+    if not SecuritySettings.query.filter_by(user_id=admin.id).first():
+        db.session.add(SecuritySettings(user_id=admin.id, verified=True))
+        db.session.commit()
 
     stocks = [
-        {"symbol": "AAPL", "name": "Apple Inc.", "price": 175},
-        {"symbol": "TSLA", "name": "Tesla Inc.", "price": 250},
-        {"symbol": "MSFT", "name": "Microsoft Corp.", "price": 320},
-        {"symbol": "GOOGL", "name": "Alphabet Inc.", "price": 2800},
-        {"symbol": "AMZN", "name": "Amazon.com Inc.", "price": 140},
+        {"symbol": "AAPL",  "name": "Apple Inc.",        "price": 175},
+        {"symbol": "TSLA",  "name": "Tesla Inc.",         "price": 250},
+        {"symbol": "MSFT",  "name": "Microsoft Corp.",    "price": 320},
+        {"symbol": "GOOGL", "name": "Alphabet Inc.",      "price": 2800},
+        {"symbol": "AMZN",  "name": "Amazon.com Inc.",    "price": 140},
+        {"symbol": "NVDA",  "name": "NVIDIA Corp.",       "price": 875},
+        {"symbol": "META",  "name": "Meta Platforms Inc.","price": 485},
     ]
-
     for s in stocks:
         inv = Investment(
             symbol=s["symbol"],

@@ -62,3 +62,4 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
 
 # run command: gunicorn --bind 0.0.0.0:5000 app:app or flask run --host=localhost --port=5000 or flask run
+# Ctrl+Shift+P Select Interpreter
