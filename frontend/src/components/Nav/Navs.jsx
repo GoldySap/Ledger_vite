@@ -71,6 +71,14 @@ export function AdminNavSide({ children }) {
         await logout();
         navigate("/");
     }
+
+    const nav = [
+        { to: "/dashboard/admin/management", icon: "ti-users", label: "Management" },
+        { to: "/dashboard/admin/analytics", icon: "ti-chart-bar", label: "Analytics" },
+        { to: "/dashboard/admin/auditlogs", icon: "ti-list-search", label: "Audit Logs" },
+        { to: "/dashboard/admin/faq", icon: "ti-help-circle", label: "FAQ" },
+    ];
+
     return (
         <div className="dashboard">
             <nav className="sidebar">
@@ -83,9 +91,11 @@ export function AdminNavSide({ children }) {
                 <div className="spacer"><hr /></div>
 
                 <div className="nav-section">
-                    <NavLink to="/dashboard/admin/management" className={({ isActive }) => isActive ? "primary" : "" }>Management</NavLink>
-                    <NavLink to="/dashboard/admin/analytics" className={({ isActive }) => isActive ? "primary" : "" }>Analytics</NavLink>
-                    <NavLink to="/dashboard/admin/auditlogs" className={({ isActive }) => isActive ? "primary" : "" }>Audit Logs</NavLink>
+                    {nav.map(n => (
+                        <NavLink key={n.to} to={n.to} className={({ isActive }) => isActive ? "primary" : ""}>
+                            <i className={`ti ${n.icon}`} /> {n.label}
+                        </NavLink>
+                    ))}
                 </div>
 
                 <div className="spacer"><hr /></div>

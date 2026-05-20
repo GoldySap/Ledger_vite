@@ -1,5 +1,6 @@
 from flask_jwt_extended import create_access_token, create_refresh_token, set_access_cookies, set_refresh_cookies, unset_jwt_cookies, jwt_required, get_jwt_identity
 from flask import Blueprint, request, jsonify
+from sqlalchemy import update, literal
 from datetime import datetime, timedelta, UTC
 from logic.extensions import limiter
 from ..extensions import db
@@ -172,7 +173,14 @@ def delete_account():
     db.session.add(log)
     db.session.commit()
 
-    user.active = False
+    stmt = update(User).where(User.c.epost == User).values(
+        email = literal('deleted_').concat(User.c.id).concat('@eksempel.local'),
+        phonenumber = None,
+        subscription_id = 1,
+        active = False
+    )
+
+    db.session.execute(stmt)
     db.session.commit()
     response = jsonify({"msg": "Account Deleted"})
     unset_jwt_cookies(response)

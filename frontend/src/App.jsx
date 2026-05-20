@@ -4,12 +4,13 @@ import { Home } from "./components/Pages/HomePages/Home";
 import { HomeLayout } from "./components/Layout/HomeLayout";
 import Dashboard from "./components/Pages/DashboardPages/Dashboard";
 import { Settings, Finances, Investments, Analytics } from "./components/Pages/DashboardPages/DashboardSubpages";
-import { Management, AdminAnalytics, Logs } from "./components/Pages/Admin/AdminDashboardSubPages";
+import { Management, AdminAnalytics, Logs, AdminOverview, AdminFaq } from "./components/Pages/Admin/AdminDashboardSubPages";
 import { DashboardLayout, AdminDashboardLayout } from "./components/Layout/DashboardLayout";
 import { AuthProvider } from "./components/Auth/AuthContext";
 import { ProtectedRoute  } from "./components/Auth/ProtectedRoute";
 import { VerificationProvider } from "./components/Auth/VerificationContext";
 import FaqPage from "./components/Pages/HomePages/faq";
+import '@icon/themify-icons/themify-icons.css';
 import "./components/Nav/Nav.css";
 import "./App.css";
 
@@ -53,10 +54,11 @@ function App() {
                 </ProtectedRoute>
               }>
               <Route index element={<Navigate to="home" />} />
-              <Route path="home" element={<Dashboard />} />
+              <Route path="home" element={<AdminOverview />} />
               <Route path="management" element={<Management />} />
               <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="auditlogs" element={<Logs />} />
+              <Route path="faq" element={<AdminFaq />} />
             </Route>
           </Routes>
         </BrowserRouter>

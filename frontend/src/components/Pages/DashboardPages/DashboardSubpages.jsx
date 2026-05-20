@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useApi } from "../../API/useApi";
-import { Test } from "./test.jsx"
 import FinancesPage from "./finances.jsx"
 import InvestmentsPage from "./investments.jsx";
 import AnalyticsPage from "./Analytics.jsx";
@@ -9,9 +8,7 @@ import "./investments.css";
 import SettingsPage from "./settings.jsx";
 
 export function Finances() {
-    return (
-        <FinancesPage />
-    );
+    return (<FinancesPage />);
 }
 
 export function Investments() {

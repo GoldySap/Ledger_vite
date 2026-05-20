@@ -7,9 +7,6 @@ from ..extensions import db
 
 finance_bp = Blueprint("finance", __name__)
 
-
-# ── Transactions ───────────────────────────────────────────────────────────────
-
 @finance_bp.route("/transactions", methods=["GET"])
 @jwt_required()
 def get_transactions():
@@ -17,9 +14,9 @@ def get_transactions():
     transactions = Transaction.query.filter_by(user_id=user_id)\
         .order_by(Transaction.created_at.desc()).all()
     return jsonify([{
-        "id":         t.id,
-        "category":   t.category,
-        "amount":     t.amount,
+        "id": t.id,
+        "category": t.category,
+        "amount": t.amount,
         "account_id": t.account_id,
         "created_at": t.created_at.isoformat(),
     } for t in transactions])
@@ -129,8 +126,6 @@ def transfer():
         "message":      f"Transferred ${amount:,.2f}",
     })
 
-
-# ── Subscriptions ──────────────────────────────────────────────────────────────
 
 @finance_bp.route("/subscription/subs", methods=["GET"])
 @jwt_required()

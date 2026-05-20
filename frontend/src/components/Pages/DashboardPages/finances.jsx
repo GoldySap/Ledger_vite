@@ -212,7 +212,7 @@ function WalletTab() {
                             setEditingAccount(selected_acc);
                             setMode("edit");
                         }}>
-                            <i className="ti ti-edit" /> Edit
+                            <i className="ti ti-pencil-alt2" /> Edit
                         </button>
                         <button className="drawer-btn" onClick={() => setPrimary(selected_acc.id)}>
                             <i className="ti ti-star" /> Set primary
