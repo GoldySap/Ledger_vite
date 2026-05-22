@@ -70,11 +70,14 @@ class Account(db.Model):
 #     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 #     account_id = db.Column(db.Integer, db.ForeignKey("cards.id"), nullable=False)
 
+#     is_card = db.Column(db.Boolean, default=True)
 #     provider = db.Column(db.String(50))
 #     cardnumber = db.Column(db.String(12), unique=True)
 #     securitycode = db.Column(db.Integer)
 #     last4 = db.Column(db.String(4))
 #     expires_at = db.Column(db.DateTime(timezone=True), nullable=False)
+
+#     accountnumber = db.Column(db.String(20))
 
 #     currency = db.Column(db.String(3), default="USD")
     

@@ -3,7 +3,7 @@ from functools import wraps
 from flask import jsonify
 from ..extensions import db
 from ..models.data import User, AuditLog, VerificationCode, SecuritySettings
-import pyotp, hmac, os, requests, smtplib, secrets
+import pyotp, hmac, os, requests, smtplib, secrets, re
 from datetime import datetime, timedelta, UTC
 from email.message import EmailMessage
 
@@ -215,3 +215,14 @@ def verify_2fa(user, code, vtype="login_2fa"):
     db.session.commit()
 
     return True
+
+def is_email_anonymised(email):
+    pattern = r'^(deleted_?\d*|_\d+|user_?\d*)@(removed\.local|local\.host|anonymous\.invalid)$'
+    email_clean = str(email).strip().lower()
+
+    if re.match(pattern, email_clean):
+        return True
+    elif 'removed' in email_clean or 'deleted' in email_clean:
+        return True
+    
+    return False

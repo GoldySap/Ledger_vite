@@ -4,6 +4,66 @@ import { useApi } from "../../API/useApi";
 import { useAuth } from "../../Auth/AuthContext";
 import "./admin.css";
 
+export function AdminNavSide({ children }) {
+    const navigate = useNavigate();
+    const { logout } = useAuth();
+
+    async function handleLogout() {
+        await logout();
+        navigate("/");
+    }
+
+    const nav = [
+        { to: "/dashboard/admin/home", icon: "ti-layout-dashboard", label: "Overview" },
+        { to: "/dashboard/admin/management", icon: "ti-users", label: "Management" },
+        { to: "/dashboard/admin/analytics",  icon: "ti-chart-bar", label: "Analytics"  },
+        { to: "/dashboard/admin/auditlogs",  icon: "ti-list-search", label: "Audit Logs" },
+        { to: "/dashboard/admin/faq", icon: "ti-help-circle", label: "FAQ" },
+    ];
+
+    return (
+        <div className="adm-shell">
+            <nav className="adm-sidebar">
+                <div className="adm-logo">
+                    <div className="adm-logo-mark">
+                        <i className="ti ti-trending-up" />
+                    </div>
+                    <span className="adm-logo-text">Ledger</span>
+                    <span className="adm-badge">Admin</span>
+                </div>
+
+                <div className="adm-nav-group">
+                    {nav.map(n => (
+                        <NavLink
+                            key={n.to}
+                            to={n.to}
+                            className={({ isActive }) =>
+                                `adm-nav-item ${isActive ? "active" : ""}`
+                            }
+                        >
+                            <i className={`ti ${n.icon}`} />
+                            {n.label}
+                        </NavLink>
+                    ))}
+                </div>
+
+                <div className="adm-nav-footer">
+                    <NavLink to="/" className="adm-nav-item">
+                        <i className="ti ti-arrow-left" /> Back to site
+                    </NavLink>
+                    <button className="adm-nav-item adm-logout" onClick={handleLogout}>
+                        <i className="ti ti-logout" /> Log out
+                    </button>
+                </div>
+            </nav>
+
+            <main className="adm-main">
+                {children}
+            </main>
+        </div>
+    );
+}
+
 export function AdminOverview() {
     const { call } = useApi();
     const [stats, setStats] = useState(null);
@@ -17,10 +77,10 @@ export function AdminOverview() {
     return (
         <PageShell title="Overview" sub="System health at a glance">
             <div className="adm-kpi-row">
-                <KpiCard icon="ti-users" color="blue"   label="Total users" value={stats.total_users} />
-                <KpiCard icon="ti-user-check" color="green"  label="Active users" value={stats.active_users} />
-                <KpiCard icon="ti-user-plus" color="purple" label="New this week" value={stats.new_this_week} />
-                <KpiCard icon="ti-receipt" color="amber"  label="Transactions" value={stats.total_transactions} />
+                <KpiCard icon="ti-users"       color="blue"   label="Total users"      value={stats.total_users} />
+                <KpiCard icon="ti-user-check"  color="green"  label="Active users"     value={stats.active_users} />
+                <KpiCard icon="ti-user-plus"   color="purple" label="New this week"    value={stats.new_this_week} />
+                <KpiCard icon="ti-receipt"     color="amber"  label="Transactions"     value={stats.total_transactions} />
                 <KpiCard icon="ti-message-question" color="red" label="Pending questions" value={stats.pending_questions} />
             </div>
 
@@ -182,7 +242,7 @@ function UsersTab() {
                                 <td>
                                     <div className="adm-row-actions">
                                         <button className="adm-icon-btn" title="Edit" onClick={() => { setEditing(u); setCreating(false); setMsg(null); }}>
-                                            <i className="ti ti-pencil-alt2" />
+                                            <i className="ti ti-edit" />
                                         </button>
                                         <button className="adm-icon-btn danger" title="Delete" onClick={() => deleteUser(u.id)}>
                                             <i className="ti ti-trash" />
@@ -200,11 +260,11 @@ function UsersTab() {
 
 function UserForm({ initial, subs, busy, msg, onSubmit, onCancel }) {
     const [form, setForm] = useState({
-        email:           initial?.email           ?? "",
-        password:        "",
-        role:            initial?.role            ?? "user",
+        email: initial?.email ?? "",
+        password: "",
+        role: initial?.role ?? "user",
         subscription_id: initial?.subscription_id ?? 1,
-        active:          initial?.active          ?? true,
+        active: initial?.active ?? true,
     });
     const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
@@ -267,7 +327,7 @@ function SubscriptionsTab() {
         setBusy(true); setMsg(null);
         const res = editing
             ? await call(`/api/admin/subscriptions/${editing.id}`, { method: "PUT", body: JSON.stringify(data) })
-            : await call("/api/admin/subscriptions", { method: "POST", body: JSON.stringify(data) });
+            : await call("/api/admin/subscriptions",               { method: "POST", body: JSON.stringify(data) });
         setBusy(false);
         if (res?.msg) { setMsg({ text: res.msg, ok: true }); setEditing(null); setCreating(false); load(); }
         else setMsg({ text: res?.error ?? "Failed", ok: false });
@@ -307,7 +367,7 @@ function SubscriptionsTab() {
                             </div>
                             <div className="adm-row-actions">
                                 <button className="adm-icon-btn" onClick={() => { setEditing(s); setCreating(false); }}>
-                                    <i className="ti ti-pencil-alt2" />
+                                    <i className="ti ti-edit" />
                                 </button>
                                 <button className="adm-icon-btn danger" onClick={() => deleteSub(s.id)}>
                                     <i className="ti ti-trash" />
@@ -397,8 +457,8 @@ export function Logs() {
     const load = useCallback(() => {
         setLoading(true);
         const params = new URLSearchParams({ page, per_page: 50 });
-        if (filters.action)  params.set("action",  filters.action);
-        if (filters.status)  params.set("status",  filters.status);
+        if (filters.action) params.set("action", filters.action);
+        if (filters.status) params.set("status", filters.status);
         if (filters.user_id) params.set("user_id", filters.user_id);
         call(`/api/admin/audit-logs?${params}`)
             .then(res => {
@@ -487,7 +547,7 @@ export function AdminFaq() {
     const [tab, setTab] = useState("questions");
 
     const tabs = [
-        { id: "questions", label: "User questions", icon: "ti-message-question" },
+        { id: "questions", label: "User questions",  icon: "ti-message-question" },
         { id: "items", label: "Published FAQ", icon: "ti-list" },
     ];
 
@@ -514,6 +574,7 @@ function UserQuestionsTab() {
     const { call } = useApi();
     const [questions, setQuestions] = useState(null);
     const [filter, setFilter] = useState("pending");
+    const [replyTo, setReplyTo] = useState(null);
 
     const load = useCallback(() => {
         const params = filter ? `?status=${filter}` : "";
@@ -533,16 +594,30 @@ function UserQuestionsTab() {
     return (
         <div>
             <div className="adm-toolbar">
-                {["pending", "answered", "closed", ""].map(s => (
+                {[
+                    { val: "pending", label: "Pending" },
+                    { val: "answered", label: "Answered" },
+                    { val: "closed", label: "Closed" },
+                    { val: "", label: "All" },
+                ].map(s => (
                     <button
-                        key={s || "all"}
-                        className={`adm-btn sm ${filter === s ? "primary" : ""}`}
-                        onClick={() => setFilter(s)}
+                        key={s.val || "all"}
+                        className={`adm-btn sm ${filter === s.val ? "primary" : ""}`}
+                        onClick={() => { setFilter(s.val); setReplyTo(null); }}
                     >
-                        {s || "All"}
+                        {s.label}
                     </button>
                 ))}
             </div>
+
+            {replyTo && (
+                <ReplyPanel
+                    question={replyTo}
+                    call={call}
+                    onClose={() => setReplyTo(null)}
+                    onSent={() => { setReplyTo(null); load(); }}
+                />
+            )}
 
             {!questions ? (
                 <p className="adm-muted">Loading…</p>
@@ -554,17 +629,35 @@ function UserQuestionsTab() {
             ) : (
                 <div className="adm-q-list">
                     {questions.map(q => (
-                        <div key={q.id} className={`adm-q-card status-${q.status}`}>
+                        <div
+                            key={q.id}
+                            className={`adm-q-card status-${q.status} ${replyTo?.id === q.id ? "replying" : ""}`}
+                        >
                             <div className="adm-q-meta">
                                 <span className="adm-q-name">{q.name ?? "Anonymous"}</span>
-                                <span className="adm-muted">{q.email ?? "—"}</span>
+                                {q.email
+                                    ? <a href={`mailto:${q.email}`} className="adm-q-email">{q.email}</a>
+                                    : <span className="adm-muted">no email</span>
+                                }
                                 <span className="adm-muted">{fmtTime(q.created_at)}</span>
                                 <span className={`adm-q-status ${q.status}`}>{q.status}</span>
                             </div>
+
                             <p className="adm-q-text">{q.question}</p>
+
                             <div className="adm-q-actions">
+                                {q.email && (
+                                    <button
+                                        className="adm-btn sm primary"
+                                        onClick={() => setReplyTo(replyTo?.id === q.id ? null : q)}
+                                    >
+                                        <i className="ti ti-send" />
+                                        {replyTo?.id === q.id ? "Cancel reply" : "Reply by email"}
+                                    </button>
+                                )}
+
                                 {q.status !== "answered" && (
-                                    <button className="adm-btn sm primary" onClick={() => setStatus(q.id, "answered")}>
+                                    <button className="adm-btn sm" onClick={() => setStatus(q.id, "answered")}>
                                         <i className="ti ti-check" /> Mark answered
                                     </button>
                                 )}
@@ -587,13 +680,111 @@ function UserQuestionsTab() {
     );
 }
 
+function buildDefaults(q) {
+    return {
+        subject: `Re: Your question on Ledger`,
+        body: `Hi ${q.name ?? "there"},\n\nThank you for reaching out. You asked:\n\n"${q.question}"\n\nHere is our answer:\n\n[Write your answer here]\n\nIf you have any other questions, feel free to reply to this email or visit our FAQ at ledger.app/faq.\n\nBest regards,\nLedger Support`,
+        promote: false,
+    };
+}
+
+function ReplyPanel({ question, call, onClose, onSent }) {
+    const defaults = buildDefaults(question);
+    const [subject, setSubject] = useState(defaults.subject);
+    const [body, setBody] = useState(defaults.body);
+    const [promote, setPromote] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const [msg, setMsg] = useState(null);
+
+    async function send() {
+        if (!subject.trim() || !body.trim()) {
+            setMsg({ text: "Subject and body are required.", ok: false });
+            return;
+        }
+        setBusy(true);
+        setMsg(null);
+        const res = await call(`/api/admin/faq/questions/${question.id}/reply`, {
+            method: "POST",
+            body:   JSON.stringify({ subject, body, promote_to_faq: promote }),
+        });
+        setBusy(false);
+        if (res?.msg) {
+            setMsg({ text: res.msg, ok: true });
+            setTimeout(onSent, 1200);
+        } else {
+            setMsg({ text: res?.error ?? "Failed to send.", ok: false });
+        }
+    }
+
+    return (
+        <div className="adm-reply-panel">
+            <div className="adm-reply-header">
+                <div className="adm-reply-to">
+                    <i className="ti ti-send" />
+                    Replying to <strong>{question.name ?? "Anonymous"}</strong>
+                    <span className="adm-reply-email">→ {question.email}</span>
+                </div>
+                <button className="adm-icon-btn" onClick={onClose} aria-label="Close">
+                    <i className="ti ti-x" />
+                </button>
+            </div>
+
+            <div className="adm-reply-quote">
+                <i className="ti ti-quote" />
+                <span>{question.question}</span>
+            </div>
+
+            <div className="adm-field" style={{ marginBottom: "0.625rem" }}>
+                <label>Subject</label>
+                <input
+                    value={subject}
+                    onChange={e => setSubject(e.target.value)}
+                    placeholder="Email subject…"
+                />
+            </div>
+
+            <div className="adm-field" style={{ marginBottom: "0.75rem" }}>
+                <label>Message</label>
+                <textarea
+                    className="adm-reply-body"
+                    rows={10}
+                    value={body}
+                    onChange={e => setBody(e.target.value)}
+                />
+            </div>
+
+            <label className="adm-reply-promote">
+                <input
+                    type="checkbox"
+                    checked={promote}
+                    onChange={e => setPromote(e.target.checked)}
+                />
+                <span>
+                    <strong>Promote to published FAQ</strong>
+                    <span className="adm-muted"> — saves this Q&amp;A as a new FAQ item (you can edit it afterwards)</span>
+                </span>
+            </label>
+
+            {msg && <p className={`adm-msg ${msg.ok ? "ok" : "err"}`}>{msg.text}</p>}
+
+            <div className="adm-form-actions" style={{ marginTop: "0.875rem" }}>
+                <button className="adm-btn" onClick={onClose}>Cancel</button>
+                <button className="adm-btn primary" onClick={send} disabled={busy}>
+                    <i className="ti ti-send" />
+                    {busy ? "Sending…" : "Send reply"}
+                </button>
+            </div>
+        </div>
+    );
+}
+
 function FaqItemsTab() {
-    const { call }                     = useApi();
-    const [items,   setItems]          = useState(null);
-    const [editing, setEditing]        = useState(null);
-    const [creating, setCreating]      = useState(false);
-    const [busy,    setBusy]           = useState(false);
-    const [msg,     setMsg]            = useState(null);
+    const { call } = useApi();
+    const [items, setItems] = useState(null);
+    const [editing, setEditing] = useState(null);
+    const [creating, setCreating] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const [msg, setMsg] = useState(null);
 
     const CATS = ["account","security","privacy","finance","investments","subscription"];
 
@@ -606,8 +797,8 @@ function FaqItemsTab() {
     async function saveItem(data) {
         setBusy(true); setMsg(null);
         const res = editing
-            ? await call(`/api/admin/faq/items/${editing.id}`, { method: "PUT",    body: JSON.stringify(data) })
-            : await call("/api/admin/faq/items",               { method: "POST",   body: JSON.stringify(data) });
+            ? await call(`/api/admin/faq/items/${editing.id}`, { method: "PUT", body: JSON.stringify(data) })
+            : await call("/api/admin/faq/items", { method: "POST", body: JSON.stringify(data) });
         setBusy(false);
         if (res?.id || res?.question) { setEditing(null); setCreating(false); load(); }
         else setMsg({ text: res?.error ?? "Failed", ok: false });
@@ -666,7 +857,7 @@ function FaqItemsTab() {
                                     {item.published ? "Unpublish" : "Publish"}
                                 </button>
                                 <button className="adm-btn sm" onClick={() => { setEditing(item); setCreating(false); }}>
-                                    <i className="ti ti-pencil-alt2" />    
+                                    <i className="ti ti-edit" /> Edit
                                 </button>
                                 <button className="adm-btn sm danger" onClick={() => deleteItem(item.id)}>
                                     <i className="ti ti-trash" />
@@ -682,11 +873,11 @@ function FaqItemsTab() {
 
 function FaqItemForm({ initial, categories, busy, msg, onSubmit, onCancel }) {
     const [form, setForm] = useState({
-        category:   initial?.category   ?? "account",
-        question:   initial?.question   ?? "",
-        answer:     initial?.answer     ?? "",
+        category: initial?.category ?? "account",
+        question: initial?.question ?? "",
+        answer: initial?.answer ?? "",
         sort_order: initial?.sort_order ?? 0,
-        published:  initial?.published  ?? true,
+        published: initial?.published  ?? true,
     });
     const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
@@ -733,10 +924,6 @@ function FaqItemForm({ initial, categories, busy, msg, onSubmit, onCancel }) {
     );
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   ANALYTICS placeholder (reuse your existing AnalyticsPage)
-═══════════════════════════════════════════════════════════════ */
-
 export function AdminAnalytics() {
     return (
         <PageShell title="Analytics" sub="Platform-wide statistics">
@@ -744,10 +931,6 @@ export function AdminAnalytics() {
         </PageShell>
     );
 }
-
-/* ═══════════════════════════════════════════════════════════════
-   SHARED PRIMITIVES
-═══════════════════════════════════════════════════════════════ */
 
 function PageShell({ title, sub, children }) {
     return (

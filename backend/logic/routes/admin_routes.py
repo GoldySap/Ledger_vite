@@ -1,18 +1,13 @@
-from flask_jwt_extended import (
-    jwt_required, create_access_token, get_jwt_identity, set_access_cookies
-)
+from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, set_access_cookies
 from flask import Blueprint, request, jsonify
 from ..extensions import db
 from ..models.data import User, Subscription, SubscriptionAccess, AuditLog, Transaction, Holding
-from ..routes.helpers import admin_required, verified_required
+from ..routes.helpers import admin_required, verified_required, is_email_anonymised
 from ..routes.faq_routes import FaqItem, UserQuestion
 from datetime import datetime, UTC, timedelta
 from sqlalchemy import func
 
 admin_bp = Blueprint("admin", __name__)
-
-
-# ── Helpers ────────────────────────────────────────────────────────────────────
 
 def model_to_dict(obj, exclude=None):
     exclude = exclude or []
@@ -22,16 +17,13 @@ def model_to_dict(obj, exclude=None):
         if c.name not in exclude
     }
 
-
-# ── Overview / stats ───────────────────────────────────────────────────────────
-
 @admin_bp.route("/stats", methods=["GET"])
 @jwt_required()
 @admin_required
 def get_stats():
     """Summary numbers for the overview dashboard."""
-    total_users   = User.query.count()
-    active_users  = User.query.filter_by(active=True).count()
+    total_users = User.query.count()
+    active_users = User.query.filter_by(active=True).count()
     new_this_week = User.query.filter(
         User.created_at >= datetime.now(UTC) - timedelta(days=7)
     ).count()
@@ -44,7 +36,7 @@ def get_stats():
     )
 
     total_transactions = Transaction.query.count()
-    pending_questions  = UserQuestion.query.filter_by(status="pending").count()
+    pending_questions = UserQuestion.query.filter_by(status="pending").count()
 
     recent_logs = (
         AuditLog.query
@@ -53,29 +45,26 @@ def get_stats():
     )
 
     return jsonify({
-        "total_users":        total_users,
-        "active_users":       active_users,
-        "new_this_week":      new_this_week,
+        "total_users": total_users,
+        "active_users": active_users,
+        "new_this_week": new_this_week,
         "subscription_breakdown": [
             {"label": label, "count": count}
             for label, count in sub_counts
         ],
-        "total_transactions":  total_transactions,
-        "pending_questions":   pending_questions,
+        "total_transactions": total_transactions,
+        "pending_questions": pending_questions,
         "recent_logs": [
             {
-                "id":         l.id,
-                "user_id":    l.user_id,
-                "action":     l.action,
-                "status":     l.status,
+                "id": l.id,
+                "user_id": l.user_id,
+                "action": l.action,
+                "status": l.status,
                 "created_at": l.created_at.isoformat(),
             }
             for l in recent_logs
         ],
     })
-
-
-# ── Users ──────────────────────────────────────────────────────────────────────
 
 @admin_bp.route("/users", methods=["GET"])
 @jwt_required()
@@ -131,7 +120,7 @@ def delete_user(user_id):
 @verified_required
 @admin_required
 def bulk_update_users():
-    data    = request.get_json()
+    data = request.get_json()
     updates = data.get("updates", {})
     allowed = ["role", "active", "subscription_id", "email", "phonenumber"]
     for user_id, changes in updates.items():
@@ -164,16 +153,13 @@ def create_user():
     db.session.commit()
     return jsonify({"msg": "User created", "id": user.id}), 201
 
-
-# ── Subscriptions ──────────────────────────────────────────────────────────────
-
 @admin_bp.route("/subscriptions", methods=["GET"])
 @jwt_required()
 @admin_required
 def get_subscriptions():
     subs = Subscription.query.all()
     return jsonify([{
-        "id":    s.id,
+        "id": s.id,
         "label": s.label,
         "price": s.price,
         "user_count": len(s.users),
@@ -210,7 +196,7 @@ def update_subscription(sub_id):
 @admin_required
 def create_subscription():
     data = request.get_json()
-    sub  = Subscription(label=data["label"], price=float(data["price"]))
+    sub = Subscription(label=data["label"], price=float(data["price"]))
     db.session.add(sub)
     db.session.flush()
     access_fields = [
@@ -236,26 +222,23 @@ def delete_subscription(sub_id):
     db.session.commit()
     return jsonify({"msg": "Deleted"})
 
-
-# ── Audit logs ─────────────────────────────────────────────────────────────────
-
 @admin_bp.route("/audit-logs", methods=["GET"])
 @jwt_required()
 @admin_required
 def get_audit_logs():
-    page     = int(request.args.get("page", 1))
+    page = int(request.args.get("page", 1))
     per_page = int(request.args.get("per_page", 50))
-    action   = request.args.get("action")
-    status   = request.args.get("status")
-    user_id  = request.args.get("user_id")
+    action = request.args.get("action")
+    status = request.args.get("status")
+    user_id = request.args.get("user_id")
 
     q = AuditLog.query
-    if action:  q = q.filter(AuditLog.action.ilike(f"%{action}%"))
-    if status:  q = q.filter_by(status=status)
+    if action: q = q.filter(AuditLog.action.ilike(f"%{action}%"))
+    if status: q = q.filter_by(status=status)
     if user_id: q = q.filter_by(user_id=int(user_id))
 
-    total   = q.count()
-    logs    = q.order_by(AuditLog.created_at.desc())\
+    total = q.count()
+    logs = q.order_by(AuditLog.created_at.desc())\
                .offset((page - 1) * per_page).limit(per_page).all()
 
     return jsonify({
@@ -263,17 +246,14 @@ def get_audit_logs():
         "page":  page,
         "pages": (total + per_page - 1) // per_page,
         "logs":  [{
-            "id":         l.id,
-            "user_id":    l.user_id,
-            "action":     l.action,
-            "status":     l.status,
+            "id": l.id,
+            "user_id": l.user_id,
+            "action": l.action,
+            "status": l.status,
             "ip_address": l.ip_address,
             "created_at": l.created_at.isoformat(),
         } for l in logs],
     })
-
-
-# ── FAQ management ─────────────────────────────────────────────────────────────
 
 @admin_bp.route("/faq/items", methods=["GET"])
 @jwt_required()
@@ -308,11 +288,11 @@ def admin_create_faq():
 def admin_update_faq(item_id):
     item = FaqItem.query.get_or_404(item_id)
     data = request.get_json()
-    if "category"   in data: item.category   = data["category"].lower().strip()
-    if "question"   in data: item.question   = data["question"].strip()
-    if "answer"     in data: item.answer     = data["answer"].strip()
+    if "category" in data: item.category = data["category"].lower().strip()
+    if "question" in data: item.question = data["question"].strip()
+    if "answer" in data: item.answer = data["answer"].strip()
     if "sort_order" in data: item.sort_order = int(data["sort_order"])
-    if "published"  in data: item.published  = bool(data["published"])
+    if "published" in data: item.published  = bool(data["published"])
     db.session.commit()
     return jsonify(item.to_dict())
 
@@ -349,8 +329,84 @@ def admin_update_question(q_id):
     db.session.commit()
     return jsonify(row.to_dict(admin=True))
 
+@admin_bp.route("/faq/questions/<int:q_id>/reply", methods=["POST"])
+@jwt_required()
+@admin_required
+def reply_to_question(q_id):
+    row = UserQuestion.query.get_or_404(q_id)
+    data = request.get_json()
 
-# ── Verify (elevate JWT) ───────────────────────────────────────────────────────
+    subject = (data.get("subject") or "").strip()
+    body = (data.get("body") or "").strip()
+    promote = bool(data.get("promote_to_faq", False))
+
+    if not subject or not body:
+        return jsonify({"error": "subject and body are required"}), 400
+
+    recipient = row.email
+    if not recipient:
+        return jsonify({"error": "This question has no email address — it cannot be replied to."}), 400
+    if is_email_anonymised(recipient):
+        return jsonify({"error": "This question has no valid email address due to anonymization with accordence to GDPR article 17 — it cannot be replied to."}), 400
+
+    import smtplib, os
+    from email.message import EmailMessage
+
+    msg = EmailMessage()
+    msg.set_content(body)
+
+    msg["Subject"] = subject
+    msg["From"] = os.getenv("EMAIL_USER")
+    msg["To"] = recipient
+
+    html_body = body.replace("\n", "<br>")
+    msg.add_alternative(f"""
+    <html><body style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px">
+      <p style="color:#555;font-size:13px;margin-bottom:24px">
+        Support reply to your question on <strong>Ledger</strong>
+      </p>
+      <blockquote style="border-left:3px solid #hsl(120, 14%, 41%);padding:8px 16px;margin:0 0 20px;color:#555;font-size:14px">
+        {row.question}
+      </blockquote>
+      <div style="font-size:15px;line-height:1.65;color:#111">{html_body}</div>
+      <hr style="margin:32px 0;border:none;border-top:1px solid #eee">
+      <p style="color:#aaa;font-size:12px">
+        Ledger Support &nbsp;·&nbsp; support@ledger.app
+      </p>
+    </body></html>
+    """, subtype="html")
+
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.set_debuglevel(1)
+            server.starttls()
+            server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_APP_PASSWORD"))
+            server.send_message(msg)
+            server.quit()
+            print("Message sent successfully!")
+    except Exception as e:
+        return jsonify({"error": f"Email failed to send: {str(e)}"}), 502
+
+    row.status = "answered"
+
+    if promote:
+        existing = FaqItem.query.filter_by(question=row.question).first()
+        if not existing:
+            faq_item = FaqItem(
+                category="account",          
+                question=row.question,
+                answer=body,
+                sort_order=99,
+                published=True,
+            )
+            db.session.add(faq_item)
+
+    db.session.commit()
+    return jsonify({
+        "msg":      f"Reply sent to {recipient}",
+        "promoted": promote,
+    })
+
 
 @admin_bp.route("/verify", methods=["POST"])
 @jwt_required()
@@ -358,7 +414,7 @@ def admin_update_question(q_id):
 def verify_admin():
     data = request.get_json()
     code = data.get("code")
-    if code != "1234":                     # replace with env var in production
+    if code != "1234":                
         return jsonify({"error": "Invalid code"}), 403
     access_token = create_access_token(
         identity=get_jwt_identity(),

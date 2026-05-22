@@ -22,8 +22,6 @@ def get_transactions():
     } for t in transactions])
 
 
-# ── Money: deposit / withdraw / transfer ───────────────────────────────────────
-
 @finance_bp.route("/accounts/<int:account_id>/deposit", methods=["POST"])
 @jwt_required()
 def deposit(account_id):
@@ -63,7 +61,6 @@ def withdraw(account_id):
     if acc.balance < amount:
         return jsonify({"error": "Insufficient funds"}), 400
 
-    # Check transfer rate limit from subscription access
     sub_access = acc.user.subscription.access if acc.user.subscription else None
     if sub_access:
         start_of_month = datetime.now(UTC).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
