@@ -73,7 +73,6 @@ def _upsert_investment(symbol: str, name: str | None = None) -> Investment | Non
 
     return inv
 
-
 def _inv_payload(inv: Investment) -> dict:
     return {
         "id": inv.id,
@@ -95,7 +94,6 @@ def live_market():
             results.append(_inv_payload(updated))
     db.session.commit()
     return jsonify(results)
-
 
 @investment_bp.route("/investments/search", methods=["GET"])
 @jwt_required()
@@ -330,7 +328,6 @@ def add_to_watchlist():
     db.session.add(Watchlist(user_id=user_id, investment_id=inv.id))
     db.session.commit()
     return jsonify({"message": "Added to watchlist"}), 201
-
 
 @investment_bp.route("/watchlist/<int:watchlist_id>", methods=["DELETE"])
 @jwt_required()

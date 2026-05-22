@@ -9,4 +9,4 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 )
 
-// npm run dev, npm run dev -- --host
+// npm run dev or npm run dev -- --host

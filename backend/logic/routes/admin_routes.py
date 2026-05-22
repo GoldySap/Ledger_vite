@@ -21,7 +21,6 @@ def model_to_dict(obj, exclude=None):
 @jwt_required()
 @admin_required
 def get_stats():
-    """Summary numbers for the overview dashboard."""
     total_users = User.query.count()
     active_users = User.query.filter_by(active=True).count()
     new_this_week = User.query.filter(
@@ -403,7 +402,7 @@ def reply_to_question(q_id):
 
     db.session.commit()
     return jsonify({
-        "msg":      f"Reply sent to {recipient}",
+        "msg": f"Reply sent to {recipient}",
         "promoted": promote,
     })
 

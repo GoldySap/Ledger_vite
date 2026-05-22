@@ -30,29 +30,38 @@ export function NavSide({ children }) {
         await logout();
         navigate("/");
     }
+
+    const nav = [
+        { to: "/dashboard/user/finances", icon: "ti-credit-card", label: "Finances" },
+        { to: "/dashboard/user/investments", icon: "ti-stats-up", label: "Investments" },
+        { to: "/dashboard/user/analytics", icon: "ti-bar-chart", label: "Analytics" },
+    ];
+
     return (
         <div className="dashboard">
             <nav className="sidebar">
                 <NavLink to="/dashboard/user/home" className="logo"><strong>Ledger</strong></NavLink>
 
                 <div className="nav-section">
-                    <NavLink to="/dashboard/user/home" className={({ isActive }) => isActive ? "primary" : "" }>Overview</NavLink>
-                    <NavLink to="/dashboard/user/settings" className={({ isActive }) => isActive ? "primary" : "" }>Settings</NavLink>
+                    <NavLink to="/dashboard/user/home" className={({ isActive }) => isActive ? "primary" : "" }><i className={`ti ti-home`} /> Overview</NavLink>
+                    <NavLink to="/dashboard/user/settings" className={({ isActive }) => isActive ? "primary" : "" }><i className={`ti ti-settings`} /> Settings</NavLink>
                 </div>
 
                 <div className="spacer"><hr /></div>
 
                 <div className="nav-section">
-                    <NavLink to="/dashboard/user/finances" className={({ isActive }) => isActive ? "primary" : "" }>Finances</NavLink>
-                    <NavLink to="/dashboard/user/investments" className={({ isActive }) => isActive ? "primary" : "" }>Investments</NavLink>
-                    <NavLink to="/dashboard/user/analytics" className={({ isActive }) => isActive ? "primary" : "" }>Analytics</NavLink>
+                    {nav.map(n => (
+                        <NavLink key={n.to} to={n.to} className={({ isActive }) => isActive ? "primary" : ""}>
+                            <i className={`ti ${n.icon}`} /> {n.label}
+                        </NavLink>
+                    ))}
                 </div>
 
                 <div className="spacer"><hr /></div>
 
                 <div className="nav-section">
-                    <NavLink to="/" className={({ isActive }) => isActive ? "primary" : "" }>Back</NavLink>
-                    <NavLink onClick={()=>{handleLogout()}} to="/" className={({ isActive }) => isActive ? "Expandeble-Btn primary" : "Expandeble-Btn" }>Logout</NavLink>
+                    <NavLink to="/" className={({ isActive }) => isActive ? "primary" : "" }><i className={`ti ti-back-left`} /> Back</NavLink>
+                    <NavLink onClick={()=>{handleLogout()}} to="/" className={({ isActive }) => isActive ? "exits primary" : "exits" }><i className={`ti ti-power-off`} /> Logout</NavLink>
                 </div>
             </nav>
 
@@ -73,10 +82,10 @@ export function AdminNavSide({ children }) {
     }
 
     const nav = [
-        { to: "/dashboard/admin/management", icon: "ti-users", label: "Management" },
-        { to: "/dashboard/admin/analytics", icon: "ti-chart-bar", label: "Analytics" },
-        { to: "/dashboard/admin/auditlogs", icon: "ti-list-search", label: "Audit Logs" },
-        { to: "/dashboard/admin/faq", icon: "ti-help-circle", label: "FAQ" },
+        { to: "/dashboard/admin/management", icon: "ti-user", label: "Management" },
+        { to: "/dashboard/admin/analytics", icon: "ti-bar-chart", label: "Analytics" },
+        { to: "/dashboard/admin/auditlogs", icon: "ti-search", label: "Audit Logs" },
+        { to: "/dashboard/admin/faq", icon: "ti-help-alt", label: "FAQ" },
     ];
 
     return (

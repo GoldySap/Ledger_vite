@@ -10,7 +10,6 @@ debug_bp = Blueprint("debug", __name__)
 
 @debug_bp.route("/reset-migrations")
 def reset_migrations():
-
     db.session.execute(text("DELETE FROM alembic_version"))
     db.session.commit()
     
@@ -86,13 +85,13 @@ def seed_all():
         db.session.commit()
 
     stocks = [
-        {"symbol": "AAPL",  "name": "Apple Inc.",        "price": 175},
-        {"symbol": "TSLA",  "name": "Tesla Inc.",         "price": 250},
-        {"symbol": "MSFT",  "name": "Microsoft Corp.",    "price": 320},
-        {"symbol": "GOOGL", "name": "Alphabet Inc.",      "price": 2800},
-        {"symbol": "AMZN",  "name": "Amazon.com Inc.",    "price": 140},
-        {"symbol": "NVDA",  "name": "NVIDIA Corp.",       "price": 875},
-        {"symbol": "META",  "name": "Meta Platforms Inc.","price": 485},
+        {"symbol": "AAPL", "name": "Apple Inc.", "price": 175},
+        {"symbol": "TSLA", "name": "Tesla Inc.", "price": 250},
+        {"symbol": "MSFT", "name": "Microsoft Corp.", "price": 320},
+        {"symbol": "GOOGL", "name": "Alphabet Inc.", "price": 2800},
+        {"symbol": "AMZN", "name": "Amazon.com Inc.", "price": 140},
+        {"symbol": "NVDA", "name": "NVIDIA Corp.", "price": 875},
+        {"symbol": "META", "name": "Meta Platforms Inc.","price": 485},
     ]
     for s in stocks:
         inv = Investment(

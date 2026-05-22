@@ -5,22 +5,22 @@ import "./faq.css";
 
 const CATEGORIES = [
     { id: "account", label: "Account", icon: "ti-user" },
-    { id: "security", label: "Security", icon: "ti-shield-lock" },
+    { id: "security", label: "Security", icon: "ti-shield" },
     { id: "privacy", label: "Privacy", icon: "ti-lock" },
     { id: "finance", label: "Finances", icon: "ti-wallet" },
-    { id: "investments", label: "Investments", icon: "ti-trending-up" },
+    { id: "investments", label: "Investments", icon: "ti-stats-up" },
     { id: "subscription", label: "Subscription", icon: "ti-crown" },
 ];
 
 export default function FaqPage() {
-    const { call }                          = useApi();
-    const { user }                          = useAuth();
-    const [grouped,   setGrouped]           = useState(null);
-    const [error,     setError]             = useState(null);
-    const [query,     setQuery]             = useState("");
-    const [activeCat, setActiveCat]         = useState("all");
-    const [openId,    setOpenId]            = useState(null);
-    const [panel,     setPanel]             = useState(null);
+    const { call } = useApi();
+    const { user } = useAuth();
+    const [grouped, setGrouped] = useState(null);
+    const [error, setError] = useState(null);
+    const [query, setQuery] = useState("");
+    const [activeCat, setActiveCat] = useState("all");
+    const [openId, setOpenId] = useState(null);
+    const [panel, setPanel] = useState(null);
 
     useEffect(() => {
         call("/api/faq")
@@ -186,11 +186,11 @@ export default function FaqPage() {
 }
 
 function AskPanel({ user, call, onClose }) {
-    const [name,     setName]     = useState("");
-    const [email,    setEmail]    = useState("");
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
     const [question, setQuestion] = useState("");
-    const [busy,     setBusy]     = useState(false);
-    const [msg,      setMsg]      = useState(null); // { text, ok }
+    const [busy, setBusy] = useState(false);
+    const [msg, setMsg] = useState(null);
 
     async function submit() {
         const q = question.trim();

@@ -6,7 +6,6 @@ from ..models.data import User, VerificationCode, AuditLog, SecuritySettings, Su
 from .helpers import generate_code, verify_code, login_user_response, sendCode
 import pyotp, secrets
 
-
 security_bp = Blueprint("security", __name__, url_prefix="/api/security")
 
 @security_bp.route("/send", methods=["POST"])
@@ -105,7 +104,6 @@ def verify_public():
     db.session.delete(record)
     db.session.commit()
     return jsonify({"success": True})
-
 
 @security_bp.route("", methods=["GET"])
 @jwt_required()

@@ -242,7 +242,7 @@ function UsersTab() {
                                 <td>
                                     <div className="adm-row-actions">
                                         <button className="adm-icon-btn" title="Edit" onClick={() => { setEditing(u); setCreating(false); setMsg(null); }}>
-                                            <i className="ti ti-edit" />
+                                            <i className="ti ti-pencil" />
                                         </button>
                                         <button className="adm-icon-btn danger" title="Delete" onClick={() => deleteUser(u.id)}>
                                             <i className="ti ti-trash" />
@@ -367,7 +367,7 @@ function SubscriptionsTab() {
                             </div>
                             <div className="adm-row-actions">
                                 <button className="adm-icon-btn" onClick={() => { setEditing(s); setCreating(false); }}>
-                                    <i className="ti ti-edit" />
+                                    <i className="ti ti-pencil" />
                                 </button>
                                 <button className="adm-icon-btn danger" onClick={() => deleteSub(s.id)}>
                                     <i className="ti ti-trash" />
@@ -857,7 +857,7 @@ function FaqItemsTab() {
                                     {item.published ? "Unpublish" : "Publish"}
                                 </button>
                                 <button className="adm-btn sm" onClick={() => { setEditing(item); setCreating(false); }}>
-                                    <i className="ti ti-edit" /> Edit
+                                    <i className="ti ti-pencil" /> Edit
                                 </button>
                                 <button className="adm-btn sm danger" onClick={() => deleteItem(item.id)}>
                                     <i className="ti ti-trash" />

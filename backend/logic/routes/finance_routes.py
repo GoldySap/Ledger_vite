@@ -123,7 +123,6 @@ def transfer():
         "message":      f"Transferred ${amount:,.2f}",
     })
 
-
 @finance_bp.route("/subscription/subs", methods=["GET"])
 @jwt_required()
 def get_subscriptions():

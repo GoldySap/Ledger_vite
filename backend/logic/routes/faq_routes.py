@@ -72,8 +72,8 @@ def gdpr_delete():
         return jsonify({"message": "If we held any data for that email, it has been removed."})
 
     for row in rows:
-        row.name    = "Deleted user"
-        row.email   = f"deleted_{row.id}@removed.local"
+        row.name = "Deleted user"
+        row.email = f"deleted_{row.id}@removed.local"
         row.user_id = None
 
     db.session.commit()
@@ -149,11 +149,11 @@ def admin_update(item_id):
     if not item:
         return jsonify({"error": "Not found"}), 404
     data = request.get_json() or {}
-    if "category"   in data: item.category   = data["category"].lower().strip()
-    if "question"   in data: item.question   = data["question"].strip()
-    if "answer"     in data: item.answer     = data["answer"].strip()
+    if "category" in data: item.category = data["category"].lower().strip()
+    if "question" in data: item.question = data["question"].strip()
+    if "answer" in data: item.answer = data["answer"].strip()
     if "sort_order" in data: item.sort_order = int(data["sort_order"])
-    if "published"  in data: item.published  = bool(data["published"])
+    if "published" in data: item.published  = bool(data["published"])
     db.session.commit()
     return jsonify(item.to_dict())
 
