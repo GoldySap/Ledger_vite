@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useApi } from "../../API/useApi";
-import "./analytics.css";
+import "./Analytics.css";
 
 export default function AnalyticsPage() {
     const { call } = useApi();
