@@ -683,7 +683,7 @@ function UserQuestionsTab() {
 function buildDefaults(q) {
     return {
         subject: `Re: Your question on Ledger`,
-        body: `Hi ${q.name ?? "there"},\n\nThank you for reaching out. You asked:\n\n"${q.question}"\n\nHere is our answer:\n\n[Write your answer here]\n\nIf you have any other questions, feel free to reply to this email or visit our FAQ at ledger-vite.vercel.app/faq.\n\nBest regards,\nLedger Support`,
+        body: `Hi ${q.name ?? "there"},\n\nThank you for reaching out. You asked:\n\n"${q.question}"\n\nHere is our answer:\n\n[Write your answer here]\n\nIf you have any other questions, feel free to reply to this email or visit our FAQ at ledger-vite.vercel.app/support.\n\nBest regards,\nLedger Support`,
         promote: false,
     };
 }
