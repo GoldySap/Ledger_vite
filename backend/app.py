@@ -26,7 +26,7 @@ def create_app():
     else:
         app.config.from_object(DevelopmentConfig)
 
-    CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}}, allow_headers=["Content-Type", "Authorization", "X-CSRF-TOKEN", "X-CSRF-TOKEN-ACCESS", "X-CSRF-TOKEN-REFRESH"], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+    CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}}, allow_headers=["Content-Type", "Authorization", "X-CSRF-TOKEN"], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]) # "X-CSRF-TOKEN-ACCESS", "X-CSRF-TOKEN-REFRESH"
 
     app.register_blueprint(debug_bp)
     app.register_blueprint(faq_bp)
