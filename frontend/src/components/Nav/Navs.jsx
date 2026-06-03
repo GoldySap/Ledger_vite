@@ -9,7 +9,7 @@ export function NavTop() {
         <nav>
             <NavLink to="/">Home</NavLink>
             <NavLink to="/features">Features</NavLink>
-            <NavLink to="/pricing">Pricing</NavLink>
+            <NavLink to="/plans">Plans</NavLink>
             <NavLink to="/support">Support</NavLink>
             {!loading && (
             user ? (

@@ -64,9 +64,7 @@ def gdpr_delete():
     if not email or "@" not in email:
         return jsonify({"error": "A valid email address is required"}), 400
 
-    rows = UserQuestion.query.filter(
-        db.func.lower(UserQuestion.email) == email
-    ).all()
+    rows = UserQuestion.query.filter(db.func.lower(UserQuestion.email) == email).all()
 
     if not rows:
         return jsonify({"message": "If we held any data for that email, it has been removed."})

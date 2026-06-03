@@ -1,8 +1,9 @@
 from flask_jwt_extended import get_jwt_identity, get_jwt, create_access_token, create_refresh_token, set_access_cookies, set_refresh_cookies
 from functools import wraps
 from flask import jsonify
+from werkzeug.security import generate_password_hash
 from ..extensions import db
-from ..models.data import User, AuditLog, VerificationCode, SecuritySettings
+from ..models.data import User, AuditLog, VerificationCode, SecuritySettings, Account, UserQuestion
 import pyotp, hmac, os, requests, smtplib, secrets, re
 from datetime import datetime, timedelta, UTC
 from email.message import EmailMessage
@@ -226,3 +227,60 @@ def is_email_anonymised(email):
         return True
     
     return False
+
+def anonymise_user(user):
+    user.name = "Deleted user"
+    user.email = f"deleted_{user.id}@removed.local"
+    user.phonenumber = "0000000000"
+    user.password_hash = generate_password_hash("deleted")
+    user.role = "deleted"
+    user.subscription_id = 1
+    user.active = False
+    db.session.commit()
+
+def gdpr_anonymise_user(user: User) -> None:
+    uid = user.id
+ 
+    user.email = f"deleted_{uid}@removed.local"
+    user.phonenumber = "0000000000"
+    user.password_hash = generate_password_hash(secrets.token_hex(32))
+    user.role = "deleted"
+    user.active = False
+ 
+    for account in user.accounts:
+        for card in account.cards:
+            card.last4 = "0000"
+            card.provider = "Deleted"
+            card.active = False
+ 
+    for q in UserQuestion.query.filter_by(user_id=uid).all():
+        q.name = "Deleted user"
+        q.email = f"deleted_{q.id}@removed.local"
+        q.user_id = None 
+ 
+    sec = SecuritySettings.query.get(uid)
+    if sec:
+        sec.totp_secret = None
+        sec.totp_pending_secret = None
+        sec.totp_enabled = False
+        sec.backup_codes = None
+        sec.email_2fa_enabled = False
+        sec.sms_2fa_enabled = False
+ 
+    VerificationCode.query.filter_by(user_id=uid).delete()
+ 
+    db.session.commit()
+ 
+ 
+def gdpr_anonymise_account(account: Account) -> None:
+    account.name = f"Deleted account {account.id}"
+    account.provider = "Deleted"
+    account.last4 = "0000"
+    account.active = False
+ 
+    for card in account.cards:
+        card.last4 = "0000"
+        card.provider = "Deleted"
+        card.active = False
+ 
+    db.session.commit()

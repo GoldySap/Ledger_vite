@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, UTC
 from logic.extensions import limiter
 from ..extensions import db
 from ..models.data import User, SecuritySettings, AuditLog
-from ..routes.helpers import login_user_response, verify_turnstile, create_verification, verify_2fa
+from ..routes.helpers import login_user_response, verify_turnstile, create_verification, verify_2fa, gdpr_anonymise_user
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -167,21 +167,13 @@ def delete_account():
 
     log = AuditLog(
         user_id=user.id,
-        action="deletion",
+        action="account_deletion",
         status="success"
     )
     db.session.add(log)
     db.session.commit()
 
-    stmt = update(User).where(User.c.epost == User).values(
-        email = literal('deleted_').concat(User.c.id).concat('@eksempel.local'),
-        phonenumber = None,
-        subscription_id = 1,
-        active = False
-    )
-
-    db.session.execute(stmt)
-    db.session.commit()
+    gdpr_anonymise_user(user)
     response = jsonify({"msg": "Account Deleted"})
     unset_jwt_cookies(response)
     return response

@@ -238,10 +238,25 @@ function AskPanel({ user, call, onClose }) {
             </div>
 
             {user ? (
-                <p className="faq-panel-user-note">
-                    <i className="ti ti-user-check" aria-hidden="true" />
-                    Submitting as <strong>{user.email}</strong>
-                </p>
+                <div className="faq-panel-fields">
+                    <div className="faq-field">
+                        <label htmlFor="faq-name">Your name</label>
+                        <input
+                            id="faq-name"
+                            type="text"
+                            placeholder="Ole Nordmann"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                        />
+                    </div>
+                    <div className="faq-field">
+                        <label htmlFor="faq-email">Email address</label>
+                            <p className="faq-panel-user-note">
+                            <i className="ti ti-user-check" aria-hidden="true" />
+                            Submitting as <strong>{user.email}</strong>
+                        </p>
+                    </div>
+                </div>
             ) : (
                 <div className="faq-panel-fields">
                     <div className="faq-field">
@@ -249,7 +264,7 @@ function AskPanel({ user, call, onClose }) {
                         <input
                             id="faq-name"
                             type="text"
-                            placeholder="Jane Doe"
+                            placeholder="Ole Nordmann"
                             value={name}
                             onChange={e => setName(e.target.value)}
                         />
@@ -259,7 +274,7 @@ function AskPanel({ user, call, onClose }) {
                         <input
                             id="faq-email"
                             type="email"
-                            placeholder="jane@example.com"
+                            placeholder="ole@example.com"
                             value={email}
                             onChange={e => setEmail(e.target.value)}
                         />
@@ -355,7 +370,7 @@ function GdprPanel({ call, onClose }) {
                 <input
                     id="gdpr-email"
                     type="email"
-                    placeholder="jane@example.com"
+                    placeholder="ole@example.com"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     onKeyDown={e => e.key === "Enter" && submit()}

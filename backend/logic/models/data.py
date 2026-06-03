@@ -63,26 +63,40 @@ class Account(db.Model):
 
     user = db.relationship("User", back_populates="accounts")
     transactions = db.relationship("Transaction", back_populates="account", cascade="all, delete")
+    cards = db.relationship("Card", back_populates="account", cascade="all, delete-orphan")
 
-# class Card(db.Model):
-#     __tablename__ = "cards"
-#     id = db.Column(db.Integer, primary_key=True)
-#     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-#     account_id = db.Column(db.Integer, db.ForeignKey("cards.id"), nullable=False)
+class Card(db.Model):
+    __tablename__ = "cards"
+    id = db.Column(db.Integer, primary_key=True)
+    account_id = db.Column(db.Integer, db.ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+ 
+    provider = db.Column(db.String(50))         
+    last4 = db.Column(db.String(4))             
+    expires_at = db.Column(db.DateTime(timezone=True))
+    is_default = db.Column(db.Boolean, default=False) 
 
-#     is_card = db.Column(db.Boolean, default=True)
-#     provider = db.Column(db.String(50))
-#     cardnumber = db.Column(db.String(12), unique=True)
-#     securitycode = db.Column(db.Integer)
-#     last4 = db.Column(db.String(4))
-#     expires_at = db.Column(db.DateTime(timezone=True), nullable=False)
+    balance = db.Column(db.Float, default=0)
+    currency = db.Column(db.String(3), default="USD")
 
-#     accountnumber = db.Column(db.String(20))
+    active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+ 
+    account = db.relationship("Account", back_populates="cards")
+    user = db.relationship("User", backref="cards")
+ 
+    def to_dict(self):
+        return {
+            "id":         self.id,
+            "account_id": self.account_id,
+            "provider":   self.provider,
+            "last4":      self.last4,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+            "is_default": self.is_default,
+            "active":     self.active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
 
-#     currency = db.Column(db.String(3), default="USD")
-    
-#     active = db.Column(db.Boolean, default=True)
-#     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
 class Portfolio(db.Model):
     __tablename__ = "portfolios"

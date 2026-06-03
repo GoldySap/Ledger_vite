@@ -229,11 +229,15 @@
 .faq-panel-close:hover { color: var(--text, #111); }
 
 .faq-panel-user-note {
-    display: flex; align-items: center; gap: 0.4rem;
-    font-size: 0.8125rem; color: var(--muted);
-    padding: 0.5rem 0.75rem;
-    background: var(--border); border-radius: 0.4rem;
-    margin-bottom: 0.875rem;
+    display: flex; 
+    align-items: center; 
+    gap: 0.4rem;
+    font-size: 0.8125rem; 
+    color: var(--muted);
+    padding: 0.4rem 0.7rem;
+    background: var(--border); 
+    border-radius: 0.4rem;
+    margin: 0;
 }
 .faq-panel-user-note i { color: var(--accent); }
 

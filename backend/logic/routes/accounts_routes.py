@@ -2,7 +2,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask import Blueprint, request, jsonify
 from logic.extensions import limiter
 from ..extensions import db
-from ..models.data import User, Account, AuditLog
+from ..models.data import User, Account, AuditLog, Card
 
 def can_create_account(user):
     if not user.subscription or not user.subscription.access:
@@ -12,7 +12,7 @@ def can_create_account(user):
     current_count = Account.query.filter_by(user_id=user.id).count()
     return current_count <= max_accounts
 
-accounts_bp = Blueprint("accounts", __name__, url_prefix="/api/accounts")
+accounts_bp = Blueprint("accounts", __name__)
 
 @accounts_bp.route("/get", methods=["GET"])
 @limiter.limit("10 per minute")
@@ -52,17 +52,18 @@ def get_accounts():
     db.session.commit()
 
     return jsonify([
-        {
-            "id": a.id,
-            "name": a.name,
-            "provider": a.provider,
-            "last4": a.last4,
-            "balance": a.balance,
-            "currency": a.currency,
-            "is_primary": a.is_primary
-        }
-        for a in accounts
-    ])
+    {
+        "id": a.id,
+        "name": a.name,
+        "provider": a.provider,
+        "last4": a.last4,
+        "balance": a.balance,
+        "currency": a.currency,
+        "is_primary": a.is_primary,
+        "card_count": len([c for c in a.cards if c.active])
+    }
+    for a in accounts
+])
 
 @accounts_bp.route("/create", methods=["POST"])
 @limiter.limit("5 per minute")
@@ -172,3 +173,38 @@ def delete_account(id):
     db.session.commit()
 
     return jsonify({"success": True})
+
+@accounts_bp.route("/<int:account_id>/cards", methods=["GET"])
+@jwt_required()
+def get_account_cards(account_id):
+    user_id = get_jwt_identity()
+
+    account = Account.query.filter_by(
+        id=account_id,
+        user_id=user_id
+    ).first()
+
+    if not account:
+        return jsonify({"error": "Account not found"}), 404
+
+    cards = Card.query.filter_by(
+        account_id=account_id,
+        active=True
+    ).all()
+
+    return jsonify([
+        {
+            "id": card.id,
+            "provider": card.provider,
+            "last4": card.last4,
+            "expires_at": (
+                card.expires_at.isoformat()
+                if card.expires_at else None
+            ),
+            "currency": card.currency,
+            "balance": card.balance,
+            "is_default": card.is_default,
+            "is_card": True,
+        }
+        for card in cards
+    ])

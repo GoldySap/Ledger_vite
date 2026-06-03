@@ -2,7 +2,7 @@ from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identi
 from flask import Blueprint, request, jsonify
 from ..extensions import db
 from ..models.data import User, Subscription, SubscriptionAccess, AuditLog, Transaction, Holding
-from ..routes.helpers import admin_required, verified_required, is_email_anonymised
+from ..routes.helpers import admin_required, verified_required, is_email_anonymised, gdpr_anonymise_user
 from ..routes.faq_routes import FaqItem, UserQuestion
 from datetime import datetime, UTC, timedelta
 from sqlalchemy import func
@@ -109,10 +109,8 @@ def update_user(user_id):
 @admin_required
 def delete_user(user_id):
     user = User.query.get_or_404(user_id)
-    db.session.delete(user)
-    db.session.commit()
+    gdpr_anonymise_user(user)
     return jsonify({"msg": "User deleted"})
-
 
 @admin_bp.route("/users/bulk", methods=["PUT"])
 @jwt_required()

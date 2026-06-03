@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useApi } from "../../API/useApi";
 import "./finances.css";
 
@@ -13,18 +13,18 @@ export default function FinancesPage() {
             </div>
 
             <div className="fin-tabs">
-                <button
-                    className={`fin-tab ${tab === "wallet" ? "active" : ""}`}
-                    onClick={() => setTab("wallet")}
-                >
-                    <i className="ti ti-wallet" /> Wallet
-                </button>
-                <button
-                    className={`fin-tab ${tab === "transactions" ? "active" : ""}`}
-                    onClick={() => setTab("transactions")}
-                >
-                    <i className="ti ti-receipt" /> Transactions
-                </button>
+                {[
+                    { id: "wallet", icon: "ti-wallet",  label: "Wallet" },
+                    { id: "transactions", icon: "ti-receipt", label: "Transactions" },
+                ].map(t => (
+                    <button
+                        key={t.id}
+                        className={`fin-tab ${tab === t.id ? "active" : ""}`}
+                        onClick={() => setTab(t.id)}
+                    >
+                        <i className={`ti ${t.icon}`} /> {t.label}
+                    </button>
+                ))}
             </div>
 
             {tab === "wallet" && <WalletTab />}
@@ -37,41 +37,36 @@ function WalletTab() {
     const { call } = useApi();
     const [accounts, setAccounts] = useState([]);
     const [selected, setSelected] = useState(null);
-    const [mode, setMode] = useState("view");
+    const [mode, setMode] = useState("view"); // view, create, edit
     const [editingAccount, setEditingAccount] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isHovered, setIsHovered] = useState(false);
+    const [cardsFor, setCardsFor] = useState(null);
+    const [limitError, setLimitError] = useState(null);
 
-
-    useEffect(() => { load(); }, []);
-
-    async function load() {
+    const load = useCallback(async () => {
         setLoading(true);
         const res = await call("/api/accounts/get");
         setAccounts(res || []);
         setLoading(false);
-    }
+    }, []);
+
+    useEffect(() => { load(); }, [load]);
 
     async function create(data) {
-        await call("/api/accounts/create", { method: "POST", body: JSON.stringify(data) });
-        setMode("view");
-        load();
+        const res = await call("/api/accounts/create", { method: "POST", body: JSON.stringify(data) });
+        if (res?.error) { setLimitError(res.error); return; }
+        setMode("view"); setLimitError(null); load();
     }
 
     async function update(data) {
-        await call(`/api/accounts/${editingAccount.id}/update`, {
-            method: "PUT",
-            body: JSON.stringify(data),
-        });
-        setMode("view");
-        setEditingAccount(null);
-        load();
+        await call(`/api/accounts/${editingAccount.id}/update`, { method: "PUT", body: JSON.stringify(data) });
+        setMode("view"); setEditingAccount(null); load();
     }
 
     async function remove(id) {
         await call(`/api/accounts/${id}/delete`, { method: "DELETE" });
-        setSelected(null);
-        load();
+        setSelected(null); load();
     }
 
     async function setPrimary(id) {
@@ -79,21 +74,24 @@ function WalletTab() {
         load();
     }
 
-    if (mode === "create") {
-        return <AccountForm onSubmit={create} onCancel={() => setMode("view")} />;
-    }
-    if (mode === "edit") {
-        return (
-            <AccountForm
-                initial={editingAccount}
-                onSubmit={update}
-                onCancel={() => { setMode("view"); setEditingAccount(null); }}
-            />
-        );
-    }
+    if (mode === "create") return <AccountForm onSubmit={create} onCancel={() => { setMode("view"); setLimitError(null); }} error={limitError} />;
+    if (mode === "edit")   return (
+        <AccountForm
+            initial={editingAccount}
+            onSubmit={update}
+            onCancel={() => { setMode("view"); setEditingAccount(null); }}
+        />
+    );
+
+    if (cardsFor) return (
+        <CardsPanel
+            account={cardsFor}
+            onBack={() => { setCardsFor(null); load(); }}
+        />
+    );
 
     const total = accounts.reduce((s, a) => s + (a.balance ?? 0), 0);
-    const primary  = accounts.find(a => a.is_primary);
+    const primary = accounts.find(a => a.is_primary);
     const selected_acc = accounts.find(a => a.id === selected);
 
     return (
@@ -127,11 +125,10 @@ function WalletTab() {
                     <button className="add-btn" onClick={() => setMode("create")}>Add your first account</button>
                 </div>
             ) : (
-                /* From Uiverse.io by byllzz */
                 <div className="app-container">
                     <div className="wallet"
-                    onMouseEnter={() => setIsHovered(true)}
-                    onMouseLeave={() => setIsHovered(false)}
+                        onMouseEnter={() => setIsHovered(true)}
+                        onMouseLeave={() => setIsHovered(false)}
                     >
                         <div className="wallet-back"></div>
                         <div className="cards">
@@ -148,16 +145,8 @@ function WalletTab() {
                         </div>
                         <div className="pocket">
                             <svg className="pocket-svg" viewBox="0 0 280 160" fill="none">
-                                <path
-                                d="M 0 20 C 0 10, 5 10, 10 10 C 20 10, 25 25, 40 25 L 240 25 C 255 25, 260 10, 270 10 C 275 10, 280 10, 280 20 L 280 120 C 280 155, 260 160, 240 160 L 40 160 C 20 160, 0 155, 0 120 Z"
-                                fill="#1e341e"
-                                ></path>
-                                <path
-                                d="M 8 22 C 8 16, 12 16, 15 16 C 23 16, 27 29, 40 29 L 240 29 C 253 29, 257 16, 265 16 C 268 16, 272 16, 272 22 L 272 120 C 272 150, 255 152, 240 152 L 40 152 C 25 152, 8 152, 8 120 Z"
-                                stroke="#3d5635"
-                                strokeWidth="1.5"
-                                strokeDasharray="6 4"
-                                ></path>
+                                <path d="M 0 20 C 0 10, 5 10, 10 10 C 20 10, 25 25, 40 25 L 240 25 C 255 25, 260 10, 270 10 C 275 10, 280 10, 280 20 L 280 120 C 280 155, 260 160, 240 160 L 40 160 C 20 160, 0 155, 0 120 Z" fill="#1e341e" />
+                                <path d="M 8 22 C 8 16, 12 16, 15 16 C 23 16, 27 29, 40 29 L 240 29 C 253 29, 257 16, 265 16 C 268 16, 272 16, 272 22 L 272 120 C 272 150, 255 152, 240 152 L 40 152 C 25 152, 8 152, 8 120 Z" stroke="#3d5635" strokeWidth="1.5" strokeDasharray="6 4" />
                             </svg>
                             <div className="pocket-content">
                                 <div style={{position: "relative", height: "24px", width: "100%"}}>
@@ -166,31 +155,12 @@ function WalletTab() {
                                 </div>
                                 <div style={{color: "#698263", fontSize: "12px", fontWeight: 500}}>Hover To View Total Balance</div>
                                 <div className="eye-icon-wrapper">
-                                    <svg
-                                        className="eye-icon eye-slash"
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
+                                    <svg className="eye-icon eye-slash" width="20" height="20" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                         <circle cx="12" cy="12" r="3"></circle>
                                         <line x1="3" y1="3" x2="21" y2="21"></line>
                                     </svg>
-                                    <svg
-                                        className="eye-icon eye-open"
-                                        style={{opacity: 0}}
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
+                                    <svg className="eye-icon eye-open" style={{opacity: 0}} width="20" height="20" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                         <circle cx="12" cy="12" r="3"></circle>
                                     </svg>
@@ -208,10 +178,13 @@ function WalletTab() {
                         <span className="drawer-balance">{fmt(selected_acc.balance)}</span>
                     </div>
                     <div className="drawer-actions">
-                        <button className="drawer-btn" onClick={() => {
-                            setEditingAccount(selected_acc);
-                            setMode("edit");
-                        }}>
+                        <button className="drawer-btn" onClick={() => setCardsFor(selected_acc)}>
+                            <i className="ti ti-credit-card" /> Cards
+                            {selected_acc.card_count > 0 && (
+                                <span className="drawer-badge">{selected_acc.card_count}</span>
+                            )}
+                        </button>
+                        <button className="drawer-btn" onClick={() => { setEditingAccount(selected_acc); setMode("edit"); }}>
                             <i className="ti ti-pencil-alt2" /> Edit
                         </button>
                         <button className="drawer-btn" onClick={() => setPrimary(selected_acc.id)}>
@@ -230,65 +203,211 @@ function WalletTab() {
     );
 }
 
-const CARD_PALETTES = [
-    { bg: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)", text: "#e2e8f0", accent: "#4ade80" },
-    { bg: "linear-gradient(135deg, #134e4a 0%, #065f46 100%)", text: "#ecfdf5", accent: "#34d399" },
-    { bg: "linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%)", text: "#dbeafe", accent: "#93c5fd" },
-    { bg: "linear-gradient(135deg, #3b0764 0%, #6d28d9 100%)", text: "#ede9fe", accent: "#c4b5fd" },
-    { bg: "linear-gradient(135deg, #450a0a 0%, #991b1b 100%)", text: "#fee2e2", accent: "#fca5a5" },
-];
+function CardsPanel({ account, onBack }) {
+    const { call } = useApi();
+    const [cards, setCards] = useState(null);
+    const [creating, setCreating] = useState(false);
+    const [editing, setEditing] = useState(null);
+    const [error, setError] = useState(null);
 
-function BankCard({ acc, idx, selected, onClick, isHovered }) {
-    const pal = CARD_PALETTES[idx % CARD_PALETTES.length];
-    const [isHoveringCard, setIsHoveringCard] = useState(false);
+    const load = useCallback(async () => {
+        const res = await call(`/api/accounts/${account.id}/cards`);
+        setCards(Array.isArray(res) ? res : []);
+    }, [account.id]);
+
+    useEffect(() => { load(); }, [load]);
+
+    async function addCard(data) {
+        const res = await call(`/api/accounts/${account.id}/cards`, {
+            method: "POST",
+            body: JSON.stringify(data),
+        });
+        if (res?.error) { setError(res.error); return; }
+        setCreating(false); setError(null); load();
+    }
+
+    async function deleteCard(cardId) {
+        await call(`/api/accounts/${account.id}/cards/${cardId}/delete`, { method: "DELETE" });
+        load();
+    }
+
+    if (creating) return (
+        <CardForm
+            currency={account.currency}
+            onSubmit={addCard}
+            onCancel={() => { setCreating(false); setError(null); }}
+            error={error}
+        />
+    );
+
     return (
-        <div
-            className={`card ${selected ? "selected" : ""}`}
-            onMouseEnter={() => setIsHoveringCard(true)}
-            onMouseLeave={() => setIsHoveringCard(false)}
-            style={{
-                background: pal.bg,
-                color: pal.text,
-                bottom: `${20 + idx * 25}px`,
-                zIndex: isHoveringCard ? 100 : 40 - (idx * 5),
-                animationDelay: `${idx * 0.1}s`,
-                transitionDelay: isHoveringCard ? `0s` : "",
-                transform: isHovered
-                    ? `translateY(-${30 + (idx * 20)}px) rotate(${idx % 2 ? "" : "-"}${4 -idx}deg)`
-                    : `translateY(0px) rotate(0deg)`,
-                }}
-            onClick={onClick}
-        >
-            {acc.is_primary && (
-                <span className="primary-badge" style={{ color: pal.accent }}>
-                    <i className="ti ti-star-filled" /> Primary
-                </span>
-            )}
-            <div className="card-inner">
-                <div className="card-top">
-                    <span className="card-provider">{acc.provider ?? "Account"}</span>
-                    <div className="card-chip" />
+        <div className="cards-panel">
+            <div className="cards-panel-header">
+                <button className="fin-btn" onClick={onBack}>
+                    <i className="ti ti-arrow-left" /> Back
+                </button>
+                <div>
+                    <h2>{account.name}</h2>
+                    <p className="muted">{fmt(account.balance)} · {account.currency}</p>
                 </div>
-                <div className="card-number">
-                        <span>••••</span><span>••••</span><span>••••</span>
-                        <span>{acc.last4 ?? "????"}  </span>
+                <button className="add-btn" onClick={() => setCreating(true)}>
+                    <i className="ti ti-plus" /> Add card
+                </button>
+            </div>
+
+            {error && <p className="fin-error">{error}</p>}
+
+            {!cards ? (
+                <p className="muted loading-text">Loading cards…</p>
+            ) : cards.length === 0 ? (
+                <div className="empty-state">
+                    <i className="ti ti-credit-card-off" />
+                    <p>No cards linked to this account</p>
+                    <button className="add-btn" onClick={() => setCreating(true)}>Add a card</button>
+                </div>
+            ) : (
+                <div className="linked-cards-list">
+                    {cards.map(card => (
+                        <div key={card.id} className="linked-card-row">
+                            <div className="linked-card-icon">
+                                <i className={`ti ${card.is_card ? "ti-credit-card" : "ti-building-bank"}`} />
+                            </div>
+                            <div className="linked-card-info">
+                                <span className="linked-card-provider">{card.provider ?? "Card"}</span>
+                                <span className="muted linked-card-num">
+                                    {card.is_card
+                                        ? `•••• •••• •••• ${card.last4 ?? "????"}  `
+                                        : `Account: ${card.accountnumber ?? "—"}`
+                                    }
+                                </span>
+                                {card.expires_at && (
+                                    <span className="muted linked-card-exp">
+                                        Expires {new Date(card.expires_at).toLocaleDateString("en-US", { month: "2-digit", year: "2-digit" })}
+                                    </span>
+                                )}
+                            </div>
+                            <span className="linked-card-currency">{card.currency}</span>
+                            <button className="drawer-btn danger" onClick={() => deleteCard(card.id)}>
+                                <i className="ti ti-trash" />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+function CardForm({ currency, onSubmit, onCancel, error }) {
+    const [isCard, setIsCard] = useState(true);
+    const [provider, setProvider] = useState("");
+    const [cardnumber, setCardnumber] = useState("");
+    const [securitycode, setSecuritycode] = useState("");
+    const [expiresMonth, setExpiresMonth] = useState("");
+    const [expiresYear, setExpiresYear] = useState("");
+    const [accountnumber, setAccountnumber] = useState("");
+    const [cur, setCur] = useState(currency ?? "USD");
+
+    function handleSubmit() {
+        if (!provider) { alert("Provider is required"); return; }
+        if (isCard && cardnumber.replace(/\s/g, "").length < 12) { alert("Card number must be at least 12 digits"); return; }
+
+        const expires_at = isCard && expiresMonth && expiresYear
+            ? new Date(Number(`20${expiresYear}`), Number(expiresMonth) - 1, 1).toISOString()
+            : null;
+
+        onSubmit({
+            is_card: isCard,
+            provider,
+            cardnumber: isCard ? cardnumber.replace(/\s/g, "") : null,
+            securitycode: isCard ? Number(securitycode) || null : null,
+            expires_at,
+            accountnumber: !isCard ? accountnumber : null,
+            currency: cur,
+        });
+    }
+
+    return (
+        <div className="account-form-wrap">
+            <div className="account-form">
+                <h2>Add card / account</h2>
+
+                {/* Type toggle */}
+                <div className="card-type-toggle">
+                    <button
+                        className={`card-type-btn ${isCard ? "active" : ""}`}
+                        onClick={() => setIsCard(true)}
+                    >
+                        <i className="ti ti-credit-card" /> Physical card
+                    </button>
+                    <button
+                        className={`card-type-btn ${!isCard ? "active" : ""}`}
+                        onClick={() => setIsCard(false)}
+                    >
+                        <i className="ti ti-building-bank" /> Account number
+                    </button>
+                </div>
+
+                <div className="form-grid">
+                    <div className="form-field">
+                        <label>Provider</label>
+                        <input placeholder="e.g. Visa, Mastercard" value={provider} onChange={e => setProvider(e.target.value)} />
                     </div>
-                <div className="card-bottom">
-                    <div className="card-info">
-                        <div className="card-meta-label">Account name</div>
-                        <div className="card-meta-value">{acc.name}</div>
+                    <div className="form-field">
+                        <label>Currency</label>
+                        <select value={cur} onChange={e => setCur(e.target.value)}>
+                            {["USD","EUR","GBP","NOK","SEK","DKK"].map(c => <option key={c}>{c}</option>)}
+                        </select>
                     </div>
-                    <div className="card-balance" style={{ color: pal.accent }}>
-                        {fmt(acc.balance)}
-                        <span className="card-currency">{acc.currency}</span>
-                    </div>
+
+                    {isCard ? (
+                        <>
+                            <div className="form-field full">
+                                <label>Card number</label>
+                                <input
+                                    placeholder="1234 5678 9012 3456"
+                                    maxLength={19}
+                                    value={cardnumber}
+                                    onChange={e => setCardnumber(e.target.value.replace(/[^\d\s]/g, ""))}
+                                />
+                            </div>
+                            <div className="form-field">
+                                <label>CVV / Security code</label>
+                                <input
+                                    placeholder="123"
+                                    maxLength={4}
+                                    value={securitycode}
+                                    onChange={e => setSecuritycode(e.target.value.replace(/\D/g, ""))}
+                                />
+                            </div>
+                            <div className="form-field">
+                                <label>Expires (MM / YY)</label>
+                                <div style={{ display: "flex", gap: "0.5rem" }}>
+                                    <input placeholder="MM" maxLength={2} value={expiresMonth} onChange={e => setExpiresMonth(e.target.value.replace(/\D/g, ""))} style={{ width: "4rem" }} />
+                                    <input placeholder="YY" maxLength={2} value={expiresYear}  onChange={e => setExpiresYear(e.target.value.replace(/\D/g, ""))}  style={{ width: "4rem" }} />
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="form-field full">
+                            <label>Account number</label>
+                            <input placeholder="e.g. NO12 3456 7890" value={accountnumber} onChange={e => setAccountnumber(e.target.value)} />
+                        </div>
+                    )}
+                </div>
+
+                {error && <p className="fin-error">{error}</p>}
+
+                <div className="form-actions">
+                    <button className="fin-btn" onClick={onCancel}>Cancel</button>
+                    <button className="fin-btn primary" onClick={handleSubmit}>Add</button>
                 </div>
             </div>
         </div>
     );
 }
 
-function AccountForm({ initial = {}, onSubmit, onCancel }) {
+function AccountForm({ initial = {}, onSubmit, onCancel, error }) {
     const [name, setName] = useState(initial.name ?? "");
     const [provider, setProvider] = useState(initial.provider ?? "");
     const [cardNumber, setCardNumber] = useState("");
@@ -314,27 +433,19 @@ function AccountForm({ initial = {}, onSubmit, onCancel }) {
                         <input placeholder="e.g. Visa, Chase" value={provider} onChange={e => setProvider(e.target.value)} />
                     </div>
                     {!initial.id && (
-                        <>
-                            <div className="form-field full">
-                                <label>Card number</label>
-                                <input
-                                    placeholder="12+ digits"
-                                    value={cardNumber}
-                                    maxLength={19}
-                                    onChange={e => setCardNumber(e.target.value.replace(/\D/g, ""))}
-                                />
-                            </div>
-                        </>
+                        <div className="form-field full">
+                            <label>Card number</label>
+                            <input placeholder="12+ digits" value={cardNumber} maxLength={19} onChange={e => setCardNumber(e.target.value.replace(/\D/g, ""))} />
+                        </div>
                     )}
                     <div className="form-field">
                         <label>Currency</label>
                         <select value={currency} onChange={e => setCurrency(e.target.value)}>
-                            {["USD", "EUR", "GBP", "NOK", "SEK", "DKK"].map(c => (
-                                <option key={c}>{c}</option>
-                            ))}
+                            {["USD","EUR","GBP","NOK","SEK","DKK"].map(c => <option key={c}>{c}</option>)}
                         </select>
                     </div>
                 </div>
+                {error && <p className="fin-error">{error}</p>}
                 <div className="form-actions">
                     <button className="fin-btn" onClick={onCancel}>Cancel</button>
                     <button className="fin-btn primary" onClick={handleSubmit}>
@@ -348,9 +459,9 @@ function AccountForm({ initial = {}, onSubmit, onCancel }) {
 
 function TransactionsTab() {
     const { call } = useApi();
-    const [txns,    setTxns]    = useState(null);
-    const [filter,  setFilter]  = useState("all");
-    const [error,   setError]   = useState(null);
+    const [txns, setTxns] = useState(null);
+    const [filter, setFilter] = useState("all");
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         call("/api/transactions")
@@ -362,27 +473,19 @@ function TransactionsTab() {
     if (!txns) return <p className="muted loading-text">Loading…</p>;
 
     const categories = ["all", ...new Set(txns.map(t => t.category).filter(Boolean))];
-    const visible = filter === "all" ? txns : txns.filter(t => t.category === filter);
+    const visible    = filter === "all" ? txns : txns.filter(t => t.category === filter);
 
     return (
         <div className="txns-tab">
             <div className="txns-filters">
                 {categories.map(c => (
-                    <button
-                        key={c}
-                        className={`filter-chip ${filter === c ? "active" : ""}`}
-                        onClick={() => setFilter(c)}
-                    >
+                    <button key={c} className={`filter-chip ${filter === c ? "active" : ""}`} onClick={() => setFilter(c)}>
                         {c}
                     </button>
                 ))}
             </div>
-
             {visible.length === 0 ? (
-                <div className="empty-state">
-                    <i className="ti ti-receipt-off" />
-                    <p>No transactions</p>
-                </div>
+                <div className="empty-state"><i className="ti ti-receipt-off" /><p>No transactions</p></div>
             ) : (
                 <div className="txns-list">
                     {visible.map(t => (
@@ -405,14 +508,74 @@ function TransactionsTab() {
     );
 }
 
+const CARD_PALETTES = [
+    { bg: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)", text: "#e2e8f0", accent: "#4ade80" },
+    { bg: "linear-gradient(135deg, #134e4a 0%, #065f46 100%)", text: "#ecfdf5", accent: "#34d399" },
+    { bg: "linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%)", text: "#dbeafe", accent: "#93c5fd" },
+    { bg: "linear-gradient(135deg, #3b0764 0%, #6d28d9 100%)", text: "#ede9fe", accent: "#c4b5fd" },
+    { bg: "linear-gradient(135deg, #450a0a 0%, #991b1b 100%)", text: "#fee2e2", accent: "#fca5a5" },
+];
+
+function BankCard({ acc, idx, selected, onClick, isHovered }) {
+    const pal = CARD_PALETTES[idx % CARD_PALETTES.length];
+    const [isHoveringCard, setIsHoveringCard] = useState(false);
+    return (
+        <div
+            className={`card ${selected ? "selected" : ""}`}
+            onMouseEnter={() => setIsHoveringCard(true)}
+            onMouseLeave={() => setIsHoveringCard(false)}
+            style={{
+                background: pal.bg, color: pal.text,
+                bottom: `${20 + idx * 25}px`,
+                zIndex: isHoveringCard ? 100 : 40 - (idx * 5),
+                animationDelay: `${idx * 0.1}s`,
+                transitionDelay: isHoveringCard ? "0s" : "",
+                transform: isHovered
+                    ? `translateY(-${30 + (idx * 20)}px) rotate(${idx % 2 ? "" : "-"}${4 - idx}deg)`
+                    : "translateY(0px) rotate(0deg)",
+            }}
+            onClick={onClick}
+        >
+            {acc.is_primary && (
+                <span className="primary-badge" style={{ color: pal.accent }}>
+                    <i className="ti ti-star-filled" /> Primary
+                </span>
+            )}
+            <div className="card-inner">
+                <div className="card-top">
+                    <span className="card-provider">{acc.provider ?? "Account"}</span>
+                    <div className="card-chip" />
+                </div>
+                <div className="card-number">
+                    <span>••••</span><span>••••</span><span>••••</span>
+                    <span>{acc.last4 ?? "????"}  </span>
+                </div>
+                <div className="card-bottom">
+                    <div className="card-info">
+                        <div className="card-meta-label">Account name</div>
+                        <div className="card-meta-value">{acc.name}</div>
+                    </div>
+                    <div className="card-balance" style={{ color: pal.accent }}>
+                        {fmt(acc.balance)}
+                        <span className="card-currency">{acc.currency}</span>
+                    </div>
+                </div>
+            </div>
+            {acc.card_count > 0 && (
+                <span className="card-count-badge" style={{ background: pal.accent, color: "#111" }}>
+                    <i className="ti ti-credit-card" /> {acc.card_count}
+                </span>
+            )}
+        </div>
+    );
+}
+
 function fmt(n) {
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n ?? 0);
 }
-
 function slugify(s) {
     return (s ?? "").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 }
-
 function categoryIcon(cat) {
     const map = {
         food: "ti-tools-kitchen-2", groceries: "ti-shopping-cart",
