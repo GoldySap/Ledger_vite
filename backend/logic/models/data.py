@@ -70,7 +70,7 @@ class Card(db.Model):
  
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    account_id = db.Column(db.Integer, db.ForeignKey("accounts.id"), nullable=False)  # ← FIXED
+    account_id = db.Column(db.Integer, db.ForeignKey("accounts.id"), nullable=False)
  
     is_card = db.Column(db.Boolean, default=True)
     provider = db.Column(db.String(50))
@@ -82,13 +82,14 @@ class Card(db.Model):
     accountnumber = db.Column(db.String(20))
  
     currency = db.Column(db.String(3), default="USD")
+
+    is_default = db.Column(db.Boolean, default=False) 
     active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
  
     user = db.relationship("User", backref="cards")
     account = db.relationship("Account", back_populates="cards")
 
- 
     def to_dict(self):
         return {
             "id":         self.id,

@@ -1,5 +1,6 @@
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask import Blueprint, request, jsonify
+from datetime import datetime
 from logic.extensions import limiter
 from ..extensions import db
 from ..models.data import User, Account, AuditLog, Card
@@ -174,10 +175,9 @@ def delete_account(id):
 
     return jsonify({"success": True})
 
-@accounts_bp.route("/<int:account_id>/cards", methods=["GET", "POST"])
+@accounts_bp.route("/<int:account_id>/cards", methods=["GET"])
 @jwt_required()
 def get_account_cards(account_id):
-    """Retrieve all active cards for an account"""
     user_id = get_jwt_identity()
 
     account = Account.query.filter_by(
@@ -194,6 +194,8 @@ def get_account_cards(account_id):
         active=True
     ).all()
 
+    # print([card.to_dict() for card in cards])
+
     return jsonify([
         {
             "id": card.id,
@@ -201,6 +203,7 @@ def get_account_cards(account_id):
             "last4": card.last4,
             "accountnumber": card.accountnumber,
             "expires_at": card.expires_at.isoformat() if card.expires_at else None,
+            "accountnumber": card.accountnumber,
             "currency": card.currency,
             "is_card": card.is_card,
             "created_at": card.created_at.isoformat() if card.created_at else None,
@@ -208,12 +211,10 @@ def get_account_cards(account_id):
         for card in cards
     ])
 
-
 @accounts_bp.route("/<int:account_id>/cards", methods=["POST"])
 @limiter.limit("10 per minute")
 @jwt_required()
 def create_card(account_id):
-    """Add a new card or bank account to an account"""
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
 
@@ -262,7 +263,6 @@ def create_card(account_id):
         expires_at = data.get("expires_at")
         if expires_at:
             try:
-                from datetime import datetime
                 exp_date = datetime.fromisoformat(expires_at)
                 if exp_date < datetime.now():
                     return jsonify({"error": "Card is expired"}), 400
@@ -290,7 +290,6 @@ def create_card(account_id):
         if not accountnumber or len(accountnumber) < 8:
             return jsonify({"error": "Account number must be at least 8 characters"}), 400
 
-        # Check for duplicate account numbers
         existing = Card.query.filter_by(accountnumber=accountnumber).first()
         if existing:
             return jsonify({"error": "This account is already linked"}), 409
@@ -323,12 +322,10 @@ def create_card(account_id):
         "message": "Card added successfully"
     }), 201
 
-
 @accounts_bp.route("/<int:account_id>/cards/<int:card_id>/delete", methods=["DELETE"])
 @limiter.limit("10 per minute")
 @jwt_required()
 def delete_card(account_id, card_id):
-    """Delete (deactivate) a card"""
     user_id = get_jwt_identity()
 
     account = Account.query.filter_by(
@@ -364,12 +361,12 @@ def delete_card(account_id, card_id):
 
 
 def is_valid_card_number(cardnumber):
-    """Validate card number using Luhn algorithm"""
     digits = [int(d) for d in cardnumber if d.isdigit()]
     
     if len(digits) < 12:
         return False
     
+    # Luhn algorithm
     checksum = 0
     for i, digit in enumerate(reversed(digits)):
         if i % 2 == 1:

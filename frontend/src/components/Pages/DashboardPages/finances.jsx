@@ -222,8 +222,14 @@ function CardsPanel({ account, onBack }) {
             method: "POST",
             body: JSON.stringify(data),
         });
-        if (res?.error) { setError(res.error); return; }
-        setCreating(false); setError(null); load();
+        if (res?.error) { 
+            setError(res.error); 
+            return; 
+        }
+        setCreating(false); 
+        setError(null); 
+        load();
+        SuccessMessage("Card added successfully!");
     }
 
     async function deleteCard(cardId) {
@@ -298,6 +304,50 @@ function CardsPanel({ account, onBack }) {
     );
 }
 
+export function ErrorMessage({ error, onDismiss }) {
+    if (!error) return null;
+
+    return (
+        <div className="error-banner">
+            <div className="error-content">
+                <i className="ti ti-alert-circle" />
+                <div className="error-text">
+                    <p className="error-title">Error</p>
+                    <p className="error-message">{error}</p>
+                </div>
+            </div>
+            {onDismiss && (
+                <button className="error-dismiss" onClick={onDismiss}>
+                    <i className="ti ti-x" />
+                </button>
+            )}
+        </div>
+    );
+}
+
+
+export function SuccessMessage({ message, onDismiss }) {
+    if (!message) return null;
+
+    return (
+        <div className="success-banner">
+            <div className="success-content">
+                <i className="ti ti-check-circle" />
+                <div className="success-text">
+                    <p className="success-title">Success</p>
+                    <p className="success-message">{message}</p>
+                </div>
+            </div>
+            {onDismiss && (
+                <button className="success-dismiss" onClick={onDismiss}>
+                    <i className="ti ti-x" />
+                </button>
+            )}
+        </div>
+    );
+}
+
+
 function CardForm({ currency, onSubmit, onCancel, error }) {
     const [isCard, setIsCard] = useState(true);
     const [provider, setProvider] = useState("");
@@ -307,13 +357,52 @@ function CardForm({ currency, onSubmit, onCancel, error }) {
     const [expiresYear, setExpiresYear] = useState("");
     const [accountnumber, setAccountnumber] = useState("");
     const [cur, setCur] = useState(currency ?? "USD");
+    const [validationErrors, setValidationErrors] = useState({});
+
+    function validateForm() {
+        const errors = {};
+
+        if (!provider.trim()) {
+            errors.provider = "Provider is required";
+        }
+
+        if (isCard) {
+            const cleanCardNumber = cardnumber.replace(/\s/g, "");
+            if (cleanCardNumber.length < 12) {
+                errors.cardnumber = "Card number must be at least 12 digits";
+            }
+            if (securitycode && (securitycode.length < 3 || securitycode.length > 4)) {
+                errors.securitycode = "Security code must be 3-4 digits";
+            }
+            if (expiresMonth || expiresYear) {
+                if (!expiresMonth || !expiresYear) {
+                    errors.expires = "Both month and year are required";
+                } else if (Number(expiresMonth) < 1 || Number(expiresMonth) > 12) {
+                    errors.expires = "Month must be between 01 and 12";
+                }
+            }
+        } else {
+            const cleanAccountNumber = accountnumber.trim();
+            if (cleanAccountNumber.length < 8) {
+                errors.accountnumber = "Account number must be at least 8 characters";
+            }
+        }
+
+        setValidationErrors(errors);
+        return Object.keys(errors).length === 0;
+    }
 
     function handleSubmit() {
-        if (!provider) { alert("Provider is required"); return; }
-        if (isCard && cardnumber.replace(/\s/g, "").length < 12) { alert("Card number must be at least 12 digits"); return; }
+        if (!validateForm()) return;
 
         const expires_at = isCard && expiresMonth && expiresYear
-            ? new Date(Number(`20${expiresYear}`), Number(expiresMonth) - 1, 1).toISOString()
+            ? (() => {
+                const fullYear = Number(`20${expiresYear}`);
+                const month = Number(expiresMonth);
+                const lastDay = new Date(fullYear, month, 0).getDate();
+                const expDate = new Date(fullYear, month - 1, lastDay, 23, 59, 59);
+                return expDate.toISOString().split('.')[0];
+            })()
             : null;
 
         onSubmit({
@@ -332,27 +421,41 @@ function CardForm({ currency, onSubmit, onCancel, error }) {
             <div className="account-form">
                 <h2>Add card / account</h2>
 
-                {/* Type toggle */}
+                {error && (
+                    <div className="form-error-banner">
+                        <i className="ti ti-alert-circle" />
+                        <span>{error}</span>
+                    </div>
+                )}
+
                 <div className="card-type-toggle">
                     <button
                         className={`card-type-btn ${isCard ? "active" : ""}`}
-                        onClick={() => setIsCard(true)}
+                        onClick={() => { setIsCard(true); setValidationErrors({}); }}
                     >
                         <i className="ti ti-credit-card" /> Physical card
                     </button>
                     <button
                         className={`card-type-btn ${!isCard ? "active" : ""}`}
-                        onClick={() => setIsCard(false)}
+                        onClick={() => { setIsCard(false); setValidationErrors({}); }}
                     >
                         <i className="ti ti-building-bank" /> Account number
                     </button>
                 </div>
 
                 <div className="form-grid">
-                    <div className="form-field">
+                    <div className={`form-field ${validationErrors.provider ? "error" : ""}`}>
                         <label>Provider</label>
-                        <input placeholder="e.g. Visa, Mastercard" value={provider} onChange={e => setProvider(e.target.value)} />
+                        <input 
+                            placeholder="e.g. Visa, Mastercard" 
+                            value={provider} 
+                            onChange={e => setProvider(e.target.value)} 
+                        />
+                        {validationErrors.provider && (
+                            <p className="field-error">{validationErrors.provider}</p>
+                        )}
                     </div>
+                    
                     <div className="form-field">
                         <label>Currency</label>
                         <select value={cur} onChange={e => setCur(e.target.value)}>
@@ -362,7 +465,7 @@ function CardForm({ currency, onSubmit, onCancel, error }) {
 
                     {isCard ? (
                         <>
-                            <div className="form-field full">
+                            <div className={`form-field full ${validationErrors.cardnumber ? "error" : ""}`}>
                                 <label>Card number</label>
                                 <input
                                     placeholder="1234 5678 9012 3456"
@@ -370,8 +473,12 @@ function CardForm({ currency, onSubmit, onCancel, error }) {
                                     value={cardnumber}
                                     onChange={e => setCardnumber(e.target.value.replace(/[^\d\s]/g, ""))}
                                 />
+                                {validationErrors.cardnumber && (
+                                    <p className="field-error">{validationErrors.cardnumber}</p>
+                                )}
                             </div>
-                            <div className="form-field">
+
+                            <div className={`form-field ${validationErrors.securitycode ? "error" : ""}`}>
                                 <label>CVV / Security code</label>
                                 <input
                                     placeholder="123"
@@ -379,24 +486,48 @@ function CardForm({ currency, onSubmit, onCancel, error }) {
                                     value={securitycode}
                                     onChange={e => setSecuritycode(e.target.value.replace(/\D/g, ""))}
                                 />
+                                {validationErrors.securitycode && (
+                                    <p className="field-error">{validationErrors.securitycode}</p>
+                                )}
                             </div>
-                            <div className="form-field">
+
+                            <div className={`form-field ${validationErrors.expires ? "error" : ""}`}>
                                 <label>Expires (MM / YY)</label>
                                 <div style={{ display: "flex", gap: "0.5rem" }}>
-                                    <input placeholder="MM" maxLength={2} value={expiresMonth} onChange={e => setExpiresMonth(e.target.value.replace(/\D/g, ""))} style={{ width: "4rem" }} />
-                                    <input placeholder="YY" maxLength={2} value={expiresYear}  onChange={e => setExpiresYear(e.target.value.replace(/\D/g, ""))}  style={{ width: "4rem" }} />
+                                    <input 
+                                        placeholder="MM" 
+                                        maxLength={2} 
+                                        value={expiresMonth} 
+                                        onChange={e => setExpiresMonth(e.target.value.replace(/\D/g, ""))} 
+                                        style={{ width: "4rem" }} 
+                                    />
+                                    <input 
+                                        placeholder="YY" 
+                                        maxLength={2} 
+                                        value={expiresYear}  
+                                        onChange={e => setExpiresYear(e.target.value.replace(/\D/g, ""))}  
+                                        style={{ width: "4rem" }} 
+                                    />
                                 </div>
+                                {validationErrors.expires && (
+                                    <p className="field-error">{validationErrors.expires}</p>
+                                )}
                             </div>
                         </>
                     ) : (
-                        <div className="form-field full">
+                        <div className={`form-field full ${validationErrors.accountnumber ? "error" : ""}`}>
                             <label>Account number</label>
-                            <input placeholder="e.g. NO12 3456 7890" value={accountnumber} onChange={e => setAccountnumber(e.target.value)} />
+                            <input 
+                                placeholder="e.g. NO12 3456 7890" 
+                                value={accountnumber} 
+                                onChange={e => setAccountnumber(e.target.value)} 
+                            />
+                            {validationErrors.accountnumber && (
+                                <p className="field-error">{validationErrors.accountnumber}</p>
+                            )}
                         </div>
                     )}
                 </div>
-
-                {error && <p className="fin-error">{error}</p>}
 
                 <div className="form-actions">
                     <button className="fin-btn" onClick={onCancel}>Cancel</button>
@@ -406,6 +537,7 @@ function CardForm({ currency, onSubmit, onCancel, error }) {
         </div>
     );
 }
+
 
 function AccountForm({ initial = {}, onSubmit, onCancel, error }) {
     const [name, setName] = useState(initial.name ?? "");
