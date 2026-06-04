@@ -163,6 +163,11 @@ def delete_account(id):
         return jsonify({"error": "Not found"}), 404
 
     acc.active = False
+    acc.name = f"deleted_{acc.id}"
+    acc.provider = "deleted"
+    acc.cardnumber = None
+    acc.last4 = "0000"
+    
     db.session.commit()
 
     log = AuditLog(
@@ -253,7 +258,7 @@ def create_card(account_id):
             return jsonify({"error": "Invalid card number"}), 400
 
         existing = Card.query.filter_by(cardnumber=cardnumber).first()
-        if existing:
+        if existing and existing.active == True:
             return jsonify({"error": "This card is already linked"}), 409
 
         securitycode = data.get("securitycode")
@@ -347,6 +352,12 @@ def delete_card(account_id, card_id):
         return jsonify({"error": "Card not found"}), 404
 
     card.active = False
+    card.provider = "deleted"
+    card.cardnumber = None
+    card.securitycode = None
+    card.last4 = "0000"
+    card.accountnumber = None
+    
     db.session.commit()
 
     log = AuditLog(

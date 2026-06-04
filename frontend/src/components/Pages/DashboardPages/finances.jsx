@@ -43,6 +43,8 @@ function WalletTab() {
     const [isHovered, setIsHovered] = useState(false);
     const [cardsFor, setCardsFor] = useState(null);
     const [limitError, setLimitError] = useState(null);
+    const [success, setSuccess] = useState(null);
+    const [error, setError] = useState(null);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -51,26 +53,57 @@ function WalletTab() {
         setLoading(false);
     }, []);
 
-    useEffect(() => { load(); }, [load]);
+    useEffect(() => {
+        load();
+    }, [load]);
+
+    useEffect(() => {
+        if (!success) return;
+
+        const timer = setTimeout(() => {
+            setSuccess(null);
+        }, 3000);
+
+        return () => clearTimeout(timer);
+    }, [success]);
+
+    useEffect(() => {
+        if (!error) return;
+
+        const timer = setTimeout(() => {
+            setError(null);
+        }, 5000);
+
+        return () => clearTimeout(timer);
+    }, [error]);
 
     async function create(data) {
         const res = await call("/api/accounts/create", { method: "POST", body: JSON.stringify(data) });
         if (res?.error) { setLimitError(res.error); return; }
-        setMode("view"); setLimitError(null); load();
+        setSuccess("Account created successfully.");
+        setMode("view"); 
+        setLimitError(null); 
+        load();
     }
 
     async function update(data) {
         await call(`/api/accounts/${editingAccount.id}/update`, { method: "PUT", body: JSON.stringify(data) });
-        setMode("view"); setEditingAccount(null); load();
+        setSuccess("Account updated successfully.");
+        setMode("view");
+        setEditingAccount(null);
+        load();
     }
 
     async function remove(id) {
         await call(`/api/accounts/${id}/delete`, { method: "DELETE" });
-        setSelected(null); load();
+        setSuccess("Account deleted.");
+        setSelected(null);
+        load();
     }
 
     async function setPrimary(id) {
         await call(`/api/accounts/${id}/primary`, { method: "POST" });
+        setSuccess("Primary account updated.");
         load();
     }
 
@@ -95,111 +128,123 @@ function WalletTab() {
     const selected_acc = accounts.find(a => a.id === selected);
 
     return (
-        <div className="wallet-tab">
-            <div className="wallet-summary">
-                <div className="summary-card">
-                    <span className="summary-label">Total balance</span>
-                    <span className="summary-value">{fmt(total)}</span>
-                </div>
-                <div className="summary-card">
-                    <span className="summary-label">Accounts</span>
-                    <span className="summary-value">{accounts.length}</span>
-                </div>
-                {primary && (
-                    <div className="summary-card">
-                        <span className="summary-label">Primary account</span>
-                        <span className="summary-value sm">{primary.name}</span>
-                    </div>
-                )}
-                <button className="add-btn" onClick={() => setMode("create")}>
-                    <i className="ti ti-plus" /> Add account
-                </button>
-            </div>
+        <>
+            <SuccessMessage
+                message={success}
+                onDismiss={() => setSuccess(null)}
+            />
 
-            {loading ? (
-                <p className="muted loading-text">Loading accounts…</p>
-            ) : accounts.length === 0 ? (
-                <div className="empty-state">
-                    <i className="ti ti-credit-card" />
-                    <p>No accounts yet</p>
-                    <button className="add-btn" onClick={() => setMode("create")}>Add your first account</button>
-                </div>
-            ) : (
-                <div className="app-container">
-                    <div className="wallet"
-                        onMouseEnter={() => setIsHovered(true)}
-                        onMouseLeave={() => setIsHovered(false)}
-                    >
-                        <div className="wallet-back"></div>
-                        <div className="cards">
-                            {accounts.map((acc, idx) => (
-                                <BankCard
-                                    key={acc.id}
-                                    acc={acc}
-                                    idx={idx}
-                                    selected={selected === acc.id}
-                                    onClick={() => setSelected(selected === acc.id ? null : acc.id)}
-                                    isHovered={isHovered}
-                                />
-                            ))}
+            <ErrorMessage
+                error={error}
+                onDismiss={() => setError(null)}
+            />
+            
+            <div className="wallet-tab">
+                <div className="wallet-summary">
+                    <div className="summary-card">
+                        <span className="summary-label">Total balance</span>
+                        <span className="summary-value">{fmt(total)}</span>
+                    </div>
+                    <div className="summary-card">
+                        <span className="summary-label">Accounts</span>
+                        <span className="summary-value">{accounts.length}</span>
+                    </div>
+                    {primary && (
+                        <div className="summary-card">
+                            <span className="summary-label">Primary account</span>
+                            <span className="summary-value sm">{primary.name}</span>
                         </div>
-                        <div className="pocket">
-                            <svg className="pocket-svg" viewBox="0 0 280 160" fill="none">
-                                <path d="M 0 20 C 0 10, 5 10, 10 10 C 20 10, 25 25, 40 25 L 240 25 C 255 25, 260 10, 270 10 C 275 10, 280 10, 280 20 L 280 120 C 280 155, 260 160, 240 160 L 40 160 C 20 160, 0 155, 0 120 Z" fill="#1e341e" />
-                                <path d="M 8 22 C 8 16, 12 16, 15 16 C 23 16, 27 29, 40 29 L 240 29 C 253 29, 257 16, 265 16 C 268 16, 272 16, 272 22 L 272 120 C 272 150, 255 152, 240 152 L 40 152 C 25 152, 8 152, 8 120 Z" stroke="#3d5635" strokeWidth="1.5" strokeDasharray="6 4" />
-                            </svg>
-                            <div className="pocket-content">
-                                <div style={{position: "relative", height: "24px", width: "100%"}}>
-                                    <div className="balance-stars">******</div>
-                                    <div className="balance-real">{fmt(total)}</div>
-                                </div>
-                                <div style={{color: "#698263", fontSize: "12px", fontWeight: 500}}>Hover To View Total Balance</div>
-                                <div className="eye-icon-wrapper">
-                                    <svg className="eye-icon eye-slash" width="20" height="20" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                        <line x1="3" y1="3" x2="21" y2="21"></line>
-                                    </svg>
-                                    <svg className="eye-icon eye-open" style={{opacity: 0}} width="20" height="20" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
+                    )}
+                    <button className="add-btn" onClick={() => setMode("create")}>
+                        <i className="ti ti-plus" /> Add account
+                    </button>
+                </div>
+
+                {loading ? (
+                    <p className="muted loading-text">Loading accounts…</p>
+                ) : accounts.length === 0 ? (
+                    <div className="empty-state">
+                        <i className="ti ti-credit-card" />
+                        <p>No accounts yet</p>
+                        <button className="add-btn" onClick={() => setMode("create")}>Add your first account</button>
+                    </div>
+                ) : (
+                    <div className="app-container">
+                        <div className="wallet"
+                            onMouseEnter={() => setIsHovered(true)}
+                            onMouseLeave={() => setIsHovered(false)}
+                        >
+                            <div className="wallet-back"></div>
+                            <div className="cards">
+                                {accounts.map((acc, idx) => (
+                                    <BankCard
+                                        key={acc.id}
+                                        acc={acc}
+                                        idx={idx}
+                                        selected={selected === acc.id}
+                                        onClick={() => setSelected(selected === acc.id ? null : acc.id)}
+                                        isHovered={isHovered}
+                                    />
+                                ))}
+                            </div>
+                            <div className="pocket">
+                                <svg className="pocket-svg" viewBox="0 0 280 160" fill="none">
+                                    <path d="M 0 20 C 0 10, 5 10, 10 10 C 20 10, 25 25, 40 25 L 240 25 C 255 25, 260 10, 270 10 C 275 10, 280 10, 280 20 L 280 120 C 280 155, 260 160, 240 160 L 40 160 C 20 160, 0 155, 0 120 Z" fill="#1e341e" />
+                                    <path d="M 8 22 C 8 16, 12 16, 15 16 C 23 16, 27 29, 40 29 L 240 29 C 253 29, 257 16, 265 16 C 268 16, 272 16, 272 22 L 272 120 C 272 150, 255 152, 240 152 L 40 152 C 25 152, 8 152, 8 120 Z" stroke="#3d5635" strokeWidth="1.5" strokeDasharray="6 4" />
+                                </svg>
+                                <div className="pocket-content">
+                                    <div style={{position: "relative", height: "24px", width: "100%"}}>
+                                        <div className="balance-stars">******</div>
+                                        <div className="balance-real">{fmt(total)}</div>
+                                    </div>
+                                    <div style={{color: "#698263", fontSize: "12px", fontWeight: 500}}>Hover To View Total Balance</div>
+                                    <div className="eye-icon-wrapper">
+                                        <svg className="eye-icon eye-slash" width="20" height="20" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                            <line x1="3" y1="3" x2="21" y2="21"></line>
+                                        </svg>
+                                        <svg className="eye-icon eye-open" style={{opacity: 0}} width="20" height="20" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {selected_acc && (
-                <div className="action-drawer">
-                    <div className="drawer-info">
-                        <span className="drawer-name">{selected_acc.name}</span>
-                        <span className="drawer-balance">{fmt(selected_acc.balance)}</span>
+                {selected_acc && (
+                    <div className="action-drawer">
+                        <div className="drawer-info">
+                            <span className="drawer-name">{selected_acc.name}</span>
+                            <span className="drawer-balance">{fmt(selected_acc.balance)}</span>
+                        </div>
+                        <div className="drawer-actions">
+                            <button className="drawer-btn" onClick={() => setCardsFor(selected_acc)}>
+                                <i className="ti ti-credit-card" /> Cards
+                                {selected_acc.card_count > 0 && (
+                                    <span className="drawer-badge">{selected_acc.card_count}</span>
+                                )}
+                            </button>
+                            <button className="drawer-btn" onClick={() => { setEditingAccount(selected_acc); setMode("edit"); }}>
+                                <i className="ti ti-pencil-alt2" /> Edit
+                            </button>
+                            <button className="drawer-btn" onClick={() => setPrimary(selected_acc.id)}>
+                                <i className="ti ti-star" /> Set primary
+                            </button>
+                            <button className="drawer-btn danger" onClick={() => remove(selected_acc.id)}>
+                                <i className="ti ti-trash" /> Delete
+                            </button>
+                            <button className="drawer-btn close-btn" onClick={() => setSelected(null)}>
+                                <i className="ti ti-x" /> Deselect
+                            </button>
+                        </div>
                     </div>
-                    <div className="drawer-actions">
-                        <button className="drawer-btn" onClick={() => setCardsFor(selected_acc)}>
-                            <i className="ti ti-credit-card" /> Cards
-                            {selected_acc.card_count > 0 && (
-                                <span className="drawer-badge">{selected_acc.card_count}</span>
-                            )}
-                        </button>
-                        <button className="drawer-btn" onClick={() => { setEditingAccount(selected_acc); setMode("edit"); }}>
-                            <i className="ti ti-pencil-alt2" /> Edit
-                        </button>
-                        <button className="drawer-btn" onClick={() => setPrimary(selected_acc.id)}>
-                            <i className="ti ti-star" /> Set primary
-                        </button>
-                        <button className="drawer-btn danger" onClick={() => remove(selected_acc.id)}>
-                            <i className="ti ti-trash" /> Delete
-                        </button>
-                        <button className="drawer-btn close-btn" onClick={() => setSelected(null)}>
-                            <i className="ti ti-x" /> Deselect
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
+                )}
+            </div>
+        </>
     );
 }
 
@@ -209,13 +254,37 @@ function CardsPanel({ account, onBack }) {
     const [creating, setCreating] = useState(false);
     const [editing, setEditing] = useState(null);
     const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(null);
 
     const load = useCallback(async () => {
         const res = await call(`/api/accounts/${account.id}/cards`);
         setCards(Array.isArray(res) ? res : []);
     }, [account.id]);
 
-    useEffect(() => { load(); }, [load]);
+    useEffect(() => {
+        load();
+    }, [load]);
+
+    useEffect(() => {
+        if (!success) return;
+
+        const timer = setTimeout(() => {
+            setSuccess(null);
+        }, 3000);
+
+        return () => clearTimeout(timer);
+    }, [success]);
+
+    useEffect(() => {
+        if (!error) return;
+
+        const timer = setTimeout(() => {
+            setError(null);
+        }, 5000);
+
+        return () => clearTimeout(timer);
+    }, [error]);
+
 
     async function addCard(data) {
         const res = await call(`/api/accounts/${account.id}/cards`, {
@@ -226,14 +295,15 @@ function CardsPanel({ account, onBack }) {
             setError(res.error); 
             return; 
         }
-        setCreating(false); 
-        setError(null); 
+        setSuccess("Card added successfully.");
+        setCreating(false);
+        setError(null);
         load();
-        SuccessMessage("Card added successfully!");
     }
 
     async function deleteCard(cardId) {
         await call(`/api/accounts/${account.id}/cards/${cardId}/delete`, { method: "DELETE" });
+        setSuccess("Card removed.");
         load();
     }
 
@@ -247,60 +317,72 @@ function CardsPanel({ account, onBack }) {
     );
 
     return (
-        <div className="cards-panel">
-            <div className="cards-panel-header">
-                <button className="fin-btn" onClick={onBack}>
-                    <i className="ti ti-arrow-left" /> Back
-                </button>
-                <div>
-                    <h2>{account.name}</h2>
-                    <p className="muted">{fmt(account.balance)} · {account.currency}</p>
-                </div>
-                <button className="add-btn" onClick={() => setCreating(true)}>
-                    <i className="ti ti-plus" /> Add card
-                </button>
-            </div>
+        <>
+            <SuccessMessage
+                message={success}
+                onDismiss={() => setSuccess(null)}
+            />
 
-            {error && <p className="fin-error">{error}</p>}
-
-            {!cards ? (
-                <p className="muted loading-text">Loading cards…</p>
-            ) : cards.length === 0 ? (
-                <div className="empty-state">
-                    <i className="ti ti-credit-card-off" />
-                    <p>No cards linked to this account</p>
-                    <button className="add-btn" onClick={() => setCreating(true)}>Add a card</button>
+            <ErrorMessage
+                error={error}
+                onDismiss={() => setError(null)}
+            />
+            
+            <div className="cards-panel">
+                <div className="cards-panel-header">
+                    <button className="fin-btn" onClick={onBack}>
+                        <i className="ti ti-arrow-left" /> Back
+                    </button>
+                    <div>
+                        <h2>{account.name}</h2>
+                        <p className="muted">{fmt(account.balance)} · {account.currency}</p>
+                    </div>
+                    <button className="add-btn" onClick={() => setCreating(true)}>
+                        <i className="ti ti-plus" /> Add card
+                    </button>
                 </div>
-            ) : (
-                <div className="linked-cards-list">
-                    {cards.map(card => (
-                        <div key={card.id} className="linked-card-row">
-                            <div className="linked-card-icon">
-                                <i className={`ti ${card.is_card ? "ti-credit-card" : "ti-building-bank"}`} />
-                            </div>
-                            <div className="linked-card-info">
-                                <span className="linked-card-provider">{card.provider ?? "Card"}</span>
-                                <span className="muted linked-card-num">
-                                    {card.is_card
-                                        ? `•••• •••• •••• ${card.last4 ?? "????"}  `
-                                        : `Account: ${card.accountnumber ?? "—"}`
-                                    }
-                                </span>
-                                {card.expires_at && (
-                                    <span className="muted linked-card-exp">
-                                        Expires {new Date(card.expires_at).toLocaleDateString("en-US", { month: "2-digit", year: "2-digit" })}
+
+                {error && <p className="fin-error">{error}</p>}
+
+                {!cards ? (
+                    <p className="muted loading-text">Loading cards…</p>
+                ) : cards.length === 0 ? (
+                    <div className="empty-state">
+                        <i className="ti ti-credit-card-off" />
+                        <p>No cards linked to this account</p>
+                        <button className="add-btn" onClick={() => setCreating(true)}>Add a card</button>
+                    </div>
+                ) : (
+                    <div className="linked-cards-list">
+                        {cards.map(card => (
+                            <div key={card.id} className="linked-card-row">
+                                <div className="linked-card-icon">
+                                    <i className={`ti ${card.is_card ? "ti-credit-card" : "ti-building-bank"}`} />
+                                </div>
+                                <div className="linked-card-info">
+                                    <span className="linked-card-provider">{card.provider ?? "Card"}</span>
+                                    <span className="muted linked-card-num">
+                                        {card.is_card
+                                            ? `•••• •••• •••• ${card.last4 ?? "????"}  `
+                                            : `Account: ${card.accountnumber ?? "—"}`
+                                        }
                                     </span>
-                                )}
+                                    {card.expires_at && (
+                                        <span className="muted linked-card-exp">
+                                            Expires {new Date(card.expires_at).toLocaleDateString("en-US", { month: "2-digit", year: "2-digit" })}
+                                        </span>
+                                    )}
+                                </div>
+                                <span className="linked-card-currency">{card.currency}</span>
+                                <button className="drawer-btn danger" onClick={() => deleteCard(card.id)}>
+                                    <i className="ti ti-trash" />
+                                </button>
                             </div>
-                            <span className="linked-card-currency">{card.currency}</span>
-                            <button className="drawer-btn danger" onClick={() => deleteCard(card.id)}>
-                                <i className="ti ti-trash" />
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </>
     );
 }
 
