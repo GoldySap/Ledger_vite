@@ -161,23 +161,23 @@ def update_account():
     db.session.commit()
     return jsonify({"msg": "updated"})
 
-@auth_bp.route("/delete", methods=["POST"])
-@jwt_required()
-def delete_account():
-    user = User.query.get(get_jwt_identity())
+# @auth_bp.route("/delete", methods=["POST"])
+# @jwt_required()
+# def delete_account():
+#     user = User.query.get(get_jwt_identity())
 
-    log = AuditLog(
-        user_id=user.id,
-        action="account_deletion",
-        status="success"
-    )
-    db.session.add(log)
-    db.session.commit()
+#     log = AuditLog(
+#         user_id=user.id,
+#         action="account_deletion",
+#         status="success"
+#     )
+#     db.session.add(log)
+#     db.session.commit()
 
-    gdpr_anonymise_user(user)
-    response = jsonify({"msg": "Account Deleted"})
-    unset_jwt_cookies(response)
-    return response
+#     gdpr_anonymise_user(user)
+#     response = jsonify({"msg": "Account Deleted"})
+#     unset_jwt_cookies(response)
+#     return response
 
 @auth_bp.route("/delete", methods=["DELETE"])
 @jwt_required()

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import QRCode from "qrcode";
 import { useApi } from "../../API/useApi";
 import { useAuth } from "../../Auth/AuthContext";
+import { useAccess } from "../../Auth/SubscriptionGate";
 import "./settings.css";
 
 export default function SettingsPage() {
@@ -383,6 +384,7 @@ function SecurityTab() {
 
 function SubscriptionTab() {
     const { call } = useApi();
+    const { refresh } = useAccess() ?? {};
     const [sub,   setSub]   = useState(null);
     const [plans, setPlans] = useState([]);
     const [error, setError] = useState(null);
@@ -415,6 +417,7 @@ function SubscriptionTab() {
 
         if (res?.label) {
             setSub(res);
+            refresh?.();   // re-evaluate all SubscriptionGates on the page
         }
     }
 

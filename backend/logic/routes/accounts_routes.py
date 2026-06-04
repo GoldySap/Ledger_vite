@@ -11,7 +11,7 @@ def can_create_account(user):
     
     max_accounts = user.subscription.access.max_accounts
     current_count = Account.query.filter_by(user_id=user.id).count()
-    return current_count <= max_accounts
+    return current_count < max_accounts
 
 accounts_bp = Blueprint("accounts", __name__)
 

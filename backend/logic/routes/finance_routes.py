@@ -26,8 +26,8 @@ def get_transactions():
 @jwt_required()
 def deposit(account_id):
     user_id = get_jwt_identity()
-    data    = request.get_json()
-    amount  = float(data.get("amount", 0))
+    data = request.get_json()
+    amount = float(data.get("amount", 0))
 
     if amount <= 0:
         return jsonify({"error": "Amount must be positive"}), 400
@@ -49,8 +49,8 @@ def deposit(account_id):
 @jwt_required()
 def withdraw(account_id):
     user_id = get_jwt_identity()
-    data    = request.get_json()
-    amount  = float(data.get("amount", 0))
+    data = request.get_json()
+    amount = float(data.get("amount", 0))
 
     if amount <= 0:
         return jsonify({"error": "Amount must be positive"}), 400
@@ -87,10 +87,10 @@ def withdraw(account_id):
 @jwt_required()
 def transfer():
     user_id = get_jwt_identity()
-    data    = request.get_json()
+    data = request.get_json()
     from_id = data.get("from_account_id")
-    to_id   = data.get("to_account_id")
-    amount  = float(data.get("amount", 0))
+    to_id = data.get("to_account_id")
+    amount = float(data.get("amount", 0))
 
     if amount <= 0:
         return jsonify({"error": "Amount must be positive"}), 400
@@ -119,8 +119,8 @@ def transfer():
     db.session.commit()
     return jsonify({
         "from_balance": from_acc.balance,
-        "to_balance":   to_acc.balance,
-        "message":      f"Transferred ${amount:,.2f}",
+        "to_balance": to_acc.balance,
+        "message": f"Transferred ${amount:,.2f}",
     })
 
 @finance_bp.route("/subscription/subs", methods=["GET"])
@@ -134,11 +134,22 @@ def get_subscriptions():
         if access:
             features.append(f"{access.max_accounts} accounts")
             features.append(f"${access.max_portfolio_transfer_rate:,}/mo transfers")
-            if access.has_finance_access:   features.append("Finance access")
+            if access.has_finance_access: features.append("Finance access")
             if access.has_investment_access: features.append("Investment access")
-            if access.has_analytics_access:  features.append("Advanced analytics")
-            if access.can_export_data:       features.append("Data export")
-        data.append({"id": s.id, "label": s.label, "price": s.price, "features": features})
+            if access.has_analytics_access: features.append("Advanced analytics")
+            if access.can_export_data: features.append("Data export")
+        access_flags = {}
+        if access:
+            access_flags = {
+                "has_finance_access": access.has_finance_access,
+                "has_investment_access": access.has_investment_access,
+                "has_analytics_access": access.has_analytics_access,
+                "can_export_data": access.can_export_data,
+                "max_accounts": access.max_accounts,
+                "max_cards_per_accounts": access.max_cards_per_accounts,
+                "max_portfolio_transfer_rate": access.max_portfolio_transfer_rate,
+            }
+        data.append({"id": s.id, "label": s.label, "price": s.price, "features": features, "access": access_flags})
     return jsonify(data)
 
 
@@ -169,9 +180,9 @@ def upgrade_subscription():
 @finance_bp.route("/analytics", methods=["GET"]) 
 @jwt_required()
 def get_analytics():
-    user       = User.query.get(int(get_jwt_identity()))
+    user = User.query.get(int(get_jwt_identity()))
     time_range = request.args.get("range", "30d")
-    days       = {"7d": 7, "30d": 30, "90d": 90, "1y": 365}.get(time_range, 30)
+    days = {"7d": 7, "30d": 30, "90d": 90, "1y": 365}.get(time_range, 30)
     start_date = datetime.now(UTC) - timedelta(days=days)
 
     total_balance = db.session.query(func.sum(Account.balance)).filter_by(
@@ -231,35 +242,35 @@ def get_analytics():
         balance_trend.append({"date": cursor.strftime("%b %d"), "value": float(total_balance + net)})
         cursor += timedelta(days=step_days)
 
-    holdings        = Holding.query.filter_by(user_id=user.id).all()
-    total_invested  = 0.0
+    holdings = Holding.query.filter_by(user_id=user.id).all()
+    total_invested = 0.0
     investment_value = 0.0
-    holdings_data   = []
+    holdings_data = []
 
     for h in holdings:
-        inv        = h.investment
-        cost       = h.quantity * h.avg_buy_price
-        current    = h.quantity * inv.current_price
+        inv = h.investment
+        cost = h.quantity * h.avg_buy_price
+        current = h.quantity * inv.current_price
         gain_loss  = current - cost
-        ret_pct    = (gain_loss / cost * 100) if cost > 0 else 0
+        ret_pct = (gain_loss / cost * 100) if cost > 0 else 0
         total_invested  += cost
         investment_value += current
         holdings_data.append({
-            "id":           h.id,
-            "symbol":       inv.symbol,
-            "name":         inv.name,
-            "quantity":     h.quantity,
-            "avgBuyPrice":  h.avg_buy_price,
+            "id": h.id,
+            "symbol": inv.symbol,
+            "name": inv.name,
+            "quantity": h.quantity,
+            "avgBuyPrice": h.avg_buy_price,
             "currentPrice": inv.current_price,
             "currentValue": current,
-            "costBasis":    cost,
-            "gainLoss":     gain_loss,
-            "return":       ret_pct,
+            "costBasis": cost,
+            "gainLoss": gain_loss,
+            "return": ret_pct,
         })
 
     investment_change = investment_value - total_invested
-    portfolio_return  = (investment_change / total_invested * 100) if total_invested > 0 else 0
-    top_holdings      = sorted(holdings_data, key=lambda x: x["currentValue"], reverse=True)[:5]
+    portfolio_return = (investment_change / total_invested * 100) if total_invested > 0 else 0
+    top_holdings = sorted(holdings_data, key=lambda x: x["currentValue"], reverse=True)[:5]
 
     asset_allocation: dict[str, float] = {}
     for h in holdings:
@@ -270,26 +281,26 @@ def get_analytics():
     recent_tx = Transaction.query.filter_by(user_id=user.id)\
         .order_by(Transaction.created_at.desc()).limit(10).all()
     recent_transactions = [{
-        "id":          tx.id,
+        "id": tx.id,
         "description": tx.account.name if tx.account else "—",
-        "category":    tx.category,
-        "amount":      tx.amount,
-        "createdAt":   tx.created_at.isoformat(),
+        "category": tx.category,
+        "amount": tx.amount,
+        "createdAt": tx.created_at.isoformat(),
     } for tx in recent_tx]
 
     return jsonify({
-        "totalBalance":          total_balance,
-        "balanceChange":         balance_change,
-        "totalSpent":            total_spent,
-        "spentChange":           spent_change,
-        "investmentValue":       investment_value,
-        "investmentChange":      investment_change,
-        "portfolioReturn":       portfolio_return,
+        "totalBalance": total_balance,
+        "balanceChange": balance_change,
+        "totalSpent": total_spent,
+        "spentChange": spent_change,
+        "investmentValue": investment_value,
+        "investmentChange": investment_change,
+        "portfolioReturn": portfolio_return,
         "portfolioReturnChange": 0,
-        "accountBalances":       account_balances,
-        "spendingByCategory":    spending_data,
-        "balanceTrend":          balance_trend,
-        "topHoldings":           top_holdings,
-        "assetAllocation":       allocation_data,
-        "recentTransactions":    recent_transactions,
+        "accountBalances": account_balances,
+        "spendingByCategory": spending_data,
+        "balanceTrend": balance_trend,
+        "topHoldings": top_holdings,
+        "assetAllocation": allocation_data,
+        "recentTransactions": recent_transactions,
     })

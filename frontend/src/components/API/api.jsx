@@ -53,8 +53,7 @@ export async function api(endpoint, options = {}) {
                 "X-CSRF-TOKEN": getCookie("csrf_refresh_token")
             },
             credentials: "include",
-            method: "POST",
-            ...options
+            method: "POST"
         });
 
         if (refreshRes.ok) {

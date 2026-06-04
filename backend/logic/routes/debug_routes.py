@@ -36,7 +36,7 @@ def seed_all():
     access_config = {
         "Free": {
             "can_export_data": False,
-            "has_finance_access": False,
+            "has_finance_access": True,
             "has_investment_access": False,
             "has_analytics_access": False,
             "max_accounts": 1,
@@ -44,9 +44,9 @@ def seed_all():
             "max_portfolio_transfer_rate": 100
         },
         "Basic": {
-            "can_export_data": True,
+            "can_export_data": False,
             "has_finance_access": True,
-            "has_investment_access": False,
+            "has_investment_access": True,
             "has_analytics_access": False,
             "max_accounts": 3,
             "max_cards_per_accounts": 2,

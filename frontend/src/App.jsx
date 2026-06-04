@@ -46,19 +46,19 @@ function App() {
               <Route path="home" element={<Dashboard />} />
               <Route path="settings" element={<Settings />} />
               <Route path="finances" element={
-                <SubscriptionGate feature="has_finance_access" fallback={<Finances />}>
+                <SubscriptionGate feature="has_finance_access">
                   <Finances />
                 </SubscriptionGate>
                 } 
               />
               <Route path="investments/*" element={
-                <SubscriptionGate feature="has_investment_access" fallback={<Investments />}>
+                <SubscriptionGate feature="has_investment_access">
                   <Investments />
                 </SubscriptionGate>
                 } 
               />
               <Route path="analytics" element={
-                <SubscriptionGate feature="has_analytics_access" fallback={<Analytics />}>
+                <SubscriptionGate feature="has_analytics_access">
                   <Analytics />
                 </SubscriptionGate>
                 } 
@@ -67,7 +67,7 @@ function App() {
 
             {/* DASHBOARD ADMIN */}
             <Route path="/dashboard/admin/*" element={
-                <ProtectedRoute>
+                <ProtectedRoute adminOnly>
                   <AdminDashboardLayout />
                 </ProtectedRoute>
               }>
