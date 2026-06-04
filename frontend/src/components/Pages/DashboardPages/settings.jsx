@@ -1,16 +1,18 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import QRCode from "qrcode";
 import { useApi } from "../../API/useApi";
+import { useAuth } from "../../Auth/AuthContext";
 import "./settings.css";
 
 export default function SettingsPage() {
     const [tab, setTab] = useState("account");
 
     const tabs = [
-        { id: "account",      label: "Account",      icon: "ti-user" },
-        { id: "security",     label: "Security",     icon: "ti-shield-lock" },
+        { id: "account", label: "Account", icon: "ti-user" },
+        { id: "security", label: "Security", icon: "ti-shield-lock" },
         { id: "subscription", label: "Subscription", icon: "ti-crown" },
-        { id: "activity",     label: "Activity",     icon: "ti-list" },
+        { id: "activity", label: "Activity", icon: "ti-list" },
     ];
 
     return (
@@ -47,21 +49,24 @@ export default function SettingsPage() {
 
 function AccountTab() {
     const { call } = useApi();
+    const { logout } = useAuth();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [deleting, setDeleting] = useState(false);
     const [form, setForm] = useState({ email: "", phone: "" });
     const [showDelete, setShowDelete] = useState(false);
-    const [deleteConfirm, setDeleteConfirm] = useState("");
-    const [message, setMessage] = useState({ type: "", text: "" });
-
+    const [deleteStep, setDeleteStep] = useState(1);
+    const [deleteInput, setDeleteInput] = useState("");
+    const [deleting, setDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState(null);
+ 
     useEffect(() => {
         call("/api/auth/me").then(user => {
             if (user) setForm({ email: user.email ?? "", phone: user.phonenumber ?? "" });
             setLoading(false);
         });
     }, []);
-
+ 
     async function handleSave() {
         setSaving(true);
         await call("/api/auth/update", {
@@ -70,43 +75,26 @@ function AccountTab() {
         });
         setSaving(false);
     }
-
+ 
     async function handleDelete() {
-        if (deleteConfirm !== "DELETE") return;
+        if (deleteInput !== "DELETE") return;
         setDeleting(true);
-        
-        try {
-            await call("/api/auth/delete", { method: "POST" });
-            window.location.href = "/";
-        } catch (err) {
-            setMessage({ type: "error", text: "Failed to delete account" });
-        }
+        setDeleteError(null);
+        const res = await call("/api/auth/delete", { method: "DELETE" });
         setDeleting(false);
-        setShowDelete(false);
-        setDeleteConfirm("");
+        if (res?.error) {
+            setDeleteError(res.error);
+            return;
+        }
+        await logout();
+        navigate("/");
     }
-
-    // async function handleDelete() {
-    //     if (deleteConfirm !== "DELETE") return;
-    //     setDeleting(true);
-    //     await call("/api/auth/delete", { method: "POST" });
-    //     setDeleting(false);
-    //     setShowDelete(false);
-    //     setDeleteConfirm("");
-    //     window.location.reload();
-    // }
-
+ 
     if (loading) return <Section><p className="muted">Loading…</p></Section>;
-
+ 
     return (
         <>
-            {message.text && (
-                <div className={`message message-${message.type}`}>
-                    {message.text}
-                </div>
-            )}
-
-            <Section title="Profile information" icon="ti-user-circle">
+            <Section title="Profile" icon="ti-user-circle">
                 <div className="two-col">
                     <Field label="Email address">
                         <input
@@ -125,54 +113,84 @@ function AccountTab() {
                         />
                     </Field>
                 </div>
-                <div className="align">
+                <div className="align-right">
                     <Btn primary onClick={handleSave} disabled={saving}>
                         <i className="ti ti-check" aria-hidden="true" />
                         {saving ? "Saving…" : "Save changes"}
                     </Btn>
                 </div>
             </Section>
-
-            <Section title="Account preferences" icon="ti-settings">
-                <ToggleRow
-                    title="Email notifications"
-                    desc="Receive emails about your account activity"
-                    onChange={() => {}}
-                />
-                <ToggleRow
-                    title="Marketing emails"
-                    desc="Receive product updates and special offers"
-                    onChange={() => {}}
-                />
-            </Section>
-
-            <Section title="Danger zone" icon="ti-trash">
+ 
+            <Section title="Danger zone" icon="ti-alert-triangle">
                 <div className="row-between">
                     <div>
                         <div className="field-title">Delete account</div>
-                        <div className="muted sm">Permanently remove your account and all data</div>
+                        <div className="muted sm">
+                            Permanently anonymises your personal data in accordance with GDPR Article 17.
+                            Transaction history is retained for accounting purposes but can no longer be
+                            linked to your identity.
+                        </div>
                     </div>
-                    <Btn danger sm onClick={() => setShowDelete(true)}>
+                    <Btn danger sm onClick={() => { setShowDelete(true); setDeleteStep(1); setDeleteInput(""); setDeleteError(null); }}>
                         <i className="ti ti-trash" aria-hidden="true" /> Delete
                     </Btn>
                 </div>
             </Section>
-
+ 
             {showDelete && (
-                <Modal title="Delete account" onClose={() => { setShowDelete(false); setDeleteConfirm(""); }}>
-                    <p>This is permanent and cannot be undone. Type <strong>DELETE</strong> to confirm.</p>
-                    <input
-                        placeholder="Type DELETE to confirm"
-                        value={deleteConfirm}
-                        onChange={e => setDeleteConfirm(e.target.value)}
-                        autoFocus
-                    />
-                    <div className="modal-actions">
-                        <Btn onClick={() => { setShowDelete(false); setDeleteConfirm(""); }}>Cancel</Btn>
-                        <Btn danger onClick={handleDelete} disabled={deleteConfirm !== "DELETE" || deleting}>
-                            {deleting ? "Deleting…" : "Delete account"}
-                        </Btn>
-                    </div>
+                <Modal
+                    title={deleteStep === 1 ? "Before you delete…" : "Confirm deletion"}
+                    onClose={() => { setShowDelete(false); setDeleteStep(1); setDeleteInput(""); }}
+                >
+                    {deleteStep === 1 ? (
+                        <>
+                            <div className="gdpr-info-box">
+                                <i className="ti ti-info-circle" aria-hidden="true" />
+                                <div>
+                                    <strong>What happens to your data (GDPR Art. 17)</strong>
+                                    <ul className="gdpr-list">
+                                        <li>Your email, phone number, and password are permanently removed</li>
+                                        <li>Your account is deactivated and anonymised as <em>deleted_[id]@removed.local</em></li>
+                                        <li>Linked bank accounts are anonymised (name/provider scrubbed)</li>
+                                        <li>Cards linked to accounts are anonymised</li>
+                                        <li>Transaction history is <strong>retained</strong> — required by bookkeeping law — but can no longer be linked to you</li>
+                                        <li>Investment holdings, watchlist, and price alerts are permanently deleted</li>
+                                        <li>FAQ questions you submitted are anonymised (name/email removed)</li>
+                                        <li>Security settings and verification codes are permanently deleted</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div className="modal-actions" style={{ marginTop: "0.75rem" }}>
+                                <Btn onClick={() => { setShowDelete(false); setDeleteStep(1); }}>Cancel</Btn>
+                                <Btn danger onClick={() => setDeleteStep(2)}>
+                                    I understand, continue
+                                </Btn>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <p>Type <strong>DELETE</strong> to permanently anonymise your account. This cannot be undone.</p>
+                            <input
+                                placeholder="Type DELETE to confirm"
+                                value={deleteInput}
+                                onChange={e => setDeleteInput(e.target.value)}
+                                style={{ borderColor: deleteInput && deleteInput !== "DELETE" ? "#dc2626" : undefined }}
+                            />
+                            {deleteError && (
+                                <p style={{ color: "#dc2626", fontSize: "0.875rem", margin: "0.5rem 0 0" }}>{deleteError}</p>
+                            )}
+                            <div className="modal-actions">
+                                <Btn onClick={() => { setShowDelete(false); setDeleteStep(1); setDeleteInput(""); }}>Cancel</Btn>
+                                <Btn
+                                    danger
+                                    onClick={handleDelete}
+                                    disabled={deleteInput !== "DELETE" || deleting}
+                                >
+                                    {deleting ? "Deleting…" : "Delete my account"}
+                                </Btn>
+                            </div>
+                        </>
+                    )}
                 </Modal>
             )}
         </>

@@ -318,6 +318,16 @@
     letter-spacing: 0.04em;
 }
 
+.gdpr-info-box {
+    display: flex; gap: 0.625rem;
+    padding: 0.875rem; background: #fef9ec;
+    border: 1px solid #fcd34d; border-radius: 0.5rem;
+    font-size: 0.8125rem; line-height: 1.6; color: #78350f;
+}
+.gdpr-info-box i { font-size: 1rem; flex-shrink: 0; margin-top: 0.1rem; }
+.gdpr-list { margin: 0.4rem 0 0 1.1rem; padding: 0; }
+.gdpr-list li { margin-bottom: 0.25rem; }
+
 @media (max-width: 35rem) {
     .two-col { grid-template-columns: 1fr; }
     .plan-card { flex-direction: column; }

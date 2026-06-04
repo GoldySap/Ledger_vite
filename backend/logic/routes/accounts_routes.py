@@ -174,14 +174,16 @@ def delete_account(id):
 
     return jsonify({"success": True})
 
-@accounts_bp.route("/<int:account_id>/cards", methods=["GET"])
+@accounts_bp.route("/<int:account_id>/cards", methods=["GET", "POST"])
 @jwt_required()
 def get_account_cards(account_id):
+    """Retrieve all active cards for an account"""
     user_id = get_jwt_identity()
 
     account = Account.query.filter_by(
         id=account_id,
-        user_id=user_id
+        user_id=user_id,
+        active=True
     ).first()
 
     if not account:
@@ -197,14 +199,183 @@ def get_account_cards(account_id):
             "id": card.id,
             "provider": card.provider,
             "last4": card.last4,
-            "expires_at": (
-                card.expires_at.isoformat()
-                if card.expires_at else None
-            ),
+            "accountnumber": card.accountnumber,
+            "expires_at": card.expires_at.isoformat() if card.expires_at else None,
             "currency": card.currency,
-            "balance": card.balance,
-            "is_default": card.is_default,
-            "is_card": True,
+            "is_card": card.is_card,
+            "created_at": card.created_at.isoformat() if card.created_at else None,
         }
         for card in cards
     ])
+
+
+@accounts_bp.route("/<int:account_id>/cards", methods=["POST"])
+@limiter.limit("10 per minute")
+@jwt_required()
+def create_card(account_id):
+    """Add a new card or bank account to an account"""
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    account = Account.query.filter_by(
+        id=account_id,
+        user_id=user_id,
+        active=True
+    ).first()
+
+    if not account:
+        return jsonify({"error": "Account not found"}), 404
+
+    max_cards = user.subscription.access.max_cards_per_accounts
+    current_card_count = Card.query.filter_by(
+        account_id=account_id,
+        active=True
+    ).count()
+
+    if current_card_count >= max_cards:
+        return jsonify({"error": f"Card limit reached ({max_cards} per account)"}), 403
+
+    data = request.get_json()
+
+    if not data.get("provider"):
+        return jsonify({"error": "Provider is required"}), 400
+
+    is_card = data.get("is_card", True)
+
+    if is_card:
+        cardnumber = data.get("cardnumber", "").replace(" ", "")
+
+        if not cardnumber or len(cardnumber) < 12:
+            return jsonify({"error": "Card number must be at least 12 digits"}), 400
+
+        if not is_valid_card_number(cardnumber):
+            return jsonify({"error": "Invalid card number"}), 400
+
+        existing = Card.query.filter_by(cardnumber=cardnumber).first()
+        if existing:
+            return jsonify({"error": "This card is already linked"}), 409
+
+        securitycode = data.get("securitycode")
+        if securitycode and (len(str(securitycode)) < 3 or len(str(securitycode)) > 4):
+            return jsonify({"error": "Invalid security code"}), 400
+
+        expires_at = data.get("expires_at")
+        if expires_at:
+            try:
+                from datetime import datetime
+                exp_date = datetime.fromisoformat(expires_at)
+                if exp_date < datetime.now():
+                    return jsonify({"error": "Card is expired"}), 400
+            except (ValueError, TypeError):
+                return jsonify({"error": "Invalid expiry date format"}), 400
+
+        last4 = cardnumber[-4:] if len(cardnumber) >= 4 else cardnumber
+
+        card = Card(
+            user_id=user_id,
+            account_id=account_id,
+            is_card=True,
+            provider=data.get("provider"),
+            cardnumber=cardnumber,
+            securitycode=securitycode,
+            last4=last4,
+            expires_at=expires_at,
+            currency=data.get("currency", account.currency),
+            active=True
+        )
+
+    else:
+        accountnumber = data.get("accountnumber", "").strip()
+
+        if not accountnumber or len(accountnumber) < 8:
+            return jsonify({"error": "Account number must be at least 8 characters"}), 400
+
+        # Check for duplicate account numbers
+        existing = Card.query.filter_by(accountnumber=accountnumber).first()
+        if existing:
+            return jsonify({"error": "This account is already linked"}), 409
+
+        card = Card(
+            user_id=user_id,
+            account_id=account_id,
+            is_card=False,
+            provider=data.get("provider"),
+            accountnumber=accountnumber,
+            currency=data.get("currency", account.currency),
+            active=True
+        )
+
+    db.session.add(card)
+    db.session.commit()
+
+    log = AuditLog(
+        user_id=user_id,
+        action="card_creation",
+        status="success"
+    )
+    db.session.add(log)
+    db.session.commit()
+
+    return jsonify({
+        "id": card.id,
+        "provider": card.provider,
+        "last4": card.last4,
+        "message": "Card added successfully"
+    }), 201
+
+
+@accounts_bp.route("/<int:account_id>/cards/<int:card_id>/delete", methods=["DELETE"])
+@limiter.limit("10 per minute")
+@jwt_required()
+def delete_card(account_id, card_id):
+    """Delete (deactivate) a card"""
+    user_id = get_jwt_identity()
+
+    account = Account.query.filter_by(
+        id=account_id,
+        user_id=user_id,
+        active=True
+    ).first()
+
+    if not account:
+        return jsonify({"error": "Account not found"}), 404
+
+    card = Card.query.filter_by(
+        id=card_id,
+        account_id=account_id,
+        active=True
+    ).first()
+
+    if not card:
+        return jsonify({"error": "Card not found"}), 404
+
+    card.active = False
+    db.session.commit()
+
+    log = AuditLog(
+        user_id=user_id,
+        action="card_deletion",
+        status="success"
+    )
+    db.session.add(log)
+    db.session.commit()
+
+    return jsonify({"success": True, "message": "Card deleted successfully"})
+
+
+def is_valid_card_number(cardnumber):
+    """Validate card number using Luhn algorithm"""
+    digits = [int(d) for d in cardnumber if d.isdigit()]
+    
+    if len(digits) < 12:
+        return False
+    
+    checksum = 0
+    for i, digit in enumerate(reversed(digits)):
+        if i % 2 == 1:
+            digit *= 2
+            if digit > 9:
+                digit -= 9
+        checksum += digit
+    
+    return checksum % 10 == 0

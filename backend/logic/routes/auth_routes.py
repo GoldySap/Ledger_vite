@@ -1,10 +1,11 @@
 from flask_jwt_extended import create_access_token, create_refresh_token, set_access_cookies, set_refresh_cookies, unset_jwt_cookies, jwt_required, get_jwt_identity
 from flask import Blueprint, request, jsonify
+from werkzeug.security import generate_password_hash
 from sqlalchemy import update, literal
 from datetime import datetime, timedelta, UTC
 from logic.extensions import limiter
 from ..extensions import db
-from ..models.data import User, SecuritySettings, AuditLog
+from ..models.data import User, SecuritySettings, AuditLog, Holding, VerificationCode, Watchlist, UserQuestion, Card, PriceAlert
 from ..routes.helpers import login_user_response, verify_turnstile, create_verification, verify_2fa, gdpr_anonymise_user
 
 auth_bp = Blueprint("auth", __name__)
@@ -177,3 +178,61 @@ def delete_account():
     response = jsonify({"msg": "Account Deleted"})
     unset_jwt_cookies(response)
     return response
+
+@auth_bp.route("/delete", methods=["DELETE"])
+@jwt_required()
+def delete_own_account():
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+ 
+    for account in list(user.accounts):
+        for card in Card.query.filter_by(account_id=account.id).all():
+            card.active = False
+            card.provider = "deleted"
+            card.cardnumber = None
+            card.securitycode = None
+            card.last4 = "0000"
+            card.accountnumber = None
+            card.user_id = None
+ 
+        account.active = False
+        account.name = f"deleted_{account.id}"
+        account.provider = "deleted"
+        account.cardnumber = None
+        account.last4 = "0000"
+        account.user_id = None
+ 
+    for holding in Holding.query.filter_by(user_id=user_id).all():
+        db.session.delete(holding)
+ 
+    for item in Watchlist.query.filter_by(user_id=user_id).all():
+        db.session.delete(item)
+ 
+    for alert in PriceAlert.query.filter_by(user_id=user_id).all():
+        db.session.delete(alert)
+ 
+    for q in UserQuestion.query.filter_by(user_id=user_id).all():
+        q.name    = "Deleted user"
+        q.email   = f"deleted_{q.id}@removed.local"
+        q.user_id = None
+ 
+    SecuritySettings.query.filter_by(user_id=user_id).delete()
+    VerificationCode.query.filter_by(user_id=user_id).delete()
+ 
+   
+    AuditLog.query.filter_by(user_id=user_id).update({"user_id": 0})
+ 
+    user.email = f"deleted_{user.id}@removed.local"
+    user.phonenumber = None
+    user.password_hash = generate_password_hash(f"deleted_{user.id}_irreversible")
+    user.role = "user"
+    user.active = False
+    user.subscription_id = None
+ 
+    db.session.commit()
+ 
+    response = jsonify({"msg": "Account anonymised. You have been logged out."})
+    unset_jwt_cookies(response)
+    return response, 200

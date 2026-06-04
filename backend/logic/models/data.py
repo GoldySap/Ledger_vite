@@ -67,23 +67,27 @@ class Account(db.Model):
 
 class Card(db.Model):
     __tablename__ = "cards"
-    id = db.Column(db.Integer, primary_key=True)
-    account_id = db.Column(db.Integer, db.ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
  
-    provider = db.Column(db.String(50))         
-    last4 = db.Column(db.String(4))             
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    account_id = db.Column(db.Integer, db.ForeignKey("accounts.id"), nullable=False)  # ← FIXED
+ 
+    is_card = db.Column(db.Boolean, default=True)
+    provider = db.Column(db.String(50))
+    cardnumber = db.Column(db.String(19), unique=True)
+    securitycode = db.Column(db.Integer)
+    last4 = db.Column(db.String(4))
     expires_at = db.Column(db.DateTime(timezone=True))
-    is_default = db.Column(db.Boolean, default=False) 
-
-    balance = db.Column(db.Float, default=0)
+ 
+    accountnumber = db.Column(db.String(20))
+ 
     currency = db.Column(db.String(3), default="USD")
-
     active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
  
-    account = db.relationship("Account", back_populates="cards")
     user = db.relationship("User", backref="cards")
+    account = db.relationship("Account", back_populates="cards")
+
  
     def to_dict(self):
         return {

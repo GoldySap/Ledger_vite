@@ -10,6 +10,7 @@ import { AuthProvider } from "./components/Auth/AuthContext";
 import { ProtectedRoute  } from "./components/Auth/ProtectedRoute";
 import { VerificationProvider } from "./components/Auth/VerificationContext";
 import FaqPage from "./components/Pages/HomePages/faq";
+import { AccessProvider, SubscriptionGate } from "./components/Auth/SubscriptionGate"
 import '@icon/themify-icons/themify-icons.css';
 import "./components/Nav/Nav.css";
 import "./App.css";
@@ -24,7 +25,7 @@ function App() {
             <Route path="/" element={<HomeLayout />}>
               <Route index element={<Home />} />
               <Route path="features" element={<h1>Features</h1>} />
-              <Route path="plans" element={<h1>Plans</h1>} />
+              <Route path="plan" element={<h1>Plans</h1>} />
               <Route path="support" element={<FaqPage />} />
               <Route path="login" element={<AuthPage />} />
               <Route path="*" element={<h1>404 Not Found</h1>} />
@@ -36,15 +37,32 @@ function App() {
             {/* DASHBOARD USER */}
             <Route path="/dashboard/user/*" element={
                 <ProtectedRoute>
-                  <DashboardLayout />
+                  <AccessProvider>
+                      <DashboardLayout />
+                  </AccessProvider>
                 </ProtectedRoute>
               }>
               <Route index element={<Navigate to="home" />} />
               <Route path="home" element={<Dashboard />} />
               <Route path="settings" element={<Settings />} />
-              <Route path="finances" element={<Finances />} />
-              <Route path="investments/*" element={<Investments />} />
-              <Route path="analytics" element={<Analytics />} />
+              <Route path="finances" element={
+                <SubscriptionGate feature="has_finance_access" fallback={<Finances />}>
+                  <Finances />
+                </SubscriptionGate>
+                } 
+              />
+              <Route path="investments/*" element={
+                <SubscriptionGate feature="has_investment_access" fallback={<Investments />}>
+                  <Investments />
+                </SubscriptionGate>
+                } 
+              />
+              <Route path="analytics" element={
+                <SubscriptionGate feature="has_analytics_access" fallback={<Analytics />}>
+                  <Analytics />
+                </SubscriptionGate>
+                } 
+              />
             </Route>
 
             {/* DASHBOARD ADMIN */}

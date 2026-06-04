@@ -1,0 +1,142 @@
+.gate-wall {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    padding: 2rem;
+}
+
+.gate-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 2.5rem 2rem;
+    max-width: 22rem;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.gate-icon-wrap {
+    display: flex;
+    justify-content: center;
+    position: relative;
+    width: 4rem;
+    height: 4rem;
+    margin-bottom: 0.25rem;
+}
+.gate-feature-icon {
+    font-size: 2.5rem;
+    color: var(--muted);
+}
+.gate-lock-badge {
+    position: absolute;
+    bottom: -4px;
+    width: 1.375rem;
+    height: 1.375rem;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.7rem;
+    border: 2px solid var(--panel);
+}
+
+.gate-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text, #111);
+    margin: 0;
+}
+
+.gate-desc {
+    font-size: 0.875rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.gate-plans {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin: 0.5rem 0;
+}
+.gate-plan {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.875rem;
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+}
+.gate-plan.highlight {
+    border-color: var(--accent);
+    background: #f0fdf4;
+}
+.gate-plan-name {
+    font-weight: 500;
+    color: var(--text, #111);
+}
+.gate-plan-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+.gate-plan-status.on  { color: #16a34a; }
+.gate-plan-status.off { color: var(--muted); }
+
+/* Upgrade button */
+.gate-upgrade-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 0.625rem;
+    cursor: pointer;
+    transition: filter 0.15s;
+    margin-top: 0.25rem;
+}
+.gate-upgrade-btn:hover { filter: brightness(0.9); }
+
+.gate-sub {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin: 0;
+}
+.gate-link {
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: inherit;
+    padding: 0;
+    text-decoration: underline;
+}
+
+/* Skeleton */
+.gate-skel {
+    background: var(--border);
+    border-radius: 0.4rem;
+    animation: gate-pulse 1.4s ease-in-out infinite;
+}
+.gate-skel-icon  { width: 4rem; height: 4rem; border-radius: 50%; }
+.gate-skel-title { width: 12rem; height: 1.2rem; margin: 0.5rem 0; }
+.gate-skel-desc  { width: 16rem; height: 0.875rem; }
+@keyframes gate-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
