@@ -95,7 +95,7 @@
     flex-direction: column; 
     justify-content: center;
     align-items: center;
-    width: 100%;
+    width: 100vw;
 }
 .faq-group-label {
     display: flex; align-items: center; gap: 0.45rem;
@@ -106,7 +106,12 @@
 .faq-group-label i { font-size: 0.875rem; color: var(--accent); }
 
 .faq-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     border: 1px solid var(--border);
+    width: 50%;
     border-radius: 0.625rem;
     background: var(--panel);
     margin-bottom: 0.5rem;
@@ -114,7 +119,10 @@
     transition: border-color 0.15s;
 }
 .faq-item:hover { border-color: var(--border-hover, #ccc); }
-.faq-item.open  { border-color: var(--accent); width: 50%; }
+.faq-item.open  { 
+    border-color: 
+    var(--accent); 
+    width: 50%; }
 
 .faq-q {
     width: 100%;
@@ -130,7 +138,7 @@
     font-size: 0.875rem; 
     font-weight: 500;
 }
-.faq-q-text { flex: 1; }
+.faq-q-text { flex: 1; text-align: center;}
 .faq-chevron {
     font-size: 1rem; 
     color: var(--muted);

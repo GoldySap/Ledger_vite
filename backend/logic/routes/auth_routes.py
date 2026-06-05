@@ -218,10 +218,23 @@ def delete_own_account():
         q.email   = f"deleted_{q.id}@removed.local"
         q.user_id = None
  
-    SecuritySettings.query.filter_by(user_id=user_id).delete()
-    VerificationCode.query.filter_by(user_id=user_id).delete()
- 
-   
+    # SecuritySettings.query.filter_by(user_id=user_id).delete()
+    sec = SecuritySettings.query.get(user_id)
+    if sec:
+        sec.totp_secret = None
+        sec.totp_pending_secret = None
+        sec.totp_enabled = False
+        sec.backup_codes = None
+        sec.email_2fa_enabled = False
+        sec.sms_2fa_enabled = False
+
+    # VerificationCode.query.filter_by(user_id=user_id).delete()
+    ver = VerificationCode.query.get(user_id)
+    if ver:
+        ver.code = f"deleted_{ver.id}"
+        ver.method = None
+        ver.type = None
+    
     AuditLog.query.filter_by(user_id=user_id).update({"user_id": 0})
  
     user.email = f"deleted_{user.id}@removed.local"

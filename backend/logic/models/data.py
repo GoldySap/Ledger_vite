@@ -1,4 +1,5 @@
 from ..extensions import db
+from .crypto import encrypt, decrypt
 from sqlalchemy import Enum
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -49,9 +50,6 @@ class Account(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
     name = db.Column(db.String(100), nullable=False)
-    provider = db.Column(db.String(50))
-    cardnumber = db.Column(db.String(12), unique=True)
-    last4 = db.Column(db.String(4))
 
     balance = db.Column(db.Float, default=0)
     currency = db.Column(db.String(3), default="USD")
@@ -67,38 +65,60 @@ class Account(db.Model):
 
 class Card(db.Model):
     __tablename__ = "cards"
- 
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     account_id = db.Column(db.Integer, db.ForeignKey("accounts.id"), nullable=False)
- 
+
     is_card = db.Column(db.Boolean, default=True)
     provider = db.Column(db.String(50))
-    cardnumber = db.Column(db.String(19), unique=True)
+ 
+    _cardnumber = db.Column("cardnumber", db.Text, unique=True)
+    _accountnumber = db.Column("accountnumber", db.Text)
+
     securitycode = db.Column(db.Integer)
+
     last4 = db.Column(db.String(4))
     expires_at = db.Column(db.DateTime(timezone=True))
- 
-    accountnumber = db.Column(db.String(20))
- 
-    currency = db.Column(db.String(3), default="USD")
 
-    is_default = db.Column(db.Boolean, default=False) 
+    currency = db.Column(db.String(3), default="USD")
+    is_default = db.Column(db.Boolean, default=False)
     active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
- 
+
     user = db.relationship("User", backref="cards")
     account = db.relationship("Account", back_populates="cards")
 
+    @property
+    def cardnumber(self):
+        return decrypt(self._cardnumber)
+
+    @cardnumber.setter
+    def cardnumber(self, value):
+        self._cardnumber = encrypt(value)
+
+    @property
+    def accountnumber(self):
+        return decrypt(self._accountnumber)
+
+    @accountnumber.setter
+    def accountnumber(self, value):
+        self._accountnumber = encrypt(value)
+
     def to_dict(self):
         return {
-            "id":         self.id,
+            "id": self.id,
             "account_id": self.account_id,
-            "provider":   self.provider,
-            "last4":      self.last4,
+            "provider": self.provider,
+            "last4": self.last4,
+            "accountnumber_masked": (
+                f"{'*' * (len(self.accountnumber) - 4)}{self.accountnumber[-4:]}"
+                if self.accountnumber else None
+            ),
             "expires_at": self.expires_at.isoformat() if self.expires_at else None,
+            "is_card": self.is_card,
             "is_default": self.is_default,
-            "active":     self.active,
+            "active": self.active,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
@@ -254,7 +274,7 @@ class FaqItem(db.Model):
             "question": self.question,
             "answer": self.answer,
             "sort_order": self.sort_order,
-            "published":  self.published,
+            "published": self.published,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

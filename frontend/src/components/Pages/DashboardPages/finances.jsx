@@ -307,6 +307,13 @@ function CardsPanel({ account, onBack }) {
         load();
     }
 
+    async function setDefaultCard(cardId) {
+        const res = await call(`/api/accounts/${account.id}/cards/${cardId}/default`, { method: "POST" });
+        if (res?.error) { setError(res.error); return; }
+        setSuccess("Default card updated.");
+        load();
+    }
+
     if (creating) return (
         <CardForm
             currency={account.currency}
@@ -356,15 +363,22 @@ function CardsPanel({ account, onBack }) {
                     <div className="linked-cards-list">
                         {cards.map(card => (
                             <div key={card.id} className="linked-card-row">
-                                <div className="linked-card-icon">
+                                <div className="linked-card-icon" >
                                     <i className={`ti ${card.is_card ? "ti-credit-card" : "ti-building-bank"}`} />
                                 </div>
                                 <div className="linked-card-info">
-                                    <span className="linked-card-provider">{card.provider ?? "Card"}</span>
+                                    <div className="linked-card-name-row">
+                                        <span className="linked-card-provider">{card.provider ?? "Card"}</span>
+                                        {card.is_default && (
+                                            <span className="default-card-badge">
+                                                <i className="ti ti-star-filled" /> Default
+                                            </span>
+                                        )}
+                                    </div>
                                     <span className="muted linked-card-num">
                                         {card.is_card
                                             ? `•••• •••• •••• ${card.last4 ?? "????"}  `
-                                            : `Account: ${card.accountnumber ?? "—"}`
+                                            : `Account: ${card.accountnumber_masked ?? "—"}`
                                         }
                                     </span>
                                     {card.expires_at && (
@@ -374,6 +388,11 @@ function CardsPanel({ account, onBack }) {
                                     )}
                                 </div>
                                 <span className="linked-card-currency">{card.currency}</span>
+                                {!card.is_default && (
+                                    <button className="drawer-btn" onClick={() => setDefaultCard(card.id)} title="Set as default">
+                                        <i className="ti ti-star" />
+                                    </button>
+                                )}
                                 <button className="drawer-btn danger" onClick={() => deleteCard(card.id)}>
                                     <i className="ti ti-trash" />
                                 </button>
@@ -453,8 +472,6 @@ function CardForm({ currency, onSubmit, onCancel, error }) {
             if (cleanCardNumber.length < 12) {
                 errors.cardnumber = "Card number must be at least 12 digits";
             }
-            if (securitycode && (securitycode.length < 3 || securitycode.length > 4)) {
-                errors.securitycode = "Security code must be 3-4 digits";
             }
             if (expiresMonth || expiresYear) {
                 if (!expiresMonth || !expiresYear) {
@@ -462,7 +479,6 @@ function CardForm({ currency, onSubmit, onCancel, error }) {
                 } else if (Number(expiresMonth) < 1 || Number(expiresMonth) > 12) {
                     errors.expires = "Month must be between 01 and 12";
                 }
-            }
         } else {
             const cleanAccountNumber = accountnumber.trim();
             if (cleanAccountNumber.length < 8) {
@@ -491,7 +507,7 @@ function CardForm({ currency, onSubmit, onCancel, error }) {
             is_card: isCard,
             provider,
             cardnumber: isCard ? cardnumber.replace(/\s/g, "") : null,
-            securitycode: isCard ? Number(securitycode) || null : null,
+            securitycode,
             expires_at,
             accountnumber: !isCard ? accountnumber : null,
             currency: cur,
@@ -525,19 +541,7 @@ function CardForm({ currency, onSubmit, onCancel, error }) {
                     </button>
                 </div>
 
-                <div className="form-grid">
-                    <div className={`form-field ${validationErrors.provider ? "error" : ""}`}>
-                        <label>Provider</label>
-                        <input 
-                            placeholder="e.g. Visa, Mastercard" 
-                            value={provider} 
-                            onChange={e => setProvider(e.target.value)} 
-                        />
-                        {validationErrors.provider && (
-                            <p className="field-error">{validationErrors.provider}</p>
-                        )}
-                    </div>
-                    
+                <div className="form-grid">                    
                     <div className="form-field">
                         <label>Currency</label>
                         <select value={cur} onChange={e => setCur(e.target.value)}>
@@ -547,6 +551,17 @@ function CardForm({ currency, onSubmit, onCancel, error }) {
 
                     {isCard ? (
                         <>
+                            <div className={`form-field ${validationErrors.provider ? "error" : ""}`}>
+                                <label>Provider</label>
+                                <input 
+                                    placeholder="e.g. Visa, Mastercard" 
+                                    value={provider} 
+                                    onChange={e => setProvider(e.target.value)} 
+                                />
+                                {validationErrors.provider && (
+                                    <p className="field-error">{validationErrors.provider}</p>
+                                )}
+                            </div>
                             <div className={`form-field full ${validationErrors.cardnumber ? "error" : ""}`}>
                                 <label>Card number</label>
                                 <input
@@ -572,7 +587,6 @@ function CardForm({ currency, onSubmit, onCancel, error }) {
                                     <p className="field-error">{validationErrors.securitycode}</p>
                                 )}
                             </div>
-
                             <div className={`form-field ${validationErrors.expires ? "error" : ""}`}>
                                 <label>Expires (MM / YY)</label>
                                 <div style={{ display: "flex", gap: "0.5rem" }}>
@@ -597,17 +611,30 @@ function CardForm({ currency, onSubmit, onCancel, error }) {
                             </div>
                         </>
                     ) : (
-                        <div className={`form-field full ${validationErrors.accountnumber ? "error" : ""}`}>
-                            <label>Account number</label>
-                            <input 
-                                placeholder="e.g. NO12 3456 7890" 
-                                value={accountnumber} 
-                                onChange={e => setAccountnumber(e.target.value)} 
-                            />
-                            {validationErrors.accountnumber && (
-                                <p className="field-error">{validationErrors.accountnumber}</p>
-                            )}
-                        </div>
+                            <>
+                            <div className={`form-field ${validationErrors.provider ? "error" : ""}`}>
+                                <label>Provider</label>
+                                <input 
+                                    placeholder="e.g. Visa, Mastercard" 
+                                    value={provider} 
+                                    onChange={e => setProvider(e.target.value)} 
+                                />
+                                {validationErrors.provider && (
+                                    <p className="field-error">{validationErrors.provider}</p>
+                                )}
+                            </div>
+                            <div className={`form-field full ${validationErrors.accountnumber ? "error" : ""}`}>
+                                <label>Account number</label>
+                                <input 
+                                    placeholder="e.g. NO12 3456 7890" 
+                                    value={accountnumber} 
+                                    onChange={e => setAccountnumber(e.target.value)} 
+                                />
+                                {validationErrors.accountnumber && (
+                                    <p className="field-error">{validationErrors.accountnumber}</p>
+                                )}
+                            </div>
+                        </>
                     )}
                 </div>
 
@@ -622,36 +649,96 @@ function CardForm({ currency, onSubmit, onCancel, error }) {
 
 
 function AccountForm({ initial = {}, onSubmit, onCancel, error }) {
+    const isEdit = Boolean(initial.id);
+
     const [name, setName] = useState(initial.name ?? "");
-    const [provider, setProvider] = useState(initial.provider ?? "");
-    const [cardNumber, setCardNumber] = useState("");
     const [currency, setCurrency] = useState(initial.currency ?? "USD");
 
+    const [isCard, setIsCard] = useState(true);
+    const [provider, setProvider] = useState("");
+    const [cardnumber, setCardnumber] = useState("");
+    const [securitycode, setSecuritycode] = useState("");
+    const [expiresMonth, setExpiresMonth] = useState("");
+    const [expiresYear, setExpiresYear] = useState("");
+    const [accountnumber, setAccountnumber] = useState("");
+
+    const [validationErrors, setValidationErrors] = useState({});
+
+    function validate() {
+        const errs = {};
+        if (!name.trim()) errs.name = "Account name is required";
+
+        if (!isEdit) {
+            if (!provider.trim()) errs.provider = "Provider is required";
+            if (isCard) {
+                const clean = cardnumber.replace(/\s/g, "");
+                if (clean.length < 12) errs.cardnumber = "Card number must be at least 12 digits";
+                    if ((expiresMonth || expiresYear) && (!expiresMonth || !expiresYear))
+                    errs.expires = "Both month and year are required";
+                if (expiresMonth && (Number(expiresMonth) < 1 || Number(expiresMonth) > 12))
+                    errs.expires = "Month must be 01–12";
+            } else {
+                if (accountnumber.trim().length < 8)
+                    errs.accountnumber = "Account number must be at least 8 characters";
+            }
+        }
+
+        setValidationErrors(errs);
+        return Object.keys(errs).length === 0;
+    }
+
     function handleSubmit() {
-        if (!name || !provider) { alert("Name and provider are required"); return; }
-        if (!initial.id && cardNumber.length < 12) { alert("Card number must be at least 12 digits"); return; }
-        onSubmit({ name, provider, currency, last4: initial.id ? initial.last4 : cardNumber.slice(-4) });
+        if (!validate()) return;
+
+        const payload = { name: name.trim(), currency };
+
+        if (!isEdit) {
+            const expires_at = isCard && expiresMonth && expiresYear
+                ? (() => {
+                    const fullYear = Number(`20${expiresYear}`);
+                    const month = Number(expiresMonth);
+                    const lastDay = new Date(fullYear, month, 0).getDate();
+                    return new Date(fullYear, month - 1, lastDay, 23, 59, 59).toISOString().split(".")[0];
+                })()
+                : null;
+
+            payload.card = {
+                is_card: isCard,
+                provider: provider.trim(),
+                cardnumber: isCard ? cardnumber.replace(/\s/g, "") : null,
+                securitycode,
+                expires_at,
+                accountnumber: !isCard ? accountnumber.trim() : null,
+                currency,
+            };
+        }
+
+        onSubmit(payload);
     }
 
     return (
         <div className="account-form-wrap">
             <div className="account-form">
-                <h2>{initial.id ? "Edit account" : "New account"}</h2>
+                <h2>{isEdit ? "Edit account" : "New account"}</h2>
+
+                {error && (
+                    <div className="form-error-banner">
+                        <i className="ti ti-alert-circle" />
+                        <span>{error}</span>
+                    </div>
+                )}
+
+                <p className="form-section-label">Account details</p>
                 <div className="form-grid">
-                    <div className="form-field">
+                    <div className={`form-field ${validationErrors.name ? "error" : ""}`}>
                         <label>Account name</label>
-                        <input placeholder="e.g. Main checking" value={name} onChange={e => setName(e.target.value)} />
+                        <input
+                            placeholder="e.g. Main checking"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                        />
+                        {validationErrors.name && <p className="field-error">{validationErrors.name}</p>}
                     </div>
-                    <div className="form-field">
-                        <label>Provider</label>
-                        <input placeholder="e.g. Visa, Chase" value={provider} onChange={e => setProvider(e.target.value)} />
-                    </div>
-                    {!initial.id && (
-                        <div className="form-field full">
-                            <label>Card number</label>
-                            <input placeholder="12+ digits" value={cardNumber} maxLength={19} onChange={e => setCardNumber(e.target.value.replace(/\D/g, ""))} />
-                        </div>
-                    )}
                     <div className="form-field">
                         <label>Currency</label>
                         <select value={currency} onChange={e => setCurrency(e.target.value)}>
@@ -659,17 +746,120 @@ function AccountForm({ initial = {}, onSubmit, onCancel, error }) {
                         </select>
                     </div>
                 </div>
-                {error && <p className="fin-error">{error}</p>}
+
+                {!isEdit && (
+                    <>
+                        <p className="form-section-label">Default card</p>
+
+                        <div className="card-type-toggle">
+                            <button
+                                className={`card-type-btn ${isCard ? "active" : ""}`}
+                                onClick={() => { setIsCard(true); setValidationErrors({}); }}
+                            >
+                                <i className="ti ti-credit-card" /> Physical card
+                            </button>
+                            <button
+                                className={`card-type-btn ${!isCard ? "active" : ""}`}
+                                onClick={() => { setIsCard(false); setValidationErrors({}); }}
+                            >
+                                <i className="ti ti-building-bank" /> Account number
+                            </button>
+                        </div>
+
+                        <div className="form-grid">
+                            {isCard ? (
+                                <>
+                                    <div className={`form-field ${validationErrors.provider ? "error" : ""}`}>
+                                        <label>Card Provider</label>
+                                        <input
+                                            placeholder="e.g. Visa, Mastercard"
+                                            value={provider}
+                                            onChange={e => setProvider(e.target.value)}
+                                        />
+                                        {validationErrors.provider && <p className="field-error">{validationErrors.provider}</p>}
+                                    </div>
+                                    <div className={`form-field full ${validationErrors.cardnumber ? "error" : ""}`}>
+                                        <label>Card number</label>
+                                        <input
+                                            placeholder="1234 5678 9012 3456"
+                                            maxLength={19}
+                                            value={cardnumber}
+                                            onChange={e => setCardnumber(e.target.value.replace(/[^\d\s]/g, ""))}
+                                        />
+                                        {validationErrors.cardnumber && <p className="field-error">{validationErrors.cardnumber}</p>}
+                                    </div>
+                                    <div className={`form-field ${validationErrors.securitycode ? "error" : ""}`}>
+                                        <label>CVV / Security code</label>
+                                        <input
+                                            placeholder="123"
+                                            maxLength={4}
+                                            value={securitycode}
+                                            onChange={e => setSecuritycode(e.target.value.replace(/\D/g, ""))}
+                                        />
+                                        {validationErrors.securitycode && (
+                                            <p className="field-error">{validationErrors.securitycode}</p>
+                                        )}
+                                    </div>
+                                    <div className={`form-field ${validationErrors.expires ? "error" : ""}`}>
+                                        <label>Expires (MM / YY)</label>
+                                        <div style={{ display: "flex", gap: "0.5rem" }}>
+                                            <input 
+                                                placeholder="MM" 
+                                                maxLength={2} 
+                                                value={expiresMonth} 
+                                                onChange={e => setExpiresMonth(e.target.value.replace(/\D/g, ""))} 
+                                                style={{ width: "4rem" }} 
+                                            />
+                                            <input 
+                                                placeholder="YY" 
+                                                maxLength={2} 
+                                                value={expiresYear}  
+                                                onChange={e => setExpiresYear(e.target.value.replace(/\D/g, ""))}  
+                                                style={{ width: "4rem" }} 
+                                            />
+                                        </div>
+                                        {validationErrors.expires && (
+                                            <p className="field-error">{validationErrors.expires}</p>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                    <>
+                                    <div className={`form-field ${validationErrors.provider ? "error" : ""}`}>
+                                        <label>Bank Provider</label>
+                                        <input
+                                            placeholder="e.g. DNB, Wells Fargo"
+                                            value={provider}
+                                            onChange={e => setProvider(e.target.value)}
+                                        />
+                                        {validationErrors.provider && <p className="field-error">{validationErrors.provider}</p>}
+                                    </div>
+                                    <div className={`form-field full ${validationErrors.accountnumber ? "error" : ""}`}>
+                                        <label>Account number</label>
+                                        <input
+                                            placeholder="e.g. NO12 3456 7890"
+                                            value={accountnumber}
+                                            onChange={e => setAccountnumber(e.target.value)}
+                                        />
+                                        {validationErrors.accountnumber && <p className="field-error">{validationErrors.accountnumber}</p>}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </>
+                )}
+
                 <div className="form-actions">
                     <button className="fin-btn" onClick={onCancel}>Cancel</button>
                     <button className="fin-btn primary" onClick={handleSubmit}>
-                        {initial.id ? "Save changes" : "Create account"}
+                        {isEdit ? "Save changes" : "Create account"}
                     </button>
                 </div>
             </div>
         </div>
     );
 }
+
 
 function TransactionsTab() {
     const { call } = useApi();
@@ -757,12 +947,12 @@ function BankCard({ acc, idx, selected, onClick, isHovered }) {
             )}
             <div className="card-inner">
                 <div className="card-top">
-                    <span className="card-provider">{acc.provider ?? "Account"}</span>
+                    <span className="card-provider">{acc.default_card?.provider ?? "Account"}</span>
                     <div className="card-chip" />
                 </div>
                 <div className="card-number">
                     <span>••••</span><span>••••</span><span>••••</span>
-                    <span>{acc.last4 ?? "????"}  </span>
+                    <span>{acc.default_card?.last4 ?? "????"}  </span>
                 </div>
                 <div className="card-bottom">
                     <div className="card-info">

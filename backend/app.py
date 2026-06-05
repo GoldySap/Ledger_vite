@@ -17,7 +17,23 @@ from logic.extensions import limiter
 
 load_dotenv()
 
+NEEDED_ENV_VARIABLES = [
+    "SECRET_KEY", "JWT_SECRET_KEY", "CARD_ENCRYPTION_KEY", "FLASK_ENV", "VITE_FRONTEND_URL", 
+    "VITE_BACKEND_URL", "FLASK_USE", "DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME", 
+    "SUBABASE_DB_URL", "SUPABASE_SESSION_POOL_URL", "RENDER_DB_URL_EXTERNAL", 
+    "RENDER_DB_URL_INTERNAL", "DATADOG_API_KEY", "ADMIN_EMAIL", "ADMIN_PASSWORD", 
+    "EMAIL_USER", "EMAIL_APP_PASSWORD", "FINNHUB_API_KEY", "TURNSTILE_SECRET_KEY"
+]
+
+def _check_required_env():
+    missing = [k for k in NEEDED_ENV_VARIABLES if not os.environ.get(k)]
+    if missing:
+        raise RuntimeError(
+            f"Missing required environment variables: {', '.join(missing)}\n"
+        )
+
 def create_app():
+    _check_required_env()
     app = Flask(__name__)
 
     env = os.environ.get("FLASK_ENV", "development")

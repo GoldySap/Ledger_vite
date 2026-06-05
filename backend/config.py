@@ -28,6 +28,8 @@ class Config:
 
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
 
+    CARD_ENCRYPTION_KEY = os.environ.get("CARD_ENCRYPTION_KEY")
+
     JWT_TOKEN_LOCATION = ["cookies"]
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=15)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)

@@ -228,16 +228,6 @@ def is_email_anonymised(email):
     
     return False
 
-def anonymise_user(user):
-    user.name = "Deleted user"
-    user.email = f"deleted_{user.id}@removed.local"
-    user.phonenumber = "0000000000"
-    user.password_hash = generate_password_hash("deleted")
-    user.role = "deleted"
-    user.subscription_id = 1
-    user.active = False
-    db.session.commit()
-
 def gdpr_anonymise_user(user: User) -> None:
     uid = user.id
  
