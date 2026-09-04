@@ -77,7 +77,7 @@ SQLite er enkelt for testing, men MariaDB er bedre for produksjon og simulerer e
 ### Servermiljø
 
 - **Utvikling:** WSL2 (Ubuntu) på Windows, Flask dev-server
-- **Produksjon:** Raspberry Pi med Waitress (WSGI-server), eller Render (cloud)
+- **Produksjon:** Raspberry Pi med Waitress (WSGI-server), Render (cloud), Supabase (gratis WSGI-server leverandør)
 - **Frontend:** Vercel (automatisk deploy fra GitHub `main`-branch)
 
 ### Nettverksoppsett
