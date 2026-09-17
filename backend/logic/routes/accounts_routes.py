@@ -350,7 +350,7 @@ def create_card(account_id):
         "message": "Card added successfully",
     }), 201
 
-accounts_bp.route("/<int:account_id>/cards/<int:card_id>/default", methods=["POST"])
+@accounts_bp.route("/<int:account_id>/cards/<int:card_id>/default", methods=["POST"])
 @limiter.limit("10 per minute")
 @jwt_required()
 def set_default_card(account_id, card_id):

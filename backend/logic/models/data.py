@@ -76,7 +76,7 @@ class Card(db.Model):
     _cardnumber = db.Column("cardnumber", db.Text, unique=True)
     _accountnumber = db.Column("accountnumber", db.Text)
 
-    securitycode = db.Column(db.Integer)
+    securitycode = db.Column(db.String(255))
 
     last4 = db.Column(db.String(4))
     expires_at = db.Column(db.DateTime(timezone=True))

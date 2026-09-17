@@ -91,7 +91,12 @@ def seed_all():
         {"symbol": "GOOGL", "name": "Alphabet Inc.", "price": 2800},
         {"symbol": "AMZN", "name": "Amazon.com Inc.", "price": 140},
         {"symbol": "NVDA", "name": "NVIDIA Corp.", "price": 875},
-        {"symbol": "META", "name": "Meta Platforms Inc.","price": 485},
+        {"symbol": "META", "name": "Meta Platforms Inc.", "price": 485},
+        {"symbol": "NFLX", "name": "Netflix Inc.", "price": 600},
+        {"symbol": "AMD", "name": "Advanced Micro Devices", "price": 180},
+        {"symbol": "INTC", "name": "Intel Corp.", "price": 42},
+        {"symbol": "DIS", "name": "Walt Disney Co.", "price": 112},
+        {"symbol": "SPY", "name": "S&P 500 ETF", "price": 510}
     ]
     for s in stocks:
         inv = Investment(
