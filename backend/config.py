@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import timedelta
 
 class Config:
@@ -46,12 +47,13 @@ class Config:
     JWT_ACCESS_CSRF_HEADER_NAME = "X-CSRF-TOKEN"
     JWT_REFRESH_CSRF_HEADER_NAME = "X-CSRF-TOKEN"
 
+    LOCAL_IP_PATTERN = re.compile(r"^https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|172\.18\.\d+\.\d+|10\.\d+\.\d+\.\d+):(5124|5125)$")
+
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = Config.URL if os.environ.get("FLASK_USE") == "external" else Config.LOCAL_DB
     CORS_ORIGINS = list(filter(None, [
-        "http://localhost:5124",
-        "http://127.0.0.1:5124",
+        Config.LOCAL_IP_PATTERN,
     ]))
 
 
@@ -59,7 +61,6 @@ class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = Config.URL if os.environ.get("FLASK_USE") == "external" else Config.LOCAL_DB
     CORS_ORIGINS = list(filter(None, [
-        "http://localhost:5124",
-        "http://127.0.0.1:5124",
+        Config.LOCAL_IP_PATTERN,
         os.environ.get("VITE_FRONTEND_URL")
     ]))
