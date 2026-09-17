@@ -140,56 +140,76 @@ function HoldingRow({ h, onSell, onChart }) {
 
 function MarketTab({ onTabChange }) {
     const { call } = useApi();
-    const [results,  setResults]  = useState([]);
-    const [query,    setQuery]    = useState("");
-    const [busy,     setBusy]     = useState(false);
+    const [results, setResults] = useState([]);
+    const [query, setQuery] = useState("");
+    const [busy, setBusy] = useState(false);
     const [selected, setSelected] = useState(null);
-    const [chart,    setChart]    = useState(null);
+    const [chart, setChart] = useState(null);
     const [watchlistIds, setWatchlistIds] = useState(new Set());
-    const intervalRef = useRef(null);
-    const loadWatchlist = useCallback(async () => {
-        const res = await call(`${API}/watchlist`);
-        if (res?.watchlist) {
-            setWatchlistIds(new Set(res.watchlist.map(w => w.investment_id)));
-        }
-    }, []);
+    
+    const [page, setPage] = useState(1);
+    const [pages, setPages] = useState(1);
+    const [hasNext, setHasNext] = useState(false);
 
-    const fetchLive = useCallback(async () => {
-        const res = await call(`${API}/market/live`);
-        if (Array.isArray(res) && !query) setResults(res);
-    }, [query]);
+    // Sequence tracker to discard stale out-of-order network responses
+    const reqIdRef = useRef(0);
 
-    async function search(q) {
-        if (!q) { fetchLive(); return; }
-        setBusy(true);
-        const res = await call(`${API}/investments/search?q=${encodeURIComponent(q)}`);
-        if (res?.results) setResults(res.results);
-        setBusy(false);
-    }
-
+    // 1. Fetch Watchlist once on mount
     useEffect(() => {
-        fetchLive();
-        loadWatchlist();
-        intervalRef.current = setInterval(fetchLive, 15000);
-        return () => clearInterval(intervalRef.current);
-    }, []);
-
-    useEffect(() => {
-        const t = setTimeout(() => search(query), 400);
-        return () => clearTimeout(t);
-    }, [query]);
-
-    async function toggleWatchlist(inv) {
-        if (watchlistIds.has(inv.id)) return;
-        const res = await call(`${API}/watchlist`, {
-            method: "POST",
-            body: JSON.stringify({ investment_id: inv.id }),
+        let isMounted = true;
+        call(`${API}/watchlist`).then(res => {
+            if (isMounted && res?.watchlist) {
+                setWatchlistIds(new Set(res.watchlist.map(w => w.investment_id)));
+            }
         });
-        if (res) {
-            setWatchlistIds(prev => new Set([...prev, inv.id]));
-            onTabChange?.("watchlist");
+        return () => { isMounted = false; };
+    }, []);
+
+    const loadMarket = useCallback(async (targetPage, searchQuery) => {
+        const currentReqId = ++reqIdRef.current;
+        setBusy(true);
+
+        const url = `${API}/market/live?page=${targetPage}&per_page=5&q=${encodeURIComponent(searchQuery)}`;
+        const res = await call(url);
+
+        if (currentReqId !== reqIdRef.current) return;
+
+        if (res?.investments) {
+            // Deep clone items into fresh objects so React detects state changes
+            const freshResults = res.investments.map(item => ({
+                ...item,
+                _updatedAt: Date.now() // Force state diffing on auto-refresh
+            }));
+            
+            setResults(freshResults);
+            setPages(res.pages || 1);
+            setHasNext(res.has_next || false);
         }
-    }
+        setBusy(false);
+    }, [call]);
+
+    // 3. Trigger fetch when page or query changes (with debounce for search input)
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            loadMarket(page, query);
+        }, query ? 350 : 0);
+
+        return () => clearTimeout(timer);
+    }, [page, query, loadMarket]);
+
+    // 4. Auto-refresh current page data every 10 seconds
+    useEffect(() => {
+        const interval = setInterval(() => {
+            loadMarket(page, query);
+        }, 10000);
+
+        return () => clearInterval(interval);
+    }, [page, query, loadMarket]);
+
+    const handleQueryChange = (e) => {
+        setPage(1);
+        setQuery(e.target.value);
+    };
 
     return (
         <div className="market-tab">
@@ -200,7 +220,7 @@ function MarketTab({ onTabChange }) {
                         className="market-search"
                         placeholder="Search stocks by name or symbol…"
                         value={query}
-                        onChange={e => setQuery(e.target.value)}
+                        onChange={handleQueryChange}
                     />
                     {busy && <i className="ti ti-loader-2 spin search-spinner" />}
                 </div>
@@ -210,26 +230,38 @@ function MarketTab({ onTabChange }) {
             </div>
 
             {results.length === 0 ? (
-                <Empty icon="ti-chart-candle" msg={query ? "No results found" : "Loading market data…"} />
+                <Empty icon="ti-chart-candle" msg={busy ? "Searching..." : "No results found"} />
             ) : (
-                <div className="market-list">
-                    <div className="market-header-row">
-                        <span>Symbol / Name</span>
-                        <span>Price</span>
-                        <span>Change</span>
-                        <span></span>
+                <>
+                    <div className="market-list">
+                        <div className="market-header-row">
+                            <span>Symbol / Name</span>
+                            <span>Price</span>
+                            <span>Change</span>
+                            <span></span>
+                        </div>
+                        {results.map(r => (
+                            <MarketRow
+                                key={r.symbol}
+                                r={r}
+                                watched={watchlistIds.has(r.id)}
+                                onTrade={() => setSelected(r)}
+                                onChart={() => setChart(r)}
+                                onWatch={() => toggleWatchlist(r)}
+                            />
+                        ))}
                     </div>
-                    {results.map(r => (
-                        <MarketRow
-                            key={r.id ?? r.symbol}
-                            r={r}
-                            watched={watchlistIds.has(r.id)}
-                            onTrade={() => setSelected(r)}
-                            onChart={() => setChart(r)}
-                            onWatch={() => toggleWatchlist(r)}
-                        />
-                    ))}
-                </div>
+
+                    <div className="pagination-bar" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "1rem", marginTop: "1rem" }}>
+                        <button className="inv-btn sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+                            Previous
+                        </button>
+                        <span className="inv-muted">Page {page} of {pages}</span>
+                        <button className="inv-btn sm" disabled={!hasNext || page >= pages} onClick={() => setPage(p => p + 1)}>
+                            Next
+                        </button>
+                    </div>
+                </>
             )}
 
             {selected && (
